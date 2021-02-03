@@ -1,0 +1,7 @@
+# Gradle
+
+# macOS
+.DS_Store
+
+# Emacs backup
+*~
