@@ -5,3 +5,12 @@
 
 # Emacs backup
 *~
+
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Idea directory for now
+.idea
+
+# Ignore Gradle build output directory
+build
