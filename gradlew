@@ -110,15 +110,11 @@ if [ "$cygwin" = "true" -o "$msys" = "true" ] ; then
 fi
 DEFAULT_JVM_OPTS="$DEFAULT_JVM_OPTS \"-Djava.io.tmpdir=$GRADLE_TEMPDIR\""
 
-# LUCENE-9266: verify and download the gradle wrapper jar if we don't have one.
+# Set APP_HOME and GRADLE_WRAPPER_JAR. Unlike lucene-solr, we aren't downloading and verifying the jar if it's not present
 if [ "$cygwin" = "true" -o "$msys" = "true" ] ; then
     APP_HOME=`cygpath --path --mixed "$APP_HOME"`
 fi
 GRADLE_WRAPPER_JAR="$APP_HOME/gradle/wrapper/gradle-wrapper.jar"
-if ! "$JAVACMD" --source 11 "$APP_HOME/buildSrc/src/main/java/org/apache/lucene/gradle/WrapperDownloader.java" "$GRADLE_WRAPPER_JAR" ; then
-    echo "\nSomething went wrong. Make sure you're using Java 11 or later."
-    exit $?
-fi
 
 CLASSPATH=$GRADLE_WRAPPER_JAR
 
