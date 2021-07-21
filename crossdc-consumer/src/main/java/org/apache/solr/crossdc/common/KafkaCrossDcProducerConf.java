@@ -14,11 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.apache.solr.crossdc.common;
 
-rootProject.name = 'crossdc-consumer'
-
-description = 'Module for Apache Solr Cross DC Consumer'
-
-subprojects {
-    group "org.apache.solr.crossdc"
+public class KafkaCrossDcProducerConf extends CrossDcConf {
 }
