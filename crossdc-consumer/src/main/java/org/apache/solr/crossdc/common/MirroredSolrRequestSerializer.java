@@ -17,7 +17,12 @@
 package org.apache.solr.crossdc.common;
 
 import org.apache.kafka.common.serialization.Serializer;
+import org.apache.solr.client.solrj.SolrRequest;
+import org.apache.solr.client.solrj.request.JavaBinUpdateRequestCodec;
+import org.apache.solr.client.solrj.request.UpdateRequest;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Map;
 
 public class MirroredSolrRequestSerializer implements Serializer<MirroredSolrRequest> {
@@ -43,7 +48,17 @@ public class MirroredSolrRequestSerializer implements Serializer<MirroredSolrReq
      */
     @Override
     public byte[] serialize(String topic, MirroredSolrRequest request) {
-        return new byte[0];
+        // TODO: add checks
+        SolrRequest solrRequest = request.getSolrRequest();
+        UpdateRequest updateRequest = (UpdateRequest)solrRequest;
+        JavaBinUpdateRequestCodec codec = new JavaBinUpdateRequestCodec();
+        ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream();
+        try {
+            codec.marshal(updateRequest, baos);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return baos.byteArray();
     }
 
     /**
@@ -54,5 +69,15 @@ public class MirroredSolrRequestSerializer implements Serializer<MirroredSolrReq
     @Override
     public void close() {
         Serializer.super.close();
+    }
+
+    private static final class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
+        ExposedByteArrayOutputStream() {
+            super();
+        }
+
+        byte[] byteArray() {
+            return buf;
+        }
     }
 }

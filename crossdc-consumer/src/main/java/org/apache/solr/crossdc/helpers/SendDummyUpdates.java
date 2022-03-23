@@ -16,7 +16,13 @@
  */
 package org.apache.solr.crossdc.helpers;
 
+import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.serialization.StringSerializer;
+import org.apache.solr.client.solrj.request.UpdateRequest;
+import org.apache.solr.crossdc.common.MirroredSolrRequest;
+import org.apache.solr.crossdc.common.MirroredSolrRequestSerializer;
 
 import java.util.Properties;
 
@@ -29,10 +35,17 @@ public class SendDummyUpdates {
         properties.put("retries", 0);
         properties.put("batch.size", 16384);
         properties.put("buffer.memory", 33554432);
-        properties.put("key.serializer", "org.apache.kafka.common.serializa-tion.StringSerializer");
-        properties.put("value.serializer", "org.apache.kafka.common.serializa-tion.StringSerialization");
-        Producer<String, String>
-
+        properties.put("linger.ms", 1);
+        properties.put("key.serializer", StringSerializer.class.getName());
+        properties.put("value.serializer", MirroredSolrRequestSerializer.class.getName());
+        Producer<String, MirroredSolrRequest> producer = new KafkaProducer(properties);
+        UpdateRequest updateRequest = new UpdateRequest();
+        updateRequest.add("id", String.valueOf(System.currentTimeMillis()));
+        MirroredSolrRequest mirroredSolrRequest = new MirroredSolrRequest(updateRequest);
+        System.out.println("About to send producer record");
+        producer.send(new ProducerRecord(TOPIC, mirroredSolrRequest));
+        System.out.println("Sent producer record");
+        producer.close();
+        System.out.println("Closed producer");
     }
-
 }
