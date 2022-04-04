@@ -24,7 +24,4 @@ import org.apache.solr.crossdc.common.MirroredSolrRequest;
 public abstract class CrossDcConsumer implements Runnable {
     MessageProcessor messageProcessor;
 
-    interface ResubmitBackoffPolicy {
-        long getBackoffTimeMs(MirroredSolrRequest resubmitRequest);
-    }
 }

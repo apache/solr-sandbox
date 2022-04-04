@@ -18,7 +18,7 @@
 package org.apache.solr.crossdc.common;
 
 public interface IQueueHandler<T> {
-    public enum ResultStatus {
+    enum ResultStatus {
         /** Item was successfully processed */
         HANDLED,
 
@@ -35,7 +35,7 @@ public interface IQueueHandler<T> {
         FAILED_RESUBMIT
     }
 
-    public static class Result<T> {
+    class Result<T> {
         private final ResultStatus _status;
         private final Throwable _throwable;
         private final T _newItem;

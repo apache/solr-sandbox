@@ -48,10 +48,6 @@ public class MirroredSolrRequest {
         this.submitTimeNanos = submitTimeNanos;
     }
 
-    public MirroredSolrRequest() {
-        this(1, 0);
-    }
-
     public MirroredSolrRequest(final int attempt,
                                final long submitTimeNanos) {
         this.attempt = attempt;
@@ -69,6 +65,7 @@ public class MirroredSolrRequest {
             final String key = paramNamesIterator.next();
             if (key.equals("createNodeSet") || key.equals("node")) {
                 // don't forward as nodeset most likely makes no sense here.
+                // should we log when we skip this parameter that was part of the original request ?
                 continue;
             }
             final String[] values = params.getParams(key);

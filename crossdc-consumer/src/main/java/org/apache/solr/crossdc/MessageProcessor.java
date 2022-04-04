@@ -42,13 +42,13 @@ import java.util.concurrent.TimeUnit;
  *  2. Discarding or retrying failed requests
  *  3. Flagging requests for resubmission by the underlying consumer implementation.
  */
-public class MessageProcessor  implements IQueueHandler<MirroredSolrRequest>  {
+public class MessageProcessor implements IQueueHandler<MirroredSolrRequest>  {
     private static final Logger logger = LoggerFactory.getLogger(MessageProcessor.class);
     final CloudSolrClient client;
-    private final CrossDcConsumer.ResubmitBackoffPolicy resubmitBackoffPolicy;
+    private final MessageProcessor.ResubmitBackoffPolicy resubmitBackoffPolicy;
     private static final String VERSION_FIELD = "_version_";
 
-    public MessageProcessor(CloudSolrClient client, CrossDcConsumer.ResubmitBackoffPolicy resubmitBackoffPolicy) {
+    public MessageProcessor(CloudSolrClient client, MessageProcessor.ResubmitBackoffPolicy resubmitBackoffPolicy) {
         this.client = client;
         this.resubmitBackoffPolicy = resubmitBackoffPolicy;
     }
@@ -213,11 +213,6 @@ public class MessageProcessor  implements IQueueHandler<MirroredSolrRequest>  {
         doc.remove(VERSION_FIELD);
 
         // TODO: This could optionally strip more fields if configured
-        /**
-         for (String fieldToStrip : CrossDcProps.SolrInputDocumentFieldsToStrip.getValue()) {
-         doc.removeField(fieldToStrip);
-         }
-         **/
     }
 
     private void removeVersionFromDeleteByIds(UpdateRequest updateRequest) {
@@ -310,5 +305,9 @@ public class MessageProcessor  implements IQueueHandler<MirroredSolrRequest>  {
                 }
             }
         }
+    }
+
+    interface ResubmitBackoffPolicy {
+        long getBackoffTimeMs(MirroredSolrRequest resubmitRequest);
     }
 }
