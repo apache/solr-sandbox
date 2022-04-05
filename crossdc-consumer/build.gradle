@@ -34,10 +34,10 @@ dependencies {
     api 'org.eclipse.jetty:jetty-servlet:9.4.41.v20210516'
     api 'org.apache.kafka:kafka-clients:2.8.0'
     compile group: 'com.google.guava', name: 'guava', version: '14.0'
-    runtimeOnly ('com.google.protobuf:protobuf-java')
+    runtimeOnly ('com.google.protobuf:protobuf-java-util:3.19.2')
     testImplementation 'org.hamcrest:hamcrest:2.2'
     testImplementation 'junit:junit:4.13.2'
-    testImplementation('org.mockito:mockito-core:1.10.19', {
+    testImplementation('org.mockito:mockito-core:4.3.1', {
         exclude group: "net.bytebuddy", module: "byte-buddy-agent"
     })
 }

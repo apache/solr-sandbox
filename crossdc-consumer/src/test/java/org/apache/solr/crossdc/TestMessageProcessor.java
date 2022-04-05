@@ -38,6 +38,7 @@ import org.mockito.MockitoAnnotations;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 
@@ -52,22 +53,22 @@ public class TestMessageProcessor {
     }
 
     @Mock
-    private CloudSolrClient buddySolrClient;
+    private CloudSolrClient solrClient;
     private MessageProcessor processor;
 
     private MessageProcessor.ResubmitBackoffPolicy backoffPolicy = spy(new NoOpResubmitBackoffPolicy());
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         MockitoAnnotations.initMocks(this);
 
-        processor = Mockito.spy(new MessageProcessor(buddySolrClient,
+        processor = Mockito.spy(new MessageProcessor(solrClient,
                 backoffPolicy));
         Mockito.doNothing().when(processor).uncheckedSleep(anyLong());
     }
 
     @Test
-    public void testSkipDeleteCollectionInLiveCluster() throws Exception {
+    public void testSkipDeleteCollectionInLiveCluster() {
         CollectionAdminRequest.Delete deleteRequest = CollectionAdminRequest.deleteCollection("test-delete-collection");
         IQueueHandler.Result<MirroredSolrRequest> result =
                 processor.handleItem(new MirroredSolrRequest(1, deleteRequest, System.nanoTime()));
@@ -76,7 +77,7 @@ public class TestMessageProcessor {
 
     @Test
     public void testDoDeleteCollectionInNonLiveCluster() throws Exception {
-        when(buddySolrClient.request(isA(SolrRequest.class), (String) isNull())).thenAnswer(invocation -> {
+        when(solrClient.request(isA(SolrRequest.class), (String) isNull())).thenAnswer(invocation -> {
             SolrRequest req = (SolrRequest) invocation.getArguments()[0];
             SolrParams params = req.getParams();
             assertEquals(CollectionParams.CollectionAction.DELETE.name(), params.get(
@@ -99,7 +100,7 @@ public class TestMessageProcessor {
     }
 
     @Test
-    public void testDocumentSanitization() throws Exception {
+    public void testDocumentSanitization() {
         UpdateRequest request = spy(new UpdateRequest());
 
         // Add docs with and without version
@@ -125,34 +126,23 @@ public class TestMessageProcessor {
 
         // After processing, check that all version fields are stripped
         for (SolrInputDocument doc : request.getDocuments()) {
-            assertEquals("Doc still has version", null, doc.getField(VERSION_FIELD));
-            assertEquals("Doc still has _expire_at_", null, doc.getField("_expire_at_"));
+            assertNull("Doc still has version", doc.getField(VERSION_FIELD));
+            assertNull("Doc still has _expire_at_", doc.getField("_expire_at_"));
         }
 
         // Check versions in delete by id
         for (Map<String, Object> idParams : request.getDeleteByIdMap().values()) {
             if (idParams != null) {
                 idParams.put(UpdateRequest.VER, null);
-                assertEquals("Delete still has version", null, idParams.get(UpdateRequest.VER));
+                assertNull("Delete still has version", idParams.get(UpdateRequest.VER));
             }
         }
     }
 
     @Test
-    public void testFailedResubmitBackoff() throws Exception {
-        final UpdateRequest request = new UpdateRequest();
-        when(buddySolrClient.request(eq(request), anyString())).thenThrow(new SolrException(
-                SolrException.ErrorCode.SERVER_ERROR, "err msg", null));
-
-        processor.handleItem(new MirroredSolrRequest(request));
-
-        verify(backoffPolicy, times(1)).getBackoffTimeMs(any());
-    }
-
-    @Test
     public void testSuccessNoBackoff() throws Exception {
         final UpdateRequest request = spy(new UpdateRequest());
-        when(buddySolrClient.request(eq(request), anyString())).thenReturn(new NamedList<>());
+        when(solrClient.request(eq(request), anyString())).thenReturn(new NamedList<>());
 
         processor.handleItem(new MirroredSolrRequest(request));
 
@@ -162,7 +152,7 @@ public class TestMessageProcessor {
     @Test
     public void testClientErrorNoRetries() throws Exception {
         final UpdateRequest request = new UpdateRequest();
-        when(buddySolrClient.request(eq(request), anyString())).thenThrow(
+        when(solrClient.request(eq(request), anyString())).thenThrow(
                 new SolrException(
                         SolrException.ErrorCode.BAD_REQUEST, "err msg"));
 
