@@ -210,9 +210,9 @@ public class MessageProcessor implements IQueueHandler<MirroredSolrRequest>  {
      * Strips fields that are problematic for replication.
      */
     private void sanitizeDocument(SolrInputDocument doc) {
+        System.out.println("Removing " + VERSION_FIELD + " : " + doc.getField(VERSION_FIELD).getValue());
+        logger.info("Removing " + VERSION_FIELD + " : " + doc.getField(VERSION_FIELD).getValue());
         doc.remove(VERSION_FIELD);
-
-        // TODO: This could optionally strip more fields if configured
     }
 
     private void removeVersionFromDeleteByIds(UpdateRequest updateRequest) {

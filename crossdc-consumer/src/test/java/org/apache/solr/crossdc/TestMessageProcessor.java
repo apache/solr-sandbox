@@ -17,15 +17,10 @@
 
 package org.apache.solr.crossdc;
 
-import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
-import org.apache.solr.client.solrj.request.CollectionAdminRequest;
 import org.apache.solr.client.solrj.request.UpdateRequest;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.SolrInputDocument;
-import org.apache.solr.common.params.CollectionParams;
-import org.apache.solr.common.params.CoreAdminParams;
-import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.crossdc.common.IQueueHandler;
 import org.apache.solr.crossdc.common.MirroredSolrRequest;
@@ -39,7 +34,6 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 
 public class TestMessageProcessor {
@@ -68,38 +62,6 @@ public class TestMessageProcessor {
     }
 
     @Test
-    public void testSkipDeleteCollectionInLiveCluster() {
-        CollectionAdminRequest.Delete deleteRequest = CollectionAdminRequest.deleteCollection("test-delete-collection");
-        IQueueHandler.Result<MirroredSolrRequest> result =
-                processor.handleItem(new MirroredSolrRequest(1, deleteRequest, System.nanoTime()));
-        assertEquals(IQueueHandler.ResultStatus.FAILED_NO_RETRY, result.status());
-    }
-
-    @Test
-    public void testDoDeleteCollectionInNonLiveCluster() throws Exception {
-        when(solrClient.request(isA(SolrRequest.class), (String) isNull())).thenAnswer(invocation -> {
-            SolrRequest req = (SolrRequest) invocation.getArguments()[0];
-            SolrParams params = req.getParams();
-            assertEquals(CollectionParams.CollectionAction.DELETE.name(), params.get(
-                    CoreAdminParams.ACTION));
-            assertEquals("test-collection", params.get("name"));
-
-
-            NamedList<Object> response = new NamedList<>();
-            NamedList<Object> responseHeader = new NamedList<>();
-            responseHeader.add("status", 0);
-            response.add("responseHeader", responseHeader);
-            return response;
-        });
-
-        CollectionAdminRequest.Delete deleteRequest = CollectionAdminRequest.deleteCollection("test-collection");
-
-        IQueueHandler.Result<MirroredSolrRequest> result =
-                processor.handleItem(new MirroredSolrRequest(1, deleteRequest, System.nanoTime()));
-        assertEquals(IQueueHandler.ResultStatus.HANDLED, result.status());
-    }
-
-    @Test
     public void testDocumentSanitization() {
         UpdateRequest request = spy(new UpdateRequest());
 
@@ -108,7 +70,6 @@ public class TestMessageProcessor {
             {
                 setField("id", 1);
                 setField(VERSION_FIELD, 1);
-                setField("_expire_at_", "some time");
             }
         });
         request.add(new SolrInputDocument() {
@@ -121,13 +82,13 @@ public class TestMessageProcessor {
         request.deleteById("1");
         request.deleteById("2", 10L);
 
-        // The response is irrelevant but it will fail because mocked server returns null when processing
+        request.setParam("shouldMirror", "true");
+        // The response is irrelevant, but it will fail because mocked server returns null when processing
         processor.handleItem(new MirroredSolrRequest(request));
 
         // After processing, check that all version fields are stripped
         for (SolrInputDocument doc : request.getDocuments()) {
             assertNull("Doc still has version", doc.getField(VERSION_FIELD));
-            assertNull("Doc still has _expire_at_", doc.getField("_expire_at_"));
         }
 
         // Check versions in delete by id
@@ -152,6 +113,7 @@ public class TestMessageProcessor {
     @Test
     public void testClientErrorNoRetries() throws Exception {
         final UpdateRequest request = new UpdateRequest();
+        request.setParam("shouldMirror", "true");
         when(solrClient.request(eq(request), anyString())).thenThrow(
                 new SolrException(
                         SolrException.ErrorCode.BAD_REQUEST, "err msg"));
