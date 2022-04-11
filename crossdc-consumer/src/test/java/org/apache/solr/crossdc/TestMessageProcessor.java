@@ -24,6 +24,7 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.crossdc.common.IQueueHandler;
 import org.apache.solr.crossdc.common.MirroredSolrRequest;
+import org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -39,7 +40,7 @@ import static org.mockito.Mockito.*;
 public class TestMessageProcessor {
     static final String VERSION_FIELD = "_version_";
 
-    private static class NoOpResubmitBackoffPolicy implements MessageProcessor.ResubmitBackoffPolicy {
+    private static class NoOpResubmitBackoffPolicy implements ResubmitBackoffPolicy {
         @Override
         public long getBackoffTimeMs(MirroredSolrRequest resubmitRequest) {
             return 0;
@@ -48,15 +49,15 @@ public class TestMessageProcessor {
 
     @Mock
     private CloudSolrClient solrClient;
-    private MessageProcessor processor;
+    private SolrMessageProcessor processor;
 
-    private MessageProcessor.ResubmitBackoffPolicy backoffPolicy = spy(new NoOpResubmitBackoffPolicy());
+    private ResubmitBackoffPolicy backoffPolicy = spy(new NoOpResubmitBackoffPolicy());
 
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
 
-        processor = Mockito.spy(new MessageProcessor(solrClient,
+        processor = Mockito.spy(new SolrMessageProcessor(solrClient,
                 backoffPolicy));
         Mockito.doNothing().when(processor).uncheckedSleep(anyLong());
     }

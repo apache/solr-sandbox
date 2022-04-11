@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.solr.crossdc;
+package org.apache.solr.crossdc.messageprocessor;
 
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
@@ -24,6 +24,7 @@ import org.apache.solr.common.SolrException;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.params.SolrParams;
+import org.apache.solr.crossdc.ResubmitBackoffPolicy;
 import org.apache.solr.crossdc.common.CrossDcConstants;
 import org.apache.solr.crossdc.common.IQueueHandler;
 import org.apache.solr.crossdc.common.MirroredSolrRequest;
@@ -42,15 +43,15 @@ import java.util.concurrent.TimeUnit;
  *  2. Discarding or retrying failed requests
  *  3. Flagging requests for resubmission by the underlying consumer implementation.
  */
-public class MessageProcessor implements IQueueHandler<MirroredSolrRequest>  {
-    private static final Logger logger = LoggerFactory.getLogger(MessageProcessor.class);
+public class SolrMessageProcessor extends MessageProcessor implements IQueueHandler<MirroredSolrRequest>  {
+    private static final Logger logger = LoggerFactory.getLogger(SolrMessageProcessor.class);
     final CloudSolrClient client;
-    private final MessageProcessor.ResubmitBackoffPolicy resubmitBackoffPolicy;
+
     private static final String VERSION_FIELD = "_version_";
 
-    public MessageProcessor(CloudSolrClient client, MessageProcessor.ResubmitBackoffPolicy resubmitBackoffPolicy) {
+    public SolrMessageProcessor(CloudSolrClient client, ResubmitBackoffPolicy resubmitBackoffPolicy) {
+        super(resubmitBackoffPolicy);
         this.client = client;
-        this.resubmitBackoffPolicy = resubmitBackoffPolicy;
     }
 
     @Override
@@ -137,21 +138,18 @@ public class MessageProcessor implements IQueueHandler<MirroredSolrRequest>  {
     private void logIf4xxException(SolrException solrException) {
         // This shouldn't really happen but if it doesn, it most likely requires fixing in the return code from Solr.
         if (solrException != null && 400 <= solrException.code() && solrException.code() < 500) {
-            logger.error("Exception occurred with 4xx response. {}", solrException);
+            logger.error("Exception occurred with 4xx response. {}", solrException.code(), solrException);
         }
     }
 
     private void logFailure(MirroredSolrRequest mirroredSolrRequest, Exception e, SolrException solrException, boolean retryable) {
         // This shouldn't really happen.
         if (solrException != null && 400 <= solrException.code() && solrException.code() < 500) {
-            logger.error("Exception occurred with 4xx response. {}", solrException);
+            logger.error("Exception occurred with 4xx response. {}", solrException.code(), solrException);
             return;
         }
 
-        final StringBuffer msg = new StringBuffer();
-        msg.append("errorCode=").append(solrException != null ? solrException.code() : -1);
-        msg.append(" retryCount=").append(mirroredSolrRequest.getAttempt());
-        logger.warn("Resubmitting mirrored solr request after failure {} exception={}", msg, e);
+        logger.warn("Resubmitting mirrored solr request after failure errorCode={} retryCount={}", solrException != null ? solrException.code() : -1, mirroredSolrRequest.getAttempt(), e);
     }
 
     /**
@@ -173,7 +171,8 @@ public class MessageProcessor implements IQueueHandler<MirroredSolrRequest>  {
 
     private void logRequest(SolrRequest request) {
         if(request instanceof UpdateRequest) {
-            final StringBuffer rmsg = new StringBuffer("Submitting update request");
+            final StringBuilder rmsg = new StringBuilder(64);
+            rmsg.append("Submitting update request");
             if(((UpdateRequest) request).getDeleteById() != null) {
                 rmsg.append(" numDeleteByIds=").append(((UpdateRequest) request).getDeleteById().size());
             }
@@ -210,8 +209,7 @@ public class MessageProcessor implements IQueueHandler<MirroredSolrRequest>  {
      * Strips fields that are problematic for replication.
      */
     private void sanitizeDocument(SolrInputDocument doc) {
-        System.out.println("Removing " + VERSION_FIELD + " : " + doc.getField(VERSION_FIELD).getValue());
-        logger.info("Removing " + VERSION_FIELD + " : " + doc.getField(VERSION_FIELD).getValue());
+        logger.info("Removing {}", VERSION_FIELD + " : " + doc.getField(VERSION_FIELD).getValue());
         doc.remove(VERSION_FIELD);
     }
 
@@ -257,13 +255,13 @@ public class MessageProcessor implements IQueueHandler<MirroredSolrRequest>  {
             String shouldMirror = (params == null ? null : params.get(CrossDcConstants.SHOULD_MIRROR));
             if (shouldMirror == null) {
                 if (params instanceof ModifiableSolrParams) {
-                    logger.warn(CrossDcConstants.SHOULD_MIRROR + " param is missing - setting to false");
+                    logger.warn("{} {}", CrossDcConstants.SHOULD_MIRROR, "param is missing - setting to false");
                     ((ModifiableSolrParams) params).set(CrossDcConstants.SHOULD_MIRROR, "false");
                 } else {
-                    logger.warn(CrossDcConstants.SHOULD_MIRROR + " param is missing and params are not modifiable");
+                    logger.warn("{} {}", CrossDcConstants.SHOULD_MIRROR, "param is missing and params are not modifiable");
                 }
             } else if (!"false".equalsIgnoreCase(shouldMirror)) {
-                logger.warn(CrossDcConstants.SHOULD_MIRROR + " param is present and set to " + shouldMirror);
+                logger.warn("{} {}", CrossDcConstants.SHOULD_MIRROR, "param is present and set to " + shouldMirror);
             }
         }
     }
@@ -282,7 +280,7 @@ public class MessageProcessor implements IQueueHandler<MirroredSolrRequest>  {
         }
     }
 
-    void uncheckedSleep(long millis) {
+    public void uncheckedSleep(long millis) {
         try {
             Thread.sleep(millis);
         } catch (InterruptedException e) {
@@ -293,7 +291,7 @@ public class MessageProcessor implements IQueueHandler<MirroredSolrRequest>  {
 
     private void backoffIfNeeded(Result<MirroredSolrRequest> result) {
         if (result.status().equals(ResultStatus.FAILED_RESUBMIT)) {
-            final long backoffMs = resubmitBackoffPolicy.getBackoffTimeMs(result.newItem());
+            final long backoffMs = getResubmitBackoffPolicy().getBackoffTimeMs(result.newItem());
             if (backoffMs > 0L) {
                 try {
                     Thread.sleep(backoffMs);
@@ -307,7 +305,4 @@ public class MessageProcessor implements IQueueHandler<MirroredSolrRequest>  {
         }
     }
 
-    interface ResubmitBackoffPolicy {
-        long getBackoffTimeMs(MirroredSolrRequest resubmitRequest);
-    }
 }
