@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 plugins {
-    id 'java'
+    id 'java-library'
 }
 
 description = 'Cross-DC Consumer package'
@@ -24,7 +24,23 @@ version '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
+    jcenter()
 }
 
 dependencies {
+    implementation group: 'org.apache.solr', name: 'solr-solrj', version: '8.11.1'
+    api 'org.eclipse.jetty:jetty-http:9.4.41.v20210516'
+    api 'org.eclipse.jetty:jetty-server:9.4.41.v20210516'
+    api 'org.eclipse.jetty:jetty-servlet:9.4.41.v20210516'
+    api 'org.apache.kafka:kafka-clients:2.8.0'
+    compile group: 'com.google.guava', name: 'guava', version: '14.0'
+    runtimeOnly ('com.google.protobuf:protobuf-java-util:3.19.2')
+    testImplementation 'org.hamcrest:hamcrest:2.2'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation('org.mockito:mockito-core:4.3.1', {
+        exclude group: "net.bytebuddy", module: "byte-buddy-agent"
+    })
+}
+subprojects {
+    group "org.apache.solr"
 }

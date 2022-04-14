@@ -15,10 +15,9 @@
  * limitations under the License.
  */
 
-rootProject.name = 'crossdc-consumer'
+package org.apache.solr.crossdc.common;
 
-description = 'Module for Apache Solr Cross DC Consumer'
-
-subprojects {
-    group "org.apache.solr.crossdc"
+public class CrossDcConstants {
+    // Requests containing this parameter will not be mirrored.
+    public static final String SHOULD_MIRROR = "shouldMirror";
 }
