@@ -29,6 +29,7 @@ repositories {
 
 dependencies {
     implementation group: 'org.apache.solr', name: 'solr-solrj', version: '8.11.1'
+    implementation 'org.slf4j:slf4j-api'
     api 'org.eclipse.jetty:jetty-http:9.4.41.v20210516'
     api 'org.eclipse.jetty:jetty-server:9.4.41.v20210516'
     api 'org.eclipse.jetty:jetty-servlet:9.4.41.v20210516'
@@ -40,6 +41,10 @@ dependencies {
     testImplementation('org.mockito:mockito-core:4.3.1', {
         exclude group: "net.bytebuddy", module: "byte-buddy-agent"
     })
+    testImplementation group: 'org.apache.solr', name: 'solr-core', version: '8.11.1'
+    testImplementation group: 'org.apache.solr', name: 'solr-test-framework', version: '8.11.1'
+    testImplementation 'org.apache.kafka:kafka_2.13:2.8.1'
+
 }
 subprojects {
     group "org.apache.solr"
