@@ -23,10 +23,12 @@ import org.apache.solr.crossdc.common.MirroredSolrRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-public class KafkaMirroringSink implements RequestMirroringSink {
+public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
     private static final Logger logger = LoggerFactory.getLogger(KafkaMirroringSink.class);
 
     private long lastSuccessfulEnqueueNanos;
@@ -88,5 +90,9 @@ public class KafkaMirroringSink implements RequestMirroringSink {
         logger.warn("Enqueuing the request to Kafka took more than {} millis. enqueueElapsedTime={}",
                 conf.getSlowSubmitThresholdInMillis(),
                 elapsedTimeMillis);
+    }
+
+    @Override public void close() throws IOException {
+        producer.close();
     }
 }

@@ -35,6 +35,7 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.time.Duration;
 import java.util.Collections;
@@ -59,12 +60,15 @@ public class Consumer {
 
     public void start(String[] args) {
 
-        // TODO: use args for config
+        boolean enableDataEncryption = Boolean.getBoolean("enableDataEncryption");
+        String topicName = System.getProperty("topicName");
+        String zkConnectString = System.getProperty("zkConnectString");
+
         server = new Server();
         ServerConnector connector = new ServerConnector(server);
         connector.setPort(8090);
         server.setConnectors(new Connector[] {connector});
-        crossDcConsumer = getCrossDcConsumer();
+        crossDcConsumer = getCrossDcConsumer(zkConnectString, topicName, enableDataEncryption);
 
         // Start consumer thread
         consumerThreadExecutor = Executors.newSingleThreadExecutor();
@@ -75,9 +79,10 @@ public class Consumer {
         Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
 
-    private CrossDcConsumer getCrossDcConsumer() {
-        // nocommit - hardcoded conf
-        KafkaCrossDcConf conf = new KafkaCrossDcConf("test-topic", true, "localhost:2181");
+    private CrossDcConsumer getCrossDcConsumer(String zkConnectString, String topicName,
+        boolean enableDataEncryption) {
+
+        KafkaCrossDcConf conf = new KafkaCrossDcConf(topicName, enableDataEncryption, zkConnectString);
         return new KafkaCrossDcConsumer(conf);
     }
 
@@ -108,7 +113,7 @@ public class Consumer {
      * resubmitting to the queue in case of temporary failures.
      */
     public static class KafkaCrossDcConsumer extends CrossDcConsumer {
-        private static final Logger logger = LoggerFactory.getLogger(KafkaCrossDcConsumer.class);
+        private static final Logger log = LoggerFactory.getLogger(KafkaCrossDcConsumer.class);
 
         private final KafkaConsumer<String, MirroredSolrRequest> consumer;
         private final KafkaMirroringSink kafkaMirroringSink;
@@ -121,13 +126,13 @@ public class Consumer {
          */
         public KafkaCrossDcConsumer(KafkaCrossDcConf conf) {
             final Properties kafkaConsumerProp = new Properties();
-            logger.info("Creating Kafka consumer with configuration {}", kafkaConsumerProp);
+            log.info("Creating Kafka consumer with configuration {}", kafkaConsumerProp);
             consumer = createConsumer(kafkaConsumerProp);
 
             // Create producer for resubmitting failed requests
-            logger.info("Creating Kafka resubmit producer");
+            log.info("Creating Kafka resubmit producer");
             this.kafkaMirroringSink = new KafkaMirroringSink(conf);
-            logger.info("Created Kafka resubmit producer");
+            log.info("Created Kafka resubmit producer");
 
         }
 
@@ -144,18 +149,23 @@ public class Consumer {
          */
         @Override
         public void run() {
-            logger.info("About to start Kafka consumer thread ");
+            log.info("About to start Kafka consumer thread...");
             String topic="topic";
 
-            logger.info("Kafka consumer subscribing to topic topic={}", topic);
+            log.info("Kafka consumer subscribing to topic topic={}", topic);
             consumer.subscribe(Collections.singleton(topic));
 
             while (pollAndProcessRequests()) {
                 //no-op within this loop: everything is done in pollAndProcessRequests method defined above.
             }
 
-            logger.info("Closed kafka consumer. Exiting now.");
+            log.info("Closed kafka consumer. Exiting now.");
             consumer.close();
+            try {
+                kafkaMirroringSink.close();
+            } catch (IOException e) {
+                log.error("Failed to close kafka mirroring sink", e);
+            }
 
         }
 
@@ -170,7 +180,7 @@ public class Consumer {
                     List<ConsumerRecord<String, MirroredSolrRequest>> partitionRecords = records.records(partition);
                     try {
                         for (ConsumerRecord<String, MirroredSolrRequest> record : partitionRecords) {
-                            logger.trace("Fetched record from topic={} partition={} key={} value={}",
+                            log.trace("Fetched record from topic={} partition={} key={} value={}",
                                     record.topic(), record.partition(), record.key(), record.value());
                             IQueueHandler.Result result = messageProcessor.handleItem(record.value());
                             switch (result.status()) {
@@ -182,7 +192,7 @@ public class Consumer {
                                     break;
                                 case NOT_HANDLED_SHUTDOWN:
                                 case FAILED_RETRY:
-                                    logger.error("Unexpected response while processing request. We never expect {}.",
+                                    log.error("Unexpected response while processing request. We never expect {}.",
                                             result.status().toString());
                                     break;
                                 default:
@@ -193,28 +203,28 @@ public class Consumer {
 
                         // handleItem sets the thread interrupt, let's exit if there has been an interrupt set
                         if(Thread.currentThread().isInterrupted()) {
-                            logger.info("Kafka Consumer thread interrupted, shutting down Kafka consumer.");
+                            log.info("Kafka Consumer thread interrupted, shutting down Kafka consumer.");
                             return false;
                         }
                     } catch (MirroringException e) {
                         // We don't really know what to do here, so it's wiser to just break out.
-                        logger.error("Mirroring exception occured while resubmitting to Kafka. We are going to stop the consumer thread now.", e);
+                        log.error("Mirroring exception occured while resubmitting to Kafka. We are going to stop the consumer thread now.", e);
                         return false;
                     } catch (WakeupException e) {
-                        logger.info("Caught wakeup exception, shutting down KafkaSolrRequestConsumer.");
+                        log.info("Caught wakeup exception, shutting down KafkaSolrRequestConsumer.");
                         return false;
                     } catch (Exception e) {
                         // If there is any exception returned by handleItem, then reset the offset.
-                        logger.warn("Exception occurred in Kafka consumer thread, but we will continue.", e);
+                        log.warn("Exception occurred in Kafka consumer thread, but we will continue.", e);
                         resetOffsetForPartition(partition, partitionRecords);
                         break;
                     }
                 }
             } catch (WakeupException e) {
-                logger.info("Caught wakeup exception, shutting down KafkaSolrRequestConsumer");
+                log.info("Caught wakeup exception, shutting down KafkaSolrRequestConsumer");
                 return false;
             } catch (Exception e) {
-                logger.error("Exception occurred in Kafka consumer thread, but we will continue.", e);
+                log.error("Exception occurred in Kafka consumer thread, but we will continue.", e);
             }
             return true;
         }
@@ -225,7 +235,9 @@ public class Consumer {
          * @param partitionRecords PartitionRecords for the specified partition
          */
         private void resetOffsetForPartition(TopicPartition partition, List<ConsumerRecord<String, MirroredSolrRequest>> partitionRecords) {
-            logger.debug("Resetting offset to: {}", partitionRecords.get(0).offset());
+            if (log.isDebugEnabled()) {
+                log.debug("Resetting offset to: {}", partitionRecords.get(0).offset());
+            }
             long resetOffset = partitionRecords.get(0).offset();
             consumer.seek(partition, resetOffset);
         }
@@ -239,8 +251,10 @@ public class Consumer {
             long nextOffset = partitionRecords.get(partitionRecords.size() - 1).offset() + 1;
             consumer.commitSync(Collections.singletonMap(partition, new OffsetAndMetadata(nextOffset)));
 
-            logger.trace("Updated offset for topic={} partition={} to offset={}",
+            if (log.isTraceEnabled()) {
+                log.trace("Updated offset for topic={} partition={} to offset={}",
                     partition.topic(), partition.partition(), nextOffset);
+            }
         }
 
         /**
