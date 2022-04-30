@@ -22,6 +22,7 @@ import org.apache.solr.client.solrj.request.UpdateRequest;
 import org.apache.solr.client.solrj.response.SolrResponseBase;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.common.SolrInputField;
 import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.crossdc.ResubmitBackoffPolicy;
@@ -209,7 +210,8 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
      * Strips fields that are problematic for replication.
      */
     private void sanitizeDocument(SolrInputDocument doc) {
-        logger.info("Removing {}", VERSION_FIELD + " : " + doc.getField(VERSION_FIELD).getValue());
+        SolrInputField field = doc.getField(VERSION_FIELD);
+        logger.info("Removing {} value={}", VERSION_FIELD, field == null ? "null" : field.getValue());
         doc.remove(VERSION_FIELD);
     }
 
