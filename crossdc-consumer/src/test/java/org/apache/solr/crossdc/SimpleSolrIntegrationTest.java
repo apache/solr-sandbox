@@ -1,3 +1,4 @@
+    }
 package org.apache.solr.crossdc;
 
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
