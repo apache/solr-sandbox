@@ -16,16 +16,23 @@
  */
 package org.apache.solr.crossdc.common;
 
+import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serializer;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.request.JavaBinUpdateRequestCodec;
 import org.apache.solr.client.solrj.request.UpdateRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.util.Map;
 
-public class MirroredSolrRequestSerializer implements Serializer<MirroredSolrRequest> {
+public class MirroredSolrRequestSerializer implements Serializer<MirroredSolrRequest>, Deserializer<MirroredSolrRequest> {
+
+    private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     private boolean isKey;
     /**
@@ -37,6 +44,27 @@ public class MirroredSolrRequestSerializer implements Serializer<MirroredSolrReq
     @Override
     public void configure(Map<String, ?> configs, boolean isKey) {
         this.isKey = isKey;
+    }
+
+    @Override
+    public MirroredSolrRequest deserialize(String topic, byte[] data) {
+        UpdateRequest solrRequest;
+
+        JavaBinUpdateRequestCodec codec = new JavaBinUpdateRequestCodec();
+        ByteArrayInputStream bais = new ByteArrayInputStream(data);
+
+        try {
+            solrRequest = codec.unmarshal(bais,
+                (document, req, commitWithin, override) -> {
+
+                });
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        log.info("solrRequest={}, {}", solrRequest.getParams(), solrRequest.getDocuments());
+
+        return new MirroredSolrRequest(solrRequest);
     }
 
     /**

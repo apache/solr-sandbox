@@ -18,18 +18,22 @@ package org.apache.solr.crossdc;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.solr.crossdc.common.KafkaCrossDcConf;
 import org.apache.solr.crossdc.common.MirroredSolrRequest;
+import org.apache.solr.crossdc.common.MirroredSolrRequestSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
-    private static final Logger logger = LoggerFactory.getLogger(KafkaMirroringSink.class);
+
+    private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     private long lastSuccessfulEnqueueNanos;
     private KafkaCrossDcConf conf;
@@ -39,13 +43,13 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
         // Create Kafka Mirroring Sink
         this.conf = conf;
         this.producer = initProducer();
-        logger.info("KafkaMirroringSink has been created. Producer & Topic have been created successfully! Configurations {}", conf);
+        log.info("KafkaMirroringSink has been created. Producer & Topic have been created successfully! Configurations {}", conf);
     }
 
     @Override
     public void submit(MirroredSolrRequest request) throws MirroringException {
-        if (logger.isDebugEnabled()) {
-            logger.debug("About to submit a MirroredSolrRequest");
+        if (log.isDebugEnabled()) {
+            log.debug("About to submit a MirroredSolrRequest");
         }
 
         final long enqueueStartNanos = System.nanoTime();
@@ -53,7 +57,7 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
         // Create Producer record
         try {
             lastSuccessfulEnqueueNanos = System.nanoTime();
-            // Record time since last successful enque as 0
+            // Record time since last successful enqueue as 0
             long elapsedTimeMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - enqueueStartNanos);
             // Update elapsed time
 
@@ -64,7 +68,7 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
             // We are intentionally catching all exceptions, the expected exception form this function is {@link MirroringException}
 
             String message = String.format("Unable to enqueue request %s, # of attempts %s", request, conf.getNumOfRetries());
-            logger.error(message, e);
+            log.error(message, e);
 
             throw new MirroringException(message, e);
         }
@@ -80,13 +84,20 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
     private Producer<String, MirroredSolrRequest> initProducer() {
         // Initialize and return Kafka producer
         Properties props = new Properties();
-        logger.info("Creating Kafka producer! Configurations {} ", conf.toString());
+
+        log.info("Creating Kafka producer! Configurations {} ", conf.toString());
+
+        props.put("bootstrap.servers", conf.getBootStrapServers());
+
+        props.put("key.serializer", StringSerializer.class.getName());
+        props.put("value.serializer", MirroredSolrRequestSerializer.class.getName());
+
         Producer<String, MirroredSolrRequest> producer = new KafkaProducer(props);
         return producer;
     }
 
     private void slowSubmitAction(Object request, long elapsedTimeMillis) {
-        logger.warn("Enqueuing the request to Kafka took more than {} millis. enqueueElapsedTime={}",
+        log.warn("Enqueuing the request to Kafka took more than {} millis. enqueueElapsedTime={}",
                 conf.getSlowSubmitThresholdInMillis(),
                 elapsedTimeMillis);
     }

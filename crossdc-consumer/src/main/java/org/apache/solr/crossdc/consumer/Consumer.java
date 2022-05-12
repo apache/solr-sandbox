@@ -14,20 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.solr.crossdc.consumer;
 
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
+import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.crossdc.KafkaMirroringSink;
 import org.apache.solr.crossdc.MirroringException;
+import org.apache.solr.crossdc.ResubmitBackoffPolicy;
 import org.apache.solr.crossdc.common.IQueueHandler;
 import org.apache.solr.crossdc.common.KafkaCrossDcConf;
 import org.apache.solr.crossdc.common.MirroredSolrRequest;
+import org.apache.solr.crossdc.common.MirroredSolrRequestSerializer;
 import org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
@@ -40,6 +42,7 @@ import java.lang.invoke.MethodHandles;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -48,27 +51,25 @@ import java.util.concurrent.Executors;
 public class Consumer {
     private static boolean enabled = true;
 
+    private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
     /**
      * ExecutorService to manage the cross-dc consumer threads.
      */
     private ExecutorService consumerThreadExecutor;
 
-    private static final Logger logger = LoggerFactory.getLogger(Consumer.class);
-
     private Server server;
     CrossDcConsumer crossDcConsumer;
+    private String topicName;
 
-    public void start(String[] args) {
-
-        boolean enableDataEncryption = Boolean.getBoolean("enableDataEncryption");
-        String topicName = System.getProperty("topicName");
-        String zkConnectString = System.getProperty("zkConnectString");
+    public void start(String bootstrapServers, String zkConnectString, String topicName, boolean enableDataEncryption, int port) {
+        this.topicName = topicName;
 
         server = new Server();
         ServerConnector connector = new ServerConnector(server);
-        connector.setPort(8090);
+        connector.setPort(port);
         server.setConnectors(new Connector[] {connector});
-        crossDcConsumer = getCrossDcConsumer(zkConnectString, topicName, enableDataEncryption);
+        crossDcConsumer = getCrossDcConsumer(bootstrapServers, zkConnectString, topicName, enableDataEncryption);
 
         // Start consumer thread
         consumerThreadExecutor = Executors.newSingleThreadExecutor();
@@ -79,16 +80,26 @@ public class Consumer {
         Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
 
-    private CrossDcConsumer getCrossDcConsumer(String zkConnectString, String topicName,
+    private CrossDcConsumer getCrossDcConsumer(String bootstrapServers, String zkConnectString, String topicName,
         boolean enableDataEncryption) {
 
-        final KafkaCrossDcConf conf = new KafkaCrossDcConf(topicName, enableDataEncryption, zkConnectString);
+        KafkaCrossDcConf conf = new KafkaCrossDcConf(bootstrapServers, topicName, enableDataEncryption, zkConnectString);
         return new KafkaCrossDcConsumer(conf);
     }
 
     public static void main(String[] args) {
+        String bootstrapServers = System.getProperty("bootstrapServers");
+        boolean enableDataEncryption = Boolean.getBoolean("enableDataEncryption");
+        String topicName = System.getProperty("topicName");
+        String zkConnectString = System.getProperty("zkConnectString");
+        String port = System.getProperty("port", "8090");
+
         Consumer consumer = new Consumer();
-        consumer.start(args);
+        consumer.start(bootstrapServers, zkConnectString, topicName, enableDataEncryption, Integer.parseInt(port));
+    }
+
+    public void shutdown() {
+        crossDcConsumer.shutdown();
     }
 
     /**
@@ -96,15 +107,7 @@ public class Consumer {
      */
     public abstract static class CrossDcConsumer implements Runnable {
         SolrMessageProcessor messageProcessor;
-
-    }
-
-    public static class CrossDcConsumerFactory {
-        private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
-        CrossDcConsumer getCrossDcConsumer(){
-            return null;
-        }
+        abstract void shutdown();
 
     }
 
@@ -119,13 +122,32 @@ public class Consumer {
         private final KafkaMirroringSink kafkaMirroringSink;
 
         private final int KAFKA_CONSUMER_POLL_TIMEOUT_MS = 100;
+        private final String topicName;
         SolrMessageProcessor messageProcessor;
 
         /**
          * @param conf The Kafka consumer configuration
          */
         public KafkaCrossDcConsumer(KafkaCrossDcConf conf) {
+            this.topicName = conf.getTopicName();
+
             final Properties kafkaConsumerProp = new Properties();
+
+            kafkaConsumerProp.put("bootstrap.servers", conf.getBootStrapServers());
+
+            kafkaConsumerProp.put("key.deserializer", StringDeserializer.class.getName());
+            kafkaConsumerProp.put("value.deserializer", MirroredSolrRequestSerializer.class.getName());
+
+            kafkaConsumerProp.put("group.id", "group_1");
+
+            CloudSolrClient solrClient = new CloudSolrClient.Builder(Collections.singletonList(conf.getSolrZkConnectString()), Optional.empty()).build();
+
+            messageProcessor = new SolrMessageProcessor(solrClient, new ResubmitBackoffPolicy() {
+                @Override public long getBackoffTimeMs(MirroredSolrRequest resubmitRequest) {
+                    return 0;
+                }
+            });
+
             log.info("Creating Kafka consumer with configuration {}", kafkaConsumerProp);
             consumer = createConsumer(kafkaConsumerProp);
 
@@ -150,21 +172,25 @@ public class Consumer {
         @Override
         public void run() {
             log.info("About to start Kafka consumer thread...");
-            String topic="topic";
 
-            log.info("Kafka consumer subscribing to topic topic={}", topic);
-            consumer.subscribe(Collections.singleton(topic));
+            log.info("Kafka consumer subscribing to topic topic={}", topicName);
+            consumer.subscribe(Collections.singleton(topicName));
 
             while (pollAndProcessRequests()) {
                 //no-op within this loop: everything is done in pollAndProcessRequests method defined above.
             }
 
             log.info("Closed kafka consumer. Exiting now.");
-            consumer.close();
+            try {
+                consumer.close();
+            } catch (Exception e) {
+                log.warn("Failed to close kafka consumer", e);
+            }
+
             try {
                 kafkaMirroringSink.close();
-            } catch (IOException e) {
-                log.error("Failed to close kafka mirroring sink", e);
+            } catch (Exception e) {
+                log.warn("Failed to close kafka mirroring sink", e);
             }
 
         }
@@ -180,7 +206,7 @@ public class Consumer {
                     List<ConsumerRecord<String, MirroredSolrRequest>> partitionRecords = records.records(partition);
                     try {
                         for (ConsumerRecord<String, MirroredSolrRequest> record : partitionRecords) {
-                            log.trace("Fetched record from topic={} partition={} key={} value={}",
+                            log.info("Fetched record from topic={} partition={} key={} value={}",
                                     record.topic(), record.partition(), record.key(), record.value());
                             IQueueHandler.Result result = messageProcessor.handleItem(record.value());
                             switch (result.status()) {
@@ -260,7 +286,8 @@ public class Consumer {
         /**
          * Shutdown the Kafka consumer by calling wakeup.
          */
-        void shutdown() {
+        public void shutdown() {
+            log.info("Shutdown called on KafkaCrossDcConsumer");
             consumer.wakeup();
         }
 
