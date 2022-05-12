@@ -16,6 +16,7 @@ import org.apache.solr.cloud.SolrCloudTestCase;
 import org.apache.solr.crossdc.common.MirroredSolrRequest;
 import org.apache.solr.crossdc.common.MirroredSolrRequestSerializer;
 import org.apache.solr.crossdc.consumer.Consumer;
+import org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.slf4j.Logger;
