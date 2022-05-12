@@ -51,7 +51,6 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
         final long enqueueStartNanos = System.nanoTime();
 
         // Create Producer record
-
         try {
             lastSuccessfulEnqueueNanos = System.nanoTime();
             // Record time since last successful enque as 0

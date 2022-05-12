@@ -82,7 +82,7 @@ public class Consumer {
     private CrossDcConsumer getCrossDcConsumer(String zkConnectString, String topicName,
         boolean enableDataEncryption) {
 
-        KafkaCrossDcConf conf = new KafkaCrossDcConf(topicName, enableDataEncryption, zkConnectString);
+        final KafkaCrossDcConf conf = new KafkaCrossDcConf(topicName, enableDataEncryption, zkConnectString);
         return new KafkaCrossDcConsumer(conf);
     }
 
