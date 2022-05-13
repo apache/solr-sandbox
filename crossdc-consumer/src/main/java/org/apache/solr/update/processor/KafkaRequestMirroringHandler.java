@@ -31,7 +31,8 @@ public class KafkaRequestMirroringHandler implements RequestMirroringHandler {
     public KafkaRequestMirroringHandler() {
         // TODO: Setup Kafka properly
         final String topicName = System.getProperty("topicname");
-        conf = new KafkaCrossDcConf(topicName, false, null);
+        final String boostrapServers = System.getProperty("bootstrapservers");
+        conf = new KafkaCrossDcConf(boostrapServers, topicName, false, null);
         sink = new KafkaMirroringSink(conf);
     }
 
@@ -45,6 +46,5 @@ public class KafkaRequestMirroringHandler implements RequestMirroringHandler {
             // TODO: Enforce external version constraint for consistent update replication (cross-cluster)
             sink.submit(new MirroredSolrRequest(1, request, TimeUnit.MILLISECONDS.toNanos(
                     System.currentTimeMillis())));
-        }
     }
 }
