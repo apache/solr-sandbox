@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 plugins {
-    id 'application'
+    id 'java'
 }
 
 description = 'Cross-DC Producer package'
@@ -27,12 +27,9 @@ repositories {
     jcenter()
 }
 
-application {
-    mainClass = 'org.apache.solr.crossdc.consumer.Consumer'
-}
-
 dependencies {
     compile project(':crossdc-consumer')
+    compile project(':crossdc-commons')
     compile group: 'org.apache.solr', name: 'solr-solrj', version: '8.11.1'
     compile group: 'org.apache.solr', name: 'solr-core', version: '8.11.1'
     implementation 'org.slf4j:slf4j-api'

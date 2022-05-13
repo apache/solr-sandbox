@@ -19,9 +19,7 @@ package org.apache.solr.crossdc.consumer;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
-import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.crossdc.KafkaMirroringSink;
 import org.apache.solr.crossdc.MirroringException;
@@ -37,7 +35,6 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.time.Duration;
 import java.util.Collections;
