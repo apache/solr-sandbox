@@ -41,7 +41,7 @@ import static org.apache.solr.update.processor.DistributedUpdateProcessor.*;
 import static org.apache.solr.update.processor.DistributingUpdateProcessorFactory.DISTRIB_UPDATE_PARAM;
 
 /**
- * An update org.apache.solr.update.processor.processor that works with the {@link UpdateRequestProcessorFactory} to mirror update requests by
+ * An update processor that works with the {@link UpdateRequestProcessorFactory} to mirror update requests by
  * submitting them to a sink that implements a queue producer.
  *
  * ADDs and DeleteByIDs are mirrored from leader shards and have internal _version_ fields stripped.
@@ -60,7 +60,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
     // Flag for mirroring requests
     public static String SERVER_SHOULD_MIRROR = "shouldMirror";
 
-    /** This is instantiated in inform(SolrCore) and then shared by all org.apache.solr.update.processor.processor instances - visible for testing */
+    /** This is instantiated in inform(SolrCore) and then shared by all processor instances - visible for testing */
     volatile RequestMirroringHandler mirroringHandler;
 
     @Override
@@ -117,7 +117,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
 
     public static class MirroringUpdateProcessor extends UpdateRequestProcessor {
         /** Flag indicating whether this instance creates and submits a mirrored request. This override is
-         * necessary to prevent circular mirroring between coupled cluster running this org.apache.solr.update.processor.processor. */
+         * necessary to prevent circular mirroring between coupled cluster running this processor. */
         private final boolean doMirroring;
         private final RequestMirroringHandler requestMirroringHandler;
 
@@ -126,7 +126,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         private UpdateRequest mirrorRequest;
         private final SolrParams mirrorParams;
 
-        /** The distributed org.apache.solr.update.processor.processor downstream from us so we can establish if we're running on a leader shard */
+        /** The distributed processor downstream from us so we can establish if we're running on a leader shard */
         private DistributedUpdateProcessor distProc;
 
         /** Distribution phase of the incoming requests */
@@ -141,7 +141,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
             this.distribPhase = distribPhase;
             this.requestMirroringHandler = requestMirroringHandler;
 
-            // Find the downstream distributed update org.apache.solr.update.processor.processor
+            // Find the downstream distributed update processor
             for (UpdateRequestProcessor proc = next; proc != null; proc = proc.next) {
                 if (proc instanceof DistributedUpdateProcessor) {
                     distProc = (DistributedUpdateProcessor) proc;
