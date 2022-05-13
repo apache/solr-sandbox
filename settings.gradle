@@ -10,3 +10,5 @@
 rootProject.name = 'solr-sandbox'
 
 include 'crossdc-consumer'
+include 'crossdc-producer'
+

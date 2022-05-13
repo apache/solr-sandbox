@@ -38,7 +38,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Message processor implements all the logic to process a MirroredSolrRequest.
+ * Message org.apache.solr.update.processor.processor implements all the logic to process a MirroredSolrRequest.
  * It handles:
  *  1. Sending the update request to Solr
  *  2. Discarding or retrying failed requests
