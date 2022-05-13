@@ -32,7 +32,7 @@ public class SendDummyUpdates {
         Properties properties = new Properties();
         properties.put("bootstrap.servers", "localhost:9092");
         properties.put("acks", "all");
-        properties.put("retries", 0);
+        properties.put("retries", 3);
         properties.put("batch.size", 16384);
         properties.put("buffer.memory", 33554432);
         properties.put("linger.ms", 1);

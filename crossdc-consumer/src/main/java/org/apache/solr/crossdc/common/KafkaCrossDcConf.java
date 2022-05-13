@@ -19,12 +19,14 @@ package org.apache.solr.crossdc.common;
 public class KafkaCrossDcConf extends CrossDcConf {
     private final String topicName;
     private final boolean enableDataEncryption;
+    private final String bootstrapServers;
     private long slowSubmitThresholdInMillis;
     private int numOfRetries = 5;
     private final String solrZkConnectString;
 
 
-    public KafkaCrossDcConf(String topicName, boolean enableDataEncryption, String solrZkConnectString) {
+    public KafkaCrossDcConf(String bootstrapServers, String topicName, boolean enableDataEncryption, String solrZkConnectString) {
+        this.bootstrapServers = bootstrapServers;
         this.topicName = topicName;
         this.enableDataEncryption = enableDataEncryption;
         this.solrZkConnectString = solrZkConnectString;
@@ -55,4 +57,8 @@ public class KafkaCrossDcConf extends CrossDcConf {
     public String getClusterName() {
         return null;
     }
+
+  public String getBootStrapServers() {
+        return bootstrapServers;
+  }
 }

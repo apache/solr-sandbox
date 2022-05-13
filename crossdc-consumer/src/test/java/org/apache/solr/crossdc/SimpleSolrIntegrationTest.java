@@ -32,7 +32,7 @@ public class SimpleSolrIntegrationTest extends SolrCloudTestCase {
 
     cluster1 =
         new SolrCloudTestCase.Builder(2, createTempDir())
-            .addConfig("conf", getFile("src/resources/configs/cloud-minimal/conf").toPath())
+            .addConfig("conf", getFile("src/test/resources/configs/cloud-minimal/conf").toPath())
             .configure();
 
     String collection = "collection1";
