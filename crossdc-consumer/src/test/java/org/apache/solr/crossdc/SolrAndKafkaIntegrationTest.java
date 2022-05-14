@@ -1,8 +1,8 @@
 package org.apache.solr.crossdc;
 
-<<<<<<< refs/remotes/markrmiller/itwip
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakAction;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -10,14 +10,15 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import org.apache.lucene.util.QuickPatchThreadsFilter;
 import org.apache.solr.SolrIgnoredThreadsFilter;
+import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
 import org.apache.solr.client.solrj.request.UpdateRequest;
+import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.cloud.MiniSolrCloudCluster;
 import org.apache.solr.cloud.SolrCloudTestCase;
 import org.apache.solr.crossdc.common.MirroredSolrRequest;
 import org.apache.solr.crossdc.common.MirroredSolrRequestSerializer;
 import org.apache.solr.crossdc.consumer.Consumer;
-import org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.slf4j.Logger;
@@ -25,30 +26,13 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Properties;
-=======
-import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
-import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
-import org.apache.lucene.util.QuickPatchThreadsFilter;
-import org.apache.solr.SolrIgnoredThreadsFilter;
-import org.apache.solr.client.solrj.request.UpdateRequest;
-import org.apache.solr.cloud.MiniSolrCloudCluster;
-import org.apache.solr.cloud.SolrCloudTestCase;
-import org.apache.solr.common.SolrInputDocument;
-import org.apache.solr.crossdc.common.MirroredSolrRequest;
-import org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-
-import java.util.Map;
->>>>>>> Add back in the EmbeddedKafkaCluster.
 
 import static org.mockito.Mockito.spy;
 
 @ThreadLeakFilters(
     defaultFilters = true,
     filters = { SolrIgnoredThreadsFilter.class, QuickPatchThreadsFilter.class, SolrKafkaTestsIgnoredThreadsFilter.class})
-<<<<<<< refs/remotes/markrmiller/itwip
-@ThreadLeakAction(ThreadLeakAction.Action.INTERRUPT)
+@ThreadLeakLingering(linger = 5000)
 public class SolrAndKafkaIntegrationTest extends SolrCloudTestCase {
 
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -59,30 +43,18 @@ public class SolrAndKafkaIntegrationTest extends SolrCloudTestCase {
   public static EmbeddedKafkaCluster kafkaCluster;
 
   protected static volatile MiniSolrCloudCluster solrCluster1;
-  protected static volatile MiniSolrCloudCluster solrCluster2;
+ //protected static volatile MiniSolrCloudCluster solrCluster2;
 
   protected static volatile Consumer consumer = new Consumer();
 
   private static String TOPIC = "topic1";
   
   private static String COLLECTION = "collection1";
-=======
-public class SolrAndKafkaIntegrationTest extends SolrCloudTestCase {
-  static final String VERSION_FIELD = "_version_";
 
-  private static final int NUM_BROKERS = 1;
-  public static final EmbeddedKafkaCluster CLUSTER = new EmbeddedKafkaCluster(NUM_BROKERS);
-
-  protected static volatile MiniSolrCloudCluster cluster1;
-  protected static volatile MiniSolrCloudCluster cluster2;
-  private static SolrMessageProcessor processor;
->>>>>>> Add back in the EmbeddedKafkaCluster.
-
-  private static ResubmitBackoffPolicy backoffPolicy = spy(new TestMessageProcessor.NoOpResubmitBackoffPolicy());
 
   @BeforeClass
   public static void setupIntegrationTest() throws Exception {
-<<<<<<< refs/remotes/markrmiller/itwip
+
     Properties config = new Properties();
     config.put("unclean.leader.election.enable", "true");
     config.put("enable.partition.eof", "false");
@@ -111,24 +83,13 @@ public class SolrAndKafkaIntegrationTest extends SolrCloudTestCase {
     String bootstrapServers = kafkaCluster.bootstrapServers();
     log.info("bootstrapServers={}", bootstrapServers);
 
-    consumer.start(bootstrapServers, solrCluster1.getZkServer().getZkAddress(), TOPIC, false, 0);
+    consumer.start(bootstrapServers, solrCluster1.getZkServer().getZkHost(), TOPIC, false, 0);
 
-=======
 
-    CLUSTER.start();
-
-    cluster1 =
-        new Builder(2, createTempDir())
-            .addConfig("conf", getFile("src/resources/configs/cloud-minimal/conf").toPath())
-            .configure();
-
-    processor = new SolrMessageProcessor(cluster1.getSolrClient(), backoffPolicy);
->>>>>>> Add back in the EmbeddedKafkaCluster.
   }
 
   @AfterClass
   public static void tearDownIntegrationTest() throws Exception {
-<<<<<<< refs/remotes/markrmiller/itwip
     consumer.shutdown();
 
     try {
@@ -138,15 +99,16 @@ public class SolrAndKafkaIntegrationTest extends SolrCloudTestCase {
     }
 
     if (solrCluster1 != null) {
+      solrCluster1.getZkServer().getZkClient().printLayoutToStdOut();
       solrCluster1.shutdown();
     }
-    if (solrCluster2 != null) {
-      solrCluster2.shutdown();
-    }
+   // if (solrCluster2 != null) {
+   //   solrCluster2.shutdown();
+    //}
   }
 
-  public void test() throws InterruptedException {
-    Thread.sleep(10000);
+  public void test() throws Exception {
+
     Properties properties = new Properties();
     properties.put("bootstrap.servers", kafkaCluster.bootstrapServers());
     properties.put("acks", "all");
@@ -172,21 +134,22 @@ public class SolrAndKafkaIntegrationTest extends SolrCloudTestCase {
     producer.close();
     System.out.println("Closed producer");
 
-    Thread.sleep(10000);
-=======
+    QueryResponse results = null;
+    boolean foundUpdates = false;
+    for (int i = 0; i < 10; i++) {
+      results = solrCluster1.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
+      if (results.getResults().getNumFound() == 1) {
+        foundUpdates = true;
+      } else {
+        Thread.sleep(500);
+      }
 
-    CLUSTER.stop();
 
-    if (cluster1 != null) {
-      cluster1.shutdown();
     }
-    if (cluster2 != null) {
-      cluster2.shutdown();
-    }
-  }
 
-  public void test() {
+    assertTrue("results=" + results, foundUpdates);
+    System.out.println("Rest: " + results);
 
->>>>>>> Add back in the EmbeddedKafkaCluster.
+
   }
 }

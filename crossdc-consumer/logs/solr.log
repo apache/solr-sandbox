@@ -1,0 +1,2131 @@
+2022-05-13 21:05:37.257 WARN  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.SolrTestCase
+          System property 'solr.default.confdir' is not already set, but test-framework derived value ('/home/markmiller/solr-sandbox/crossdc-consumer/server/solr/configsets/_default/conf') either does not exist or is not a readable directory, you may need to set the property yourself for tests to run properly
+2022-05-13 21:05:37.261 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.u.ErrorLogMuter
+          Creating ErrorLogMuter-regex-1 for ERROR logs matching regex: ignore_exception
+2022-05-13 21:05:37.263 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.SolrTestCaseJ4
+          Created dataDir: /tmp/solr.crossdc.SolrAndKafkaIntegrationTest_132C63BBEFAD73A6-001/data-dir-1-001
+2022-05-13 21:05:37.287 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.SolrTestCaseJ4
+          Using PointFields (NUMERIC_POINTS_SYSPROP=true) w/NUMERIC_DOCVALUES_SYSPROP=false
+2022-05-13 21:05:37.298 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.e.j.u.log
+          Logging initialized @760ms to org.eclipse.jetty.util.log.Slf4jLog
+2022-05-13 21:05:37.300 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.SolrTestCaseJ4
+          Randomized ssl (true) and clientAuth (true) via: @org.apache.solr.util.RandomizeSSL(reason="", ssl=0.0/0.0, value=0.0/0.0, clientAuth=0.0/0.0)
+2022-05-13 21:05:37.351 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.SolrTestCaseJ4
+          SecureRandom sanity checks: test.solr.allowed.securerandom=null & java.security.egd=file:/dev/./urandom
+2022-05-13 21:05:37.397 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.u.Log4jControllerRegistration$
+          Registered kafka:type=kafka.Log4jController MBean
+2022-05-13 21:05:37.424 WARN  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.z.s.ServerCnxnFactory
+          maxCnxns is not configured, using default value 0.
+2022-05-13 21:05:37.556 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.KafkaConfig
+          KafkaConfig values: 
+	advertised.host.name = null
+	advertised.listeners = null
+	advertised.port = null
+	alter.config.policy.class.name = null
+	alter.log.dirs.replication.quota.window.num = 11
+	alter.log.dirs.replication.quota.window.size.seconds = 1
+	authorizer.class.name = 
+	auto.create.topics.enable = true
+	auto.leader.rebalance.enable = true
+	background.threads = 10
+	broker.heartbeat.interval.ms = 2000
+	broker.id = 0
+	broker.id.generation.enable = true
+	broker.rack = null
+	broker.session.timeout.ms = 9000
+	client.quota.callback.class = null
+	compression.type = producer
+	connection.failed.authentication.delay.ms = 100
+	connections.max.idle.ms = 600000
+	connections.max.reauth.ms = 0
+	control.plane.listener.name = null
+	controlled.shutdown.enable = true
+	controlled.shutdown.max.retries = 3
+	controlled.shutdown.retry.backoff.ms = 5000
+	controller.listener.names = null
+	controller.quorum.append.linger.ms = 25
+	controller.quorum.election.backoff.max.ms = 1000
+	controller.quorum.election.timeout.ms = 1000
+	controller.quorum.fetch.timeout.ms = 2000
+	controller.quorum.request.timeout.ms = 2000
+	controller.quorum.retry.backoff.ms = 20
+	controller.quorum.voters = []
+	controller.quota.window.num = 11
+	controller.quota.window.size.seconds = 1
+	controller.socket.timeout.ms = 30000
+	create.topic.policy.class.name = null
+	default.replication.factor = 1
+	delegation.token.expiry.check.interval.ms = 3600000
+	delegation.token.expiry.time.ms = 86400000
+	delegation.token.master.key = null
+	delegation.token.max.lifetime.ms = 604800000
+	delegation.token.secret.key = null
+	delete.records.purgatory.purge.interval.requests = 1
+	delete.topic.enable = true
+	fetch.max.bytes = 57671680
+	fetch.purgatory.purge.interval.requests = 1000
+	group.initial.rebalance.delay.ms = 0
+	group.max.session.timeout.ms = 1800000
+	group.max.size = 2147483647
+	group.min.session.timeout.ms = 0
+	host.name = localhost
+	initial.broker.registration.timeout.ms = 60000
+	inter.broker.listener.name = null
+	inter.broker.protocol.version = 2.8-IV1
+	kafka.metrics.polling.interval.secs = 10
+	kafka.metrics.reporters = []
+	leader.imbalance.check.interval.seconds = 300
+	leader.imbalance.per.broker.percentage = 10
+	listener.security.protocol.map = PLAINTEXT:PLAINTEXT,SSL:SSL,SASL_PLAINTEXT:SASL_PLAINTEXT,SASL_SSL:SASL_SSL
+	listeners = null
+	log.cleaner.backoff.ms = 15000
+	log.cleaner.dedupe.buffer.size = 2097152
+	log.cleaner.delete.retention.ms = 86400000
+	log.cleaner.enable = true
+	log.cleaner.io.buffer.load.factor = 0.9
+	log.cleaner.io.buffer.size = 524288
+	log.cleaner.io.max.bytes.per.second = 1.7976931348623157E308
+	log.cleaner.max.compaction.lag.ms = 9223372036854775807
+	log.cleaner.min.cleanable.ratio = 0.5
+	log.cleaner.min.compaction.lag.ms = 0
+	log.cleaner.threads = 1
+	log.cleanup.policy = [delete]
+	log.dir = /tmp/junit1856026067066757636/junit16585721094021545443
+	log.dirs = null
+	log.flush.interval.messages = 9223372036854775807
+	log.flush.interval.ms = null
+	log.flush.offset.checkpoint.interval.ms = 60000
+	log.flush.scheduler.interval.ms = 9223372036854775807
+	log.flush.start.offset.checkpoint.interval.ms = 60000
+	log.index.interval.bytes = 4096
+	log.index.size.max.bytes = 10485760
+	log.message.downconversion.enable = true
+	log.message.format.version = 2.8-IV1
+	log.message.timestamp.difference.max.ms = 9223372036854775807
+	log.message.timestamp.type = CreateTime
+	log.preallocate = false
+	log.retention.bytes = -1
+	log.retention.check.interval.ms = 300000
+	log.retention.hours = 168
+	log.retention.minutes = null
+	log.retention.ms = null
+	log.roll.hours = 168
+	log.roll.jitter.hours = 0
+	log.roll.jitter.ms = null
+	log.roll.ms = null
+	log.segment.bytes = 1073741824
+	log.segment.delete.delay.ms = 60000
+	max.connection.creation.rate = 2147483647
+	max.connections = 2147483647
+	max.connections.per.ip = 2147483647
+	max.connections.per.ip.overrides = 
+	max.incremental.fetch.session.cache.slots = 1000
+	message.max.bytes = 1000000
+	metadata.log.dir = null
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	min.insync.replicas = 1
+	node.id = -1
+	num.io.threads = 8
+	num.network.threads = 3
+	num.partitions = 1
+	num.recovery.threads.per.data.dir = 1
+	num.replica.alter.log.dirs.threads = null
+	num.replica.fetchers = 1
+	offset.metadata.max.bytes = 4096
+	offsets.commit.required.acks = -1
+	offsets.commit.timeout.ms = 5000
+	offsets.load.buffer.size = 5242880
+	offsets.retention.check.interval.ms = 600000
+	offsets.retention.minutes = 10080
+	offsets.topic.compression.codec = 0
+	offsets.topic.num.partitions = 5
+	offsets.topic.replication.factor = 1
+	offsets.topic.segment.bytes = 104857600
+	password.encoder.cipher.algorithm = AES/CBC/PKCS5Padding
+	password.encoder.iterations = 4096
+	password.encoder.key.length = 128
+	password.encoder.keyfactory.algorithm = null
+	password.encoder.old.secret = null
+	password.encoder.secret = null
+	port = 0
+	principal.builder.class = null
+	process.roles = []
+	producer.purgatory.purge.interval.requests = 1000
+	queued.max.request.bytes = -1
+	queued.max.requests = 500
+	quota.consumer.default = 9223372036854775807
+	quota.producer.default = 9223372036854775807
+	quota.window.num = 11
+	quota.window.size.seconds = 1
+	replica.fetch.backoff.ms = 1000
+	replica.fetch.max.bytes = 1048576
+	replica.fetch.min.bytes = 1
+	replica.fetch.response.max.bytes = 10485760
+	replica.fetch.wait.max.ms = 500
+	replica.high.watermark.checkpoint.interval.ms = 5000
+	replica.lag.time.max.ms = 30000
+	replica.selector.class = null
+	replica.socket.receive.buffer.bytes = 65536
+	replica.socket.timeout.ms = 30000
+	replication.quota.window.num = 11
+	replication.quota.window.size.seconds = 1
+	request.timeout.ms = 30000
+	reserved.broker.max.id = 1000
+	sasl.client.callback.handler.class = null
+	sasl.enabled.mechanisms = [GSSAPI]
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.principal.to.local.rules = [DEFAULT]
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.mechanism.controller.protocol = GSSAPI
+	sasl.mechanism.inter.broker.protocol = GSSAPI
+	sasl.server.callback.handler.class = null
+	security.inter.broker.protocol = PLAINTEXT
+	security.providers = null
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	socket.receive.buffer.bytes = 102400
+	socket.request.max.bytes = 104857600
+	socket.send.buffer.bytes = 102400
+	ssl.cipher.suites = []
+	ssl.client.auth = none
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.principal.mapping.rules = DEFAULT
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	transaction.abort.timed.out.transaction.cleanup.interval.ms = 10000
+	transaction.max.timeout.ms = 900000
+	transaction.remove.expired.transaction.cleanup.interval.ms = 3600000
+	transaction.state.log.load.buffer.size = 5242880
+	transaction.state.log.min.isr = 2
+	transaction.state.log.num.partitions = 5
+	transaction.state.log.replication.factor = 3
+	transaction.state.log.segment.bytes = 104857600
+	transactional.id.expiration.ms = 604800000
+	unclean.leader.election.enable = true
+	zookeeper.clientCnxnSocket = null
+	zookeeper.connect = 127.0.0.1:37483
+	zookeeper.connection.timeout.ms = null
+	zookeeper.max.in.flight.requests = 10
+	zookeeper.session.timeout.ms = 10000
+	zookeeper.set.acl = false
+	zookeeper.ssl.cipher.suites = null
+	zookeeper.ssl.client.enable = false
+	zookeeper.ssl.crl.enable = false
+	zookeeper.ssl.enabled.protocols = null
+	zookeeper.ssl.endpoint.identification.algorithm = HTTPS
+	zookeeper.ssl.keystore.location = null
+	zookeeper.ssl.keystore.password = null
+	zookeeper.ssl.keystore.type = null
+	zookeeper.ssl.ocsp.enable = false
+	zookeeper.ssl.protocol = TLSv1.2
+	zookeeper.ssl.truststore.location = null
+	zookeeper.ssl.truststore.password = null
+	zookeeper.ssl.truststore.type = null
+	zookeeper.sync.time.ms = 2000
+
+2022-05-13 21:05:37.600 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.KafkaServer
+          starting
+2022-05-13 21:05:37.601 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.KafkaServer
+          Connecting to zookeeper on 127.0.0.1:37483
+2022-05-13 21:05:37.609 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.z.ZooKeeperClient
+          [ZooKeeperClient Kafka server] Initializing a new session to 127.0.0.1:37483.
+2022-05-13 21:05:37.617 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.z.ZooKeeperClient
+          [ZooKeeperClient Kafka server] Waiting until connected.
+2022-05-13 21:05:37.628 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.z.ZooKeeperClient
+          [ZooKeeperClient Kafka server] Connected.
+2022-05-13 21:05:37.668 INFO  (feature-zk-node-event-process-thread) [] k.s.FinalizedFeatureChangeListener$ChangeNotificationProcessorThread
+          [feature-zk-node-event-process-thread]: Starting
+2022-05-13 21:05:37.673 INFO  (feature-zk-node-event-process-thread) [] k.s.FinalizedFeatureChangeListener
+          Feature ZK node at path: /feature does not exist
+2022-05-13 21:05:37.674 INFO  (feature-zk-node-event-process-thread) [] k.s.FinalizedFeatureCache
+          Cleared cache
+2022-05-13 21:05:37.753 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.KafkaServer
+          Cluster ID = 7K4120m8TrOj9Qwok-culg
+2022-05-13 21:05:37.754 WARN  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.BrokerMetadataCheckpoint
+          No meta.properties file under dir /tmp/junit1856026067066757636/junit16585721094021545443/meta.properties
+2022-05-13 21:05:37.776 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.KafkaConfig
+          KafkaConfig values: 
+	advertised.host.name = null
+	advertised.listeners = null
+	advertised.port = null
+	alter.config.policy.class.name = null
+	alter.log.dirs.replication.quota.window.num = 11
+	alter.log.dirs.replication.quota.window.size.seconds = 1
+	authorizer.class.name = 
+	auto.create.topics.enable = true
+	auto.leader.rebalance.enable = true
+	background.threads = 10
+	broker.heartbeat.interval.ms = 2000
+	broker.id = 0
+	broker.id.generation.enable = true
+	broker.rack = null
+	broker.session.timeout.ms = 9000
+	client.quota.callback.class = null
+	compression.type = producer
+	connection.failed.authentication.delay.ms = 100
+	connections.max.idle.ms = 600000
+	connections.max.reauth.ms = 0
+	control.plane.listener.name = null
+	controlled.shutdown.enable = true
+	controlled.shutdown.max.retries = 3
+	controlled.shutdown.retry.backoff.ms = 5000
+	controller.listener.names = null
+	controller.quorum.append.linger.ms = 25
+	controller.quorum.election.backoff.max.ms = 1000
+	controller.quorum.election.timeout.ms = 1000
+	controller.quorum.fetch.timeout.ms = 2000
+	controller.quorum.request.timeout.ms = 2000
+	controller.quorum.retry.backoff.ms = 20
+	controller.quorum.voters = []
+	controller.quota.window.num = 11
+	controller.quota.window.size.seconds = 1
+	controller.socket.timeout.ms = 30000
+	create.topic.policy.class.name = null
+	default.replication.factor = 1
+	delegation.token.expiry.check.interval.ms = 3600000
+	delegation.token.expiry.time.ms = 86400000
+	delegation.token.master.key = null
+	delegation.token.max.lifetime.ms = 604800000
+	delegation.token.secret.key = null
+	delete.records.purgatory.purge.interval.requests = 1
+	delete.topic.enable = true
+	fetch.max.bytes = 57671680
+	fetch.purgatory.purge.interval.requests = 1000
+	group.initial.rebalance.delay.ms = 0
+	group.max.session.timeout.ms = 1800000
+	group.max.size = 2147483647
+	group.min.session.timeout.ms = 0
+	host.name = localhost
+	initial.broker.registration.timeout.ms = 60000
+	inter.broker.listener.name = null
+	inter.broker.protocol.version = 2.8-IV1
+	kafka.metrics.polling.interval.secs = 10
+	kafka.metrics.reporters = []
+	leader.imbalance.check.interval.seconds = 300
+	leader.imbalance.per.broker.percentage = 10
+	listener.security.protocol.map = PLAINTEXT:PLAINTEXT,SSL:SSL,SASL_PLAINTEXT:SASL_PLAINTEXT,SASL_SSL:SASL_SSL
+	listeners = null
+	log.cleaner.backoff.ms = 15000
+	log.cleaner.dedupe.buffer.size = 2097152
+	log.cleaner.delete.retention.ms = 86400000
+	log.cleaner.enable = true
+	log.cleaner.io.buffer.load.factor = 0.9
+	log.cleaner.io.buffer.size = 524288
+	log.cleaner.io.max.bytes.per.second = 1.7976931348623157E308
+	log.cleaner.max.compaction.lag.ms = 9223372036854775807
+	log.cleaner.min.cleanable.ratio = 0.5
+	log.cleaner.min.compaction.lag.ms = 0
+	log.cleaner.threads = 1
+	log.cleanup.policy = [delete]
+	log.dir = /tmp/junit1856026067066757636/junit16585721094021545443
+	log.dirs = null
+	log.flush.interval.messages = 9223372036854775807
+	log.flush.interval.ms = null
+	log.flush.offset.checkpoint.interval.ms = 60000
+	log.flush.scheduler.interval.ms = 9223372036854775807
+	log.flush.start.offset.checkpoint.interval.ms = 60000
+	log.index.interval.bytes = 4096
+	log.index.size.max.bytes = 10485760
+	log.message.downconversion.enable = true
+	log.message.format.version = 2.8-IV1
+	log.message.timestamp.difference.max.ms = 9223372036854775807
+	log.message.timestamp.type = CreateTime
+	log.preallocate = false
+	log.retention.bytes = -1
+	log.retention.check.interval.ms = 300000
+	log.retention.hours = 168
+	log.retention.minutes = null
+	log.retention.ms = null
+	log.roll.hours = 168
+	log.roll.jitter.hours = 0
+	log.roll.jitter.ms = null
+	log.roll.ms = null
+	log.segment.bytes = 1073741824
+	log.segment.delete.delay.ms = 60000
+	max.connection.creation.rate = 2147483647
+	max.connections = 2147483647
+	max.connections.per.ip = 2147483647
+	max.connections.per.ip.overrides = 
+	max.incremental.fetch.session.cache.slots = 1000
+	message.max.bytes = 1000000
+	metadata.log.dir = null
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	min.insync.replicas = 1
+	node.id = -1
+	num.io.threads = 8
+	num.network.threads = 3
+	num.partitions = 1
+	num.recovery.threads.per.data.dir = 1
+	num.replica.alter.log.dirs.threads = null
+	num.replica.fetchers = 1
+	offset.metadata.max.bytes = 4096
+	offsets.commit.required.acks = -1
+	offsets.commit.timeout.ms = 5000
+	offsets.load.buffer.size = 5242880
+	offsets.retention.check.interval.ms = 600000
+	offsets.retention.minutes = 10080
+	offsets.topic.compression.codec = 0
+	offsets.topic.num.partitions = 5
+	offsets.topic.replication.factor = 1
+	offsets.topic.segment.bytes = 104857600
+	password.encoder.cipher.algorithm = AES/CBC/PKCS5Padding
+	password.encoder.iterations = 4096
+	password.encoder.key.length = 128
+	password.encoder.keyfactory.algorithm = null
+	password.encoder.old.secret = null
+	password.encoder.secret = null
+	port = 0
+	principal.builder.class = null
+	process.roles = []
+	producer.purgatory.purge.interval.requests = 1000
+	queued.max.request.bytes = -1
+	queued.max.requests = 500
+	quota.consumer.default = 9223372036854775807
+	quota.producer.default = 9223372036854775807
+	quota.window.num = 11
+	quota.window.size.seconds = 1
+	replica.fetch.backoff.ms = 1000
+	replica.fetch.max.bytes = 1048576
+	replica.fetch.min.bytes = 1
+	replica.fetch.response.max.bytes = 10485760
+	replica.fetch.wait.max.ms = 500
+	replica.high.watermark.checkpoint.interval.ms = 5000
+	replica.lag.time.max.ms = 30000
+	replica.selector.class = null
+	replica.socket.receive.buffer.bytes = 65536
+	replica.socket.timeout.ms = 30000
+	replication.quota.window.num = 11
+	replication.quota.window.size.seconds = 1
+	request.timeout.ms = 30000
+	reserved.broker.max.id = 1000
+	sasl.client.callback.handler.class = null
+	sasl.enabled.mechanisms = [GSSAPI]
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.principal.to.local.rules = [DEFAULT]
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.mechanism.controller.protocol = GSSAPI
+	sasl.mechanism.inter.broker.protocol = GSSAPI
+	sasl.server.callback.handler.class = null
+	security.inter.broker.protocol = PLAINTEXT
+	security.providers = null
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	socket.receive.buffer.bytes = 102400
+	socket.request.max.bytes = 104857600
+	socket.send.buffer.bytes = 102400
+	ssl.cipher.suites = []
+	ssl.client.auth = none
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.principal.mapping.rules = DEFAULT
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	transaction.abort.timed.out.transaction.cleanup.interval.ms = 10000
+	transaction.max.timeout.ms = 900000
+	transaction.remove.expired.transaction.cleanup.interval.ms = 3600000
+	transaction.state.log.load.buffer.size = 5242880
+	transaction.state.log.min.isr = 2
+	transaction.state.log.num.partitions = 5
+	transaction.state.log.replication.factor = 3
+	transaction.state.log.segment.bytes = 104857600
+	transactional.id.expiration.ms = 604800000
+	unclean.leader.election.enable = true
+	zookeeper.clientCnxnSocket = null
+	zookeeper.connect = 127.0.0.1:37483
+	zookeeper.connection.timeout.ms = null
+	zookeeper.max.in.flight.requests = 10
+	zookeeper.session.timeout.ms = 10000
+	zookeeper.set.acl = false
+	zookeeper.ssl.cipher.suites = null
+	zookeeper.ssl.client.enable = false
+	zookeeper.ssl.crl.enable = false
+	zookeeper.ssl.enabled.protocols = null
+	zookeeper.ssl.endpoint.identification.algorithm = HTTPS
+	zookeeper.ssl.keystore.location = null
+	zookeeper.ssl.keystore.password = null
+	zookeeper.ssl.keystore.type = null
+	zookeeper.ssl.ocsp.enable = false
+	zookeeper.ssl.protocol = TLSv1.2
+	zookeeper.ssl.truststore.location = null
+	zookeeper.ssl.truststore.password = null
+	zookeeper.ssl.truststore.type = null
+	zookeeper.sync.time.ms = 2000
+
+2022-05-13 21:05:37.784 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.KafkaConfig
+          KafkaConfig values: 
+	advertised.host.name = null
+	advertised.listeners = null
+	advertised.port = null
+	alter.config.policy.class.name = null
+	alter.log.dirs.replication.quota.window.num = 11
+	alter.log.dirs.replication.quota.window.size.seconds = 1
+	authorizer.class.name = 
+	auto.create.topics.enable = true
+	auto.leader.rebalance.enable = true
+	background.threads = 10
+	broker.heartbeat.interval.ms = 2000
+	broker.id = 0
+	broker.id.generation.enable = true
+	broker.rack = null
+	broker.session.timeout.ms = 9000
+	client.quota.callback.class = null
+	compression.type = producer
+	connection.failed.authentication.delay.ms = 100
+	connections.max.idle.ms = 600000
+	connections.max.reauth.ms = 0
+	control.plane.listener.name = null
+	controlled.shutdown.enable = true
+	controlled.shutdown.max.retries = 3
+	controlled.shutdown.retry.backoff.ms = 5000
+	controller.listener.names = null
+	controller.quorum.append.linger.ms = 25
+	controller.quorum.election.backoff.max.ms = 1000
+	controller.quorum.election.timeout.ms = 1000
+	controller.quorum.fetch.timeout.ms = 2000
+	controller.quorum.request.timeout.ms = 2000
+	controller.quorum.retry.backoff.ms = 20
+	controller.quorum.voters = []
+	controller.quota.window.num = 11
+	controller.quota.window.size.seconds = 1
+	controller.socket.timeout.ms = 30000
+	create.topic.policy.class.name = null
+	default.replication.factor = 1
+	delegation.token.expiry.check.interval.ms = 3600000
+	delegation.token.expiry.time.ms = 86400000
+	delegation.token.master.key = null
+	delegation.token.max.lifetime.ms = 604800000
+	delegation.token.secret.key = null
+	delete.records.purgatory.purge.interval.requests = 1
+	delete.topic.enable = true
+	fetch.max.bytes = 57671680
+	fetch.purgatory.purge.interval.requests = 1000
+	group.initial.rebalance.delay.ms = 0
+	group.max.session.timeout.ms = 1800000
+	group.max.size = 2147483647
+	group.min.session.timeout.ms = 0
+	host.name = localhost
+	initial.broker.registration.timeout.ms = 60000
+	inter.broker.listener.name = null
+	inter.broker.protocol.version = 2.8-IV1
+	kafka.metrics.polling.interval.secs = 10
+	kafka.metrics.reporters = []
+	leader.imbalance.check.interval.seconds = 300
+	leader.imbalance.per.broker.percentage = 10
+	listener.security.protocol.map = PLAINTEXT:PLAINTEXT,SSL:SSL,SASL_PLAINTEXT:SASL_PLAINTEXT,SASL_SSL:SASL_SSL
+	listeners = null
+	log.cleaner.backoff.ms = 15000
+	log.cleaner.dedupe.buffer.size = 2097152
+	log.cleaner.delete.retention.ms = 86400000
+	log.cleaner.enable = true
+	log.cleaner.io.buffer.load.factor = 0.9
+	log.cleaner.io.buffer.size = 524288
+	log.cleaner.io.max.bytes.per.second = 1.7976931348623157E308
+	log.cleaner.max.compaction.lag.ms = 9223372036854775807
+	log.cleaner.min.cleanable.ratio = 0.5
+	log.cleaner.min.compaction.lag.ms = 0
+	log.cleaner.threads = 1
+	log.cleanup.policy = [delete]
+	log.dir = /tmp/junit1856026067066757636/junit16585721094021545443
+	log.dirs = null
+	log.flush.interval.messages = 9223372036854775807
+	log.flush.interval.ms = null
+	log.flush.offset.checkpoint.interval.ms = 60000
+	log.flush.scheduler.interval.ms = 9223372036854775807
+	log.flush.start.offset.checkpoint.interval.ms = 60000
+	log.index.interval.bytes = 4096
+	log.index.size.max.bytes = 10485760
+	log.message.downconversion.enable = true
+	log.message.format.version = 2.8-IV1
+	log.message.timestamp.difference.max.ms = 9223372036854775807
+	log.message.timestamp.type = CreateTime
+	log.preallocate = false
+	log.retention.bytes = -1
+	log.retention.check.interval.ms = 300000
+	log.retention.hours = 168
+	log.retention.minutes = null
+	log.retention.ms = null
+	log.roll.hours = 168
+	log.roll.jitter.hours = 0
+	log.roll.jitter.ms = null
+	log.roll.ms = null
+	log.segment.bytes = 1073741824
+	log.segment.delete.delay.ms = 60000
+	max.connection.creation.rate = 2147483647
+	max.connections = 2147483647
+	max.connections.per.ip = 2147483647
+	max.connections.per.ip.overrides = 
+	max.incremental.fetch.session.cache.slots = 1000
+	message.max.bytes = 1000000
+	metadata.log.dir = null
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	min.insync.replicas = 1
+	node.id = -1
+	num.io.threads = 8
+	num.network.threads = 3
+	num.partitions = 1
+	num.recovery.threads.per.data.dir = 1
+	num.replica.alter.log.dirs.threads = null
+	num.replica.fetchers = 1
+	offset.metadata.max.bytes = 4096
+	offsets.commit.required.acks = -1
+	offsets.commit.timeout.ms = 5000
+	offsets.load.buffer.size = 5242880
+	offsets.retention.check.interval.ms = 600000
+	offsets.retention.minutes = 10080
+	offsets.topic.compression.codec = 0
+	offsets.topic.num.partitions = 5
+	offsets.topic.replication.factor = 1
+	offsets.topic.segment.bytes = 104857600
+	password.encoder.cipher.algorithm = AES/CBC/PKCS5Padding
+	password.encoder.iterations = 4096
+	password.encoder.key.length = 128
+	password.encoder.keyfactory.algorithm = null
+	password.encoder.old.secret = null
+	password.encoder.secret = null
+	port = 0
+	principal.builder.class = null
+	process.roles = []
+	producer.purgatory.purge.interval.requests = 1000
+	queued.max.request.bytes = -1
+	queued.max.requests = 500
+	quota.consumer.default = 9223372036854775807
+	quota.producer.default = 9223372036854775807
+	quota.window.num = 11
+	quota.window.size.seconds = 1
+	replica.fetch.backoff.ms = 1000
+	replica.fetch.max.bytes = 1048576
+	replica.fetch.min.bytes = 1
+	replica.fetch.response.max.bytes = 10485760
+	replica.fetch.wait.max.ms = 500
+	replica.high.watermark.checkpoint.interval.ms = 5000
+	replica.lag.time.max.ms = 30000
+	replica.selector.class = null
+	replica.socket.receive.buffer.bytes = 65536
+	replica.socket.timeout.ms = 30000
+	replication.quota.window.num = 11
+	replication.quota.window.size.seconds = 1
+	request.timeout.ms = 30000
+	reserved.broker.max.id = 1000
+	sasl.client.callback.handler.class = null
+	sasl.enabled.mechanisms = [GSSAPI]
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.principal.to.local.rules = [DEFAULT]
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.mechanism.controller.protocol = GSSAPI
+	sasl.mechanism.inter.broker.protocol = GSSAPI
+	sasl.server.callback.handler.class = null
+	security.inter.broker.protocol = PLAINTEXT
+	security.providers = null
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	socket.receive.buffer.bytes = 102400
+	socket.request.max.bytes = 104857600
+	socket.send.buffer.bytes = 102400
+	ssl.cipher.suites = []
+	ssl.client.auth = none
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.principal.mapping.rules = DEFAULT
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	transaction.abort.timed.out.transaction.cleanup.interval.ms = 10000
+	transaction.max.timeout.ms = 900000
+	transaction.remove.expired.transaction.cleanup.interval.ms = 3600000
+	transaction.state.log.load.buffer.size = 5242880
+	transaction.state.log.min.isr = 2
+	transaction.state.log.num.partitions = 5
+	transaction.state.log.replication.factor = 3
+	transaction.state.log.segment.bytes = 104857600
+	transactional.id.expiration.ms = 604800000
+	unclean.leader.election.enable = true
+	zookeeper.clientCnxnSocket = null
+	zookeeper.connect = 127.0.0.1:37483
+	zookeeper.connection.timeout.ms = null
+	zookeeper.max.in.flight.requests = 10
+	zookeeper.session.timeout.ms = 10000
+	zookeeper.set.acl = false
+	zookeeper.ssl.cipher.suites = null
+	zookeeper.ssl.client.enable = false
+	zookeeper.ssl.crl.enable = false
+	zookeeper.ssl.enabled.protocols = null
+	zookeeper.ssl.endpoint.identification.algorithm = HTTPS
+	zookeeper.ssl.keystore.location = null
+	zookeeper.ssl.keystore.password = null
+	zookeeper.ssl.keystore.type = null
+	zookeeper.ssl.ocsp.enable = false
+	zookeeper.ssl.protocol = TLSv1.2
+	zookeeper.ssl.truststore.location = null
+	zookeeper.ssl.truststore.password = null
+	zookeeper.ssl.truststore.type = null
+	zookeeper.sync.time.ms = 2000
+
+2022-05-13 21:05:37.802 INFO  (ThrottledChannelReaper-Fetch) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-Fetch]: Starting
+2022-05-13 21:05:37.802 INFO  (ThrottledChannelReaper-Produce) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-Produce]: Starting
+2022-05-13 21:05:37.803 INFO  (ThrottledChannelReaper-Request) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-Request]: Starting
+2022-05-13 21:05:37.803 INFO  (ThrottledChannelReaper-ControllerMutation) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-ControllerMutation]: Starting
+2022-05-13 21:05:37.819 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.l.LogManager
+          Loading logs from log dirs ArraySeq(/tmp/junit1856026067066757636/junit16585721094021545443)
+2022-05-13 21:05:37.821 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.l.LogManager
+          Attempting recovery for all logs in /tmp/junit1856026067066757636/junit16585721094021545443 since no clean shutdown file was found
+2022-05-13 21:05:37.823 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.l.LogManager
+          Loaded 0 logs in 0ms.
+2022-05-13 21:05:37.824 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.l.LogManager
+          Starting log cleanup with a period of 300000 ms.
+2022-05-13 21:05:37.825 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.l.LogManager
+          Starting log flusher with a default period of 9223372036854775807 ms.
+2022-05-13 21:05:37.831 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.l.LogCleaner
+          Starting the log cleaner
+2022-05-13 21:05:37.837 INFO  (kafka-log-cleaner-thread-0) [] k.l.LogCleaner
+          [kafka-log-cleaner-thread-0]: Starting
+2022-05-13 21:05:37.994 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.n.ConnectionQuotas
+          Updated connection-accept-rate max connection creation rate to 2147483647
+2022-05-13 21:05:37.995 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.n.Acceptor
+          Awaiting socket connections on localhost:46231.
+2022-05-13 21:05:38.013 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.n.SocketServer
+          [SocketServer listenerType=ZK_BROKER, nodeId=0] Created data-plane acceptor and processors for endpoint : ListenerName(PLAINTEXT)
+2022-05-13 21:05:38.029 INFO  (broker-0-to-controller-send-thread) [] k.s.BrokerToControllerRequestThread
+          [broker-0-to-controller-send-thread]: Starting
+2022-05-13 21:05:38.039 INFO  (ExpirationReaper-0-Produce) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Produce]: Starting
+2022-05-13 21:05:38.039 INFO  (ExpirationReaper-0-Fetch) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Fetch]: Starting
+2022-05-13 21:05:38.039 INFO  (ExpirationReaper-0-DeleteRecords) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-DeleteRecords]: Starting
+2022-05-13 21:05:38.040 INFO  (ExpirationReaper-0-ElectLeader) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-ElectLeader]: Starting
+2022-05-13 21:05:38.047 INFO  (LogDirFailureHandler) [] k.s.ReplicaManager$LogDirFailureHandler
+          [LogDirFailureHandler]: Starting
+2022-05-13 21:05:38.060 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.z.KafkaZkClient
+          Creating /brokers/ids/0 (is it secure? false)
+2022-05-13 21:05:38.067 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.z.KafkaZkClient
+          Stat of the created znode at /brokers/ids/0 is: 25,25,1652493938065,1652493938065,1,0,0,72130130663047168,204,0,25
+
+2022-05-13 21:05:38.068 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.z.KafkaZkClient
+          Registered broker 0 at path /brokers/ids/0 with addresses: PLAINTEXT://localhost:46231, czxid (broker epoch): 25
+2022-05-13 21:05:38.094 INFO  (controller-event-thread) [] k.c.ControllerEventManager$ControllerEventThread
+          [ControllerEventThread controllerId=0] Starting
+2022-05-13 21:05:38.099 INFO  (ExpirationReaper-0-topic) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-topic]: Starting
+2022-05-13 21:05:38.101 INFO  (ExpirationReaper-0-Heartbeat) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Heartbeat]: Starting
+2022-05-13 21:05:38.101 INFO  (ExpirationReaper-0-Rebalance) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Rebalance]: Starting
+2022-05-13 21:05:38.103 INFO  (controller-event-thread) [] k.z.KafkaZkClient
+          Successfully created /controller_epoch with initial epoch 0
+2022-05-13 21:05:38.106 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] 0 successfully elected as the controller. Epoch incremented to 1 and epoch zk version is now 1
+2022-05-13 21:05:38.108 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Creating FeatureZNode at path: /feature with contents: FeatureZNode(Enabled,Features{})
+2022-05-13 21:05:38.109 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker-EventThread) [] k.s.FinalizedFeatureChangeListener
+          Feature ZK node created at path: /feature
+2022-05-13 21:05:38.111 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Starting up.
+2022-05-13 21:05:38.113 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Startup complete.
+2022-05-13 21:05:38.121 INFO  (feature-zk-node-event-process-thread) [] k.s.FinalizedFeatureCache
+          Updated cache from existing <empty> to latest FinalizedFeaturesAndEpoch(features=Features{}, epoch=0).
+2022-05-13 21:05:38.121 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Registering handlers
+2022-05-13 21:05:38.123 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Deleting log dir event notifications
+2022-05-13 21:05:38.124 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Deleting isr change notifications
+2022-05-13 21:05:38.124 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.c.t.ProducerIdManager
+          [ProducerId Manager 0]: Acquired new producerId block (brokerId:0,blockStartProducerId:0,blockEndProducerId:999) by writing to Zk with path version 1
+2022-05-13 21:05:38.125 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.c.t.TransactionCoordinator
+          [TransactionCoordinator id=0] Starting up.
+2022-05-13 21:05:38.125 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Initializing controller context
+2022-05-13 21:05:38.126 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.c.t.TransactionCoordinator
+          [TransactionCoordinator id=0] Startup complete.
+2022-05-13 21:05:38.126 INFO  (TxnMarkerSenderThread-0) [] k.c.t.TransactionMarkerChannelManager
+          [Transaction Marker Channel Manager 0]: Starting
+2022-05-13 21:05:38.132 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Initialized broker epochs cache: HashMap(0 -> 25)
+2022-05-13 21:05:38.141 INFO  (ExpirationReaper-0-AlterAcls) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-AlterAcls]: Starting
+2022-05-13 21:05:38.143 INFO  (Controller-0-to-broker-0-send-thread) [] k.c.RequestSendThread
+          [RequestSendThread controllerId=0] Starting
+2022-05-13 21:05:38.144 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Currently active brokers in the cluster: Set(0)
+2022-05-13 21:05:38.144 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Currently shutting brokers in the cluster: HashSet()
+2022-05-13 21:05:38.144 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Current list of topics in the cluster: HashSet()
+2022-05-13 21:05:38.144 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Fetching topic deletions in progress
+2022-05-13 21:05:38.145 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] List of topics to be deleted: 
+2022-05-13 21:05:38.146 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] List of topics ineligible for deletion: 
+2022-05-13 21:05:38.146 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Initializing topic deletion manager
+2022-05-13 21:05:38.146 INFO  (controller-event-thread) [] k.c.TopicDeletionManager
+          [Topic Deletion Manager 0] Initializing manager with initial deletions: Set(), initial ineligible deletions: HashSet()
+2022-05-13 21:05:38.147 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Sending update metadata request
+2022-05-13 21:05:38.148 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Sending UpdateMetadata request to brokers HashSet(0) for 0 partitions
+2022-05-13 21:05:38.152 INFO  (controller-event-thread) [] k.c.ZkReplicaStateMachine
+          [ReplicaStateMachine controllerId=0] Initializing replica state
+2022-05-13 21:05:38.152 INFO  (controller-event-thread) [] k.c.ZkReplicaStateMachine
+          [ReplicaStateMachine controllerId=0] Triggering online replica state changes
+2022-05-13 21:05:38.152 INFO  (/config/changes-event-process-thread) [] k.c.ZkNodeChangeNotificationListener$ChangeEventProcessThread
+          [/config/changes-event-process-thread]: Starting
+2022-05-13 21:05:38.153 INFO  (controller-event-thread) [] k.c.ZkReplicaStateMachine
+          [ReplicaStateMachine controllerId=0] Triggering offline replica state changes
+2022-05-13 21:05:38.154 INFO  (controller-event-thread) [] k.c.ZkPartitionStateMachine
+          [PartitionStateMachine controllerId=0] Initializing partition state
+2022-05-13 21:05:38.155 INFO  (controller-event-thread) [] k.c.ZkPartitionStateMachine
+          [PartitionStateMachine controllerId=0] Triggering online partition state changes
+2022-05-13 21:05:38.155 INFO  (Controller-0-to-broker-0-send-thread) [] k.c.RequestSendThread
+          [RequestSendThread controllerId=0] Controller 0 connected to localhost:46231 (id: 0 rack: null) for sending state change requests
+2022-05-13 21:05:38.156 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.n.SocketServer
+          [SocketServer listenerType=ZK_BROKER, nodeId=0] Starting socket server acceptors and processors
+2022-05-13 21:05:38.156 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Ready to serve as the new controller with epoch 1
+2022-05-13 21:05:38.158 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Partitions undergoing preferred replica election: 
+2022-05-13 21:05:38.158 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Partitions that completed preferred replica election: 
+2022-05-13 21:05:38.159 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.n.SocketServer
+          [SocketServer listenerType=ZK_BROKER, nodeId=0] Started data-plane acceptor and processor(s) for endpoint : ListenerName(PLAINTEXT)
+2022-05-13 21:05:38.159 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Skipping preferred replica election for partitions due to topic deletion: 
+2022-05-13 21:05:38.159 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.n.SocketServer
+          [SocketServer listenerType=ZK_BROKER, nodeId=0] Started socket server acceptors and processors
+2022-05-13 21:05:38.159 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Resuming preferred replica election for partitions: 
+2022-05-13 21:05:38.160 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Starting replica leader election (PREFERRED) for partitions  triggered by ZkTriggered
+2022-05-13 21:05:38.161 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.k.c.u.AppInfoParser
+          Kafka version: 2.8.1
+2022-05-13 21:05:38.161 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.k.c.u.AppInfoParser
+          Kafka commitId: 839b886f9b732b15
+2022-05-13 21:05:38.161 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.k.c.u.AppInfoParser
+          Kafka startTimeMs: 1652493937352
+2022-05-13 21:05:38.162 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.KafkaServer
+          [KafkaServer id=0] started
+2022-05-13 21:05:38.165 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.k.c.a.AdminClientConfig
+          AdminClientConfig values: 
+	bootstrap.servers = [localhost:46231]
+	client.dns.lookup = use_all_dns_ips
+	client.id = 
+	connections.max.idle.ms = 300000
+	default.api.timeout.ms = 60000
+	metadata.max.age.ms = 300000
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	receive.buffer.bytes = 65536
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 30000
+	retries = 2147483647
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.mechanism = GSSAPI
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+
+2022-05-13 21:05:38.165 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Starting the controller scheduler
+2022-05-13 21:05:38.183 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.k.c.u.AppInfoParser
+          Kafka version: 2.8.1
+2022-05-13 21:05:38.183 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.k.c.u.AppInfoParser
+          Kafka commitId: 839b886f9b732b15
+2022-05-13 21:05:38.183 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.k.c.u.AppInfoParser
+          Kafka startTimeMs: 1652493938183
+2022-05-13 21:05:38.210 INFO  (data-plane-kafka-request-handler-4) [] k.z.AdminZkClient
+          Creating topic topic1 with configuration {} and initial partition assignment HashMap(0 -> ArrayBuffer(0))
+2022-05-13 21:05:38.218 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] New topics: [Set(topic1)], deleted topics: [HashSet()], new partition replica assignment [Set(TopicIdReplicaAssignment(topic1,Some(k74kp-NMRtiXPjcWZLenIA),Map(topic1-0 -> ReplicaAssignment(replicas=0, addingReplicas=, removingReplicas=))))]
+2022-05-13 21:05:38.219 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] New partition creation callback for topic1-0
+2022-05-13 21:05:38.220 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Changed partition topic1-0 state from NonExistentPartition to NewPartition with assigned replicas 0
+2022-05-13 21:05:38.220 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Sending UpdateMetadata request to brokers HashSet() for 0 partitions
+2022-05-13 21:05:38.222 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Sending UpdateMetadata request to brokers HashSet() for 0 partitions
+2022-05-13 21:05:38.230 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Changed partition topic1-0 from NewPartition to OnlinePartition with state LeaderAndIsr(leader=0, leaderEpoch=0, isr=List(0), zkVersion=0)
+2022-05-13 21:05:38.231 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Sending LeaderAndIsr request to broker 0 with 1 become-leader and 0 become-follower partitions
+2022-05-13 21:05:38.232 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Sending UpdateMetadata request to brokers HashSet(0) for 1 partitions
+2022-05-13 21:05:38.233 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Sending UpdateMetadata request to brokers HashSet() for 0 partitions
+2022-05-13 21:05:38.234 INFO  (data-plane-kafka-request-handler-5) [] s.c.logger
+          [Broker id=0] Handling LeaderAndIsr request correlationId 1 from controller 0 for 1 partitions
+2022-05-13 21:05:38.237 INFO  (broker-0-to-controller-send-thread) [] k.s.BrokerToControllerRequestThread
+          [broker-0-to-controller-send-thread]: Recorded new controller, from now on will use broker localhost:46231 (id: 0 rack: null)
+2022-05-13 21:05:38.242 INFO  (data-plane-kafka-request-handler-5) [] k.s.ReplicaFetcherManager
+          [ReplicaFetcherManager on broker 0] Removed fetcher for partitions Set(topic1-0)
+2022-05-13 21:05:38.243 INFO  (data-plane-kafka-request-handler-5) [] s.c.logger
+          [Broker id=0] Stopped fetchers as part of LeaderAndIsr request correlationId 1 from controller 0 epoch 1 as part of the become-leader transition for 1 partitions
+2022-05-13 21:05:38.273 INFO  (data-plane-kafka-request-handler-5) [] k.l.Log
+          [Log partition=topic1-0, dir=/tmp/junit1856026067066757636/junit16585721094021545443] Loading producer state till offset 0 with message format version 2
+2022-05-13 21:05:38.277 INFO  (data-plane-kafka-request-handler-5) [] k.l.LogManager
+          Created log for partition topic1-0 in /tmp/junit1856026067066757636/junit16585721094021545443/topic1-0 with properties {}
+2022-05-13 21:05:38.277 INFO  (data-plane-kafka-request-handler-5) [] k.c.Partition
+          [Partition topic1-0 broker=0] No checkpointed highwatermark is found for partition topic1-0
+2022-05-13 21:05:38.278 INFO  (data-plane-kafka-request-handler-5) [] k.c.Partition
+          [Partition topic1-0 broker=0] Log loaded for partition topic1-0 with initial high watermark 0
+2022-05-13 21:05:38.279 INFO  (data-plane-kafka-request-handler-5) [] s.c.logger
+          [Broker id=0] Leader topic1-0 starts at leader epoch 0 from offset 0 with high watermark 0 ISR [0] addingReplicas [] removingReplicas []. Previous leader epoch was -1.
+2022-05-13 21:05:38.286 INFO  (data-plane-kafka-request-handler-5) [] s.c.logger
+          [Broker id=0] Finished LeaderAndIsr request in 0ms correlationId 1 from controller 0 for 1 partitions
+2022-05-13 21:05:38.291 INFO  (data-plane-kafka-request-handler-6) [] s.c.logger
+          [Broker id=0] Add 1 partitions and deleted 0 partitions from metadata cache in response to UpdateMetadata request sent by controller 0 epoch 1 with correlation id 2
+2022-05-13 21:05:38.294 INFO  (kafka-admin-client-thread | adminclient-1) [] o.a.k.c.u.AppInfoParser
+          App info kafka.admin.client for adminclient-1 unregistered
+2022-05-13 21:05:38.296 INFO  (kafka-admin-client-thread | adminclient-1) [] o.a.k.c.m.Metrics
+          Metrics scheduler closed
+2022-05-13 21:05:38.296 INFO  (kafka-admin-client-thread | adminclient-1) [] o.a.k.c.m.Metrics
+          Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2022-05-13 21:05:38.296 INFO  (kafka-admin-client-thread | adminclient-1) [] o.a.k.c.m.Metrics
+          Metrics reporters closed
+2022-05-13 21:05:38.301 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.MiniSolrCloudCluster
+          Starting cluster of 2 servers in /tmp/solr.crossdc.SolrAndKafkaIntegrationTest_132C63BBEFAD73A6-001/tempDir-001
+2022-05-13 21:05:38.302 WARN  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.ZkTestServer
+          TEST_HOME() does not exist - solrj test?
+2022-05-13 21:05:38.305 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.ZkTestServer
+          STARTING ZK TEST SERVER
+2022-05-13 21:05:38.306 INFO  (ZkTestServer Run Thread) [] o.a.s.c.ZkTestServer
+          client port: 0.0.0.0/0.0.0.0:0
+2022-05-13 21:05:38.306 INFO  (ZkTestServer Run Thread) [] o.a.s.c.ZkTestServer
+          Starting server
+2022-05-13 21:05:38.306 WARN  (ZkTestServer Run Thread) [] o.a.z.s.ServerCnxnFactory
+          maxCnxns is not configured, using default value 0.
+2022-05-13 21:05:38.405 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.ZkTestServer
+          start zk server on port: 39389
+2022-05-13 21:05:38.406 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.ZkTestServer
+          waitForServerUp: 127.0.0.1:39389
+2022-05-13 21:05:38.406 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.ZkTestServer
+          parse host and port list: 127.0.0.1:39389
+2022-05-13 21:05:38.407 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.ZkTestServer
+          connecting to 127.0.0.1 39389
+2022-05-13 21:05:38.413 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.c.ConnectionManager
+          Waiting for client to connect to ZooKeeper
+2022-05-13 21:05:38.416 INFO  (zkConnectionManagerCallback-3-thread-1) [] o.a.s.c.c.ConnectionManager
+          zkClient has connected
+2022-05-13 21:05:38.416 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.c.ConnectionManager
+          Client is connected to ZooKeeper
+2022-05-13 21:05:38.418 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.c.ConnectionManager
+          Waiting for client to connect to ZooKeeper
+2022-05-13 21:05:38.419 INFO  (zkConnectionManagerCallback-5-thread-1) [] o.a.s.c.c.ConnectionManager
+          zkClient has connected
+2022-05-13 21:05:38.420 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.c.ConnectionManager
+          Client is connected to ZooKeeper
+2022-05-13 21:05:38.420 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.c.ConnectionManager
+          Waiting for client to connect to ZooKeeper
+2022-05-13 21:05:38.421 INFO  (zkConnectionManagerCallback-7-thread-1) [] o.a.s.c.c.ConnectionManager
+          zkClient has connected
+2022-05-13 21:05:38.421 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.c.ConnectionManager
+          Client is connected to ZooKeeper
+2022-05-13 21:05:38.621 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.s.e.JettySolrRunner
+          Start Jetty (configured port=0, binding port=0)
+2022-05-13 21:05:38.621 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.s.e.JettySolrRunner
+          Start Jetty (configured port=0, binding port=0)
+2022-05-13 21:05:38.621 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.s.e.JettySolrRunner
+          Trying to start Jetty on port 0 try number 2 ...
+2022-05-13 21:05:38.621 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.s.e.JettySolrRunner
+          Trying to start Jetty on port 0 try number 2 ...
+2022-05-13 21:05:38.623 INFO  (jetty-launcher-8-thread-2) [] o.e.j.s.Server
+          jetty-9.4.44.v20210927; built: 2021-09-27T23:02:44.612Z; git: 8da83308eeca865e495e53ef315a249d63ba9332; jvm 11.0.15+3
+2022-05-13 21:05:38.623 INFO  (jetty-launcher-8-thread-1) [] o.e.j.s.Server
+          jetty-9.4.44.v20210927; built: 2021-09-27T23:02:44.612Z; git: 8da83308eeca865e495e53ef315a249d63ba9332; jvm 11.0.15+3
+2022-05-13 21:05:38.628 INFO  (jetty-launcher-8-thread-2) [] o.e.j.s.session
+          DefaultSessionIdManager workerName=node0
+2022-05-13 21:05:38.628 INFO  (jetty-launcher-8-thread-1) [] o.e.j.s.session
+          DefaultSessionIdManager workerName=node0
+2022-05-13 21:05:38.628 INFO  (jetty-launcher-8-thread-1) [] o.e.j.s.session
+          No SessionScavenger set, using defaults
+2022-05-13 21:05:38.628 INFO  (jetty-launcher-8-thread-2) [] o.e.j.s.session
+          No SessionScavenger set, using defaults
+2022-05-13 21:05:38.629 INFO  (jetty-launcher-8-thread-2) [] o.e.j.s.session
+          node0 Scavenging every 660000ms
+2022-05-13 21:05:38.629 INFO  (jetty-launcher-8-thread-1) [] o.e.j.s.session
+          node0 Scavenging every 660000ms
+2022-05-13 21:05:38.633 INFO  (jetty-launcher-8-thread-1) [] o.e.j.s.h.ContextHandler
+          Started o.e.j.s.ServletContextHandler@79837a5e{/solr,null,AVAILABLE}
+2022-05-13 21:05:38.633 INFO  (jetty-launcher-8-thread-2) [] o.e.j.s.h.ContextHandler
+          Started o.e.j.s.ServletContextHandler@3bafef85{/solr,null,AVAILABLE}
+2022-05-13 21:05:38.647 INFO  (jetty-launcher-8-thread-2) [] o.e.j.s.AbstractConnector
+          Started ServerConnector@937f85{ssl, (ssl, alpn, http/1.1, h2)}{127.0.0.1:38839}
+2022-05-13 21:05:38.647 INFO  (jetty-launcher-8-thread-1) [] o.e.j.s.AbstractConnector
+          Started ServerConnector@299f4a9e{ssl, (ssl, alpn, http/1.1, h2)}{127.0.0.1:39259}
+2022-05-13 21:05:38.647 INFO  (jetty-launcher-8-thread-1) [] o.e.j.s.Server
+          Started @2110ms
+2022-05-13 21:05:38.647 INFO  (jetty-launcher-8-thread-2) [] o.e.j.s.Server
+          Started @2110ms
+2022-05-13 21:05:38.647 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.s.e.JettySolrRunner
+          Jetty properties: {hostContext=/solr, hostPort=39259, zkHost=127.0.0.1:39389/solr}
+2022-05-13 21:05:38.647 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.s.e.JettySolrRunner
+          Jetty properties: {hostContext=/solr, hostPort=38839, zkHost=127.0.0.1:39389/solr}
+2022-05-13 21:05:38.665 ERROR (jetty-launcher-8-thread-1) [] o.a.s.u.StartupLoggingUtils
+          Missing Java Option solr.log.dir. Logging may be missing or incomplete.
+2022-05-13 21:05:38.665 ERROR (jetty-launcher-8-thread-2) [] o.a.s.u.StartupLoggingUtils
+          Missing Java Option solr.log.dir. Logging may be missing or incomplete.
+2022-05-13 21:05:38.665 INFO  (jetty-launcher-8-thread-1) [] o.a.s.s.SolrDispatchFilter
+          Using logger factory org.apache.logging.slf4j.Log4jLoggerFactory
+2022-05-13 21:05:38.665 INFO  (jetty-launcher-8-thread-2) [] o.a.s.s.SolrDispatchFilter
+          Using logger factory org.apache.logging.slf4j.Log4jLoggerFactory
+2022-05-13 21:05:38.665 INFO  (jetty-launcher-8-thread-1) [] o.a.s.s.SolrDispatchFilter
+           ___      _       Welcome to Apache Solr™ version 8.11.1
+2022-05-13 21:05:38.665 INFO  (jetty-launcher-8-thread-2) [] o.a.s.s.SolrDispatchFilter
+           ___      _       Welcome to Apache Solr™ version 8.11.1
+2022-05-13 21:05:38.665 INFO  (jetty-launcher-8-thread-1) [] o.a.s.s.SolrDispatchFilter
+          / __| ___| |_ _   Starting in cloud mode on port null
+2022-05-13 21:05:38.665 INFO  (jetty-launcher-8-thread-2) [] o.a.s.s.SolrDispatchFilter
+          / __| ___| |_ _   Starting in cloud mode on port null
+2022-05-13 21:05:38.666 INFO  (jetty-launcher-8-thread-1) [] o.a.s.s.SolrDispatchFilter
+          \__ \/ _ \ | '_|  Install dir: null
+2022-05-13 21:05:38.666 INFO  (jetty-launcher-8-thread-2) [] o.a.s.s.SolrDispatchFilter
+          \__ \/ _ \ | '_|  Install dir: null
+2022-05-13 21:05:38.666 INFO  (jetty-launcher-8-thread-2) [] o.a.s.s.SolrDispatchFilter
+          |___/\___/_|_|    Start time: 2022-05-14T02:05:38.666151Z
+2022-05-13 21:05:38.666 INFO  (jetty-launcher-8-thread-1) [] o.a.s.s.SolrDispatchFilter
+          |___/\___/_|_|    Start time: 2022-05-14T02:05:38.666151Z
+2022-05-13 21:05:38.666 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.c.ConnectionManager
+          Waiting for client to connect to ZooKeeper
+2022-05-13 21:05:38.666 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.c.ConnectionManager
+          Waiting for client to connect to ZooKeeper
+2022-05-13 21:05:38.668 INFO  (zkConnectionManagerCallback-11-thread-1) [] o.a.s.c.c.ConnectionManager
+          zkClient has connected
+2022-05-13 21:05:38.668 INFO  (zkConnectionManagerCallback-12-thread-1) [] o.a.s.c.c.ConnectionManager
+          zkClient has connected
+2022-05-13 21:05:38.668 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.c.ConnectionManager
+          Client is connected to ZooKeeper
+2022-05-13 21:05:38.668 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.c.ConnectionManager
+          Client is connected to ZooKeeper
+2022-05-13 21:05:38.669 INFO  (jetty-launcher-8-thread-2) [] o.a.s.s.SolrDispatchFilter
+          solr.xml found in ZooKeeper. Loading...
+2022-05-13 21:05:38.669 INFO  (jetty-launcher-8-thread-1) [] o.a.s.s.SolrDispatchFilter
+          solr.xml found in ZooKeeper. Loading...
+2022-05-13 21:05:38.703 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.SolrXmlConfig
+          Metrics collection is disabled.
+2022-05-13 21:05:38.703 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.SolrXmlConfig
+          Metrics collection is disabled.
+2022-05-13 21:05:38.979 INFO  (jetty-launcher-8-thread-1) [] o.a.s.h.c.HttpShardHandlerFactory
+          Host whitelist initialized: WhitelistHostChecker [whitelistHosts=null, whitelistHostCheckingEnabled=true]
+2022-05-13 21:05:38.992 WARN  (jetty-launcher-8-thread-1) [] o.e.j.u.s.S.config
+          Trusting all certificates configured for Client@34635997[provider=null,keyStore=null,trustStore=null]
+2022-05-13 21:05:38.993 WARN  (jetty-launcher-8-thread-1) [] o.e.j.u.s.S.config
+          No Client EndPointIdentificationAlgorithm configured for Client@34635997[provider=null,keyStore=null,trustStore=null]
+2022-05-13 21:05:39.031 WARN  (jetty-launcher-8-thread-1) [] o.e.j.u.s.S.config
+          Trusting all certificates configured for Client@5ac86d23[provider=null,keyStore=null,trustStore=null]
+2022-05-13 21:05:39.032 WARN  (jetty-launcher-8-thread-1) [] o.e.j.u.s.S.config
+          No Client EndPointIdentificationAlgorithm configured for Client@5ac86d23[provider=null,keyStore=null,trustStore=null]
+2022-05-13 21:05:39.047 INFO  (jetty-launcher-8-thread-2) [] o.a.s.h.c.HttpShardHandlerFactory
+          Host whitelist initialized: WhitelistHostChecker [whitelistHosts=null, whitelistHostCheckingEnabled=true]
+2022-05-13 21:05:39.048 WARN  (jetty-launcher-8-thread-2) [] o.e.j.u.s.S.config
+          Trusting all certificates configured for Client@164e559[provider=null,keyStore=null,trustStore=null]
+2022-05-13 21:05:39.049 WARN  (jetty-launcher-8-thread-2) [] o.e.j.u.s.S.config
+          No Client EndPointIdentificationAlgorithm configured for Client@164e559[provider=null,keyStore=null,trustStore=null]
+2022-05-13 21:05:39.052 WARN  (jetty-launcher-8-thread-2) [] o.e.j.u.s.S.config
+          Trusting all certificates configured for Client@69f35e5f[provider=null,keyStore=null,trustStore=null]
+2022-05-13 21:05:39.052 WARN  (jetty-launcher-8-thread-2) [] o.e.j.u.s.S.config
+          No Client EndPointIdentificationAlgorithm configured for Client@69f35e5f[provider=null,keyStore=null,trustStore=null]
+2022-05-13 21:05:39.055 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.ZkContainer
+          Zookeeper client=127.0.0.1:39389/solr
+2022-05-13 21:05:39.055 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.ZkContainer
+          Zookeeper client=127.0.0.1:39389/solr
+2022-05-13 21:05:39.061 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.c.ConnectionManager
+          Waiting for client to connect to ZooKeeper
+2022-05-13 21:05:39.061 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.c.ConnectionManager
+          Waiting for client to connect to ZooKeeper
+2022-05-13 21:05:39.062 INFO  (zkConnectionManagerCallback-33-thread-1) [] o.a.s.c.c.ConnectionManager
+          zkClient has connected
+2022-05-13 21:05:39.062 INFO  (zkConnectionManagerCallback-34-thread-1) [] o.a.s.c.c.ConnectionManager
+          zkClient has connected
+2022-05-13 21:05:39.063 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.c.ConnectionManager
+          Client is connected to ZooKeeper
+2022-05-13 21:05:39.063 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.c.ConnectionManager
+          Client is connected to ZooKeeper
+2022-05-13 21:05:39.166 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.c.ConnectionManager
+          Waiting for client to connect to ZooKeeper
+2022-05-13 21:05:39.167 INFO  (zkConnectionManagerCallback-36-thread-1) [] o.a.s.c.c.ConnectionManager
+          zkClient has connected
+2022-05-13 21:05:39.167 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.c.ConnectionManager
+          Client is connected to ZooKeeper
+2022-05-13 21:05:39.187 WARN  (jetty-launcher-8-thread-2) [] o.a.s.c.ZkController
+          The _default configset could not be uploaded. Please provide 'solr.default.confdir' parameter that points to a configset intended to be the default. Current 'solr.default.confdir' value: {}
+2022-05-13 21:05:39.188 WARN  (jetty-launcher-8-thread-2) [] o.a.s.c.ZkController
+          Contents of zookeeper /security.json are world-readable; consider setting up ACLs as described in https://solr.apache.org/guide/zookeeper-access-control.html
+2022-05-13 21:05:39.205 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.OverseerElectionContext
+          I am going to be the leader 127.0.0.1:38839_solr
+2022-05-13 21:05:39.207 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.Overseer
+          Overseer (id=72130130720063495-127.0.0.1:38839_solr-n_0000000000) starting
+2022-05-13 21:05:39.242 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.ZkController
+          Register node as live in ZooKeeper:/live_nodes/127.0.0.1:38839_solr
+2022-05-13 21:05:39.243 INFO  (OverseerStateUpdate-72130130720063495-127.0.0.1:38839_solr-n_0000000000) [] o.a.s.c.Overseer
+          Starting to work on the main queue : 127.0.0.1:38839_solr
+2022-05-13 21:05:39.245 INFO  (OverseerStateUpdate-72130130720063495-127.0.0.1:38839_solr-n_0000000000) [] o.a.s.c.c.ZkStateReader
+          Updated live nodes from ZooKeeper... (0) -> (1)
+2022-05-13 21:05:39.255 INFO  (jetty-launcher-8-thread-2) [] o.a.s.p.PackageLoader
+          /packages.json updated to version -1
+2022-05-13 21:05:39.263 WARN  (jetty-launcher-8-thread-2) [] o.a.s.c.CoreContainer
+          Not all security plugins configured!  authentication=disabled authorization=disabled.  Solr is only as secure as you make it. Consider configuring authentication/authorization before exposing Solr to users internal or external.  See https://s.apache.org/solrsecurity for more info
+2022-05-13 21:05:39.265 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.c.ConnectionManager
+          Waiting for client to connect to ZooKeeper
+2022-05-13 21:05:39.266 INFO  (zkConnectionManagerCallback-45-thread-1) [] o.a.s.c.c.ConnectionManager
+          zkClient has connected
+2022-05-13 21:05:39.266 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.c.ConnectionManager
+          Client is connected to ZooKeeper
+2022-05-13 21:05:39.270 WARN  (jetty-launcher-8-thread-1) [] o.a.s.c.ZkController
+          The _default configset could not be uploaded. Please provide 'solr.default.confdir' parameter that points to a configset intended to be the default. Current 'solr.default.confdir' value: {}
+2022-05-13 21:05:39.271 WARN  (jetty-launcher-8-thread-1) [] o.a.s.c.ZkController
+          Contents of zookeeper /security.json are world-readable; consider setting up ACLs as described in https://solr.apache.org/guide/zookeeper-access-control.html
+2022-05-13 21:05:39.272 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.c.ZkStateReader
+          Updated live nodes from ZooKeeper... (0) -> (1)
+2022-05-13 21:05:39.277 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.ZkController
+          Publish node=127.0.0.1:39259_solr as DOWN
+2022-05-13 21:05:39.279 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.TransientSolrCoreCacheDefault
+          Allocating transient core cache for max 2147483647 cores with initial capacity of 1024
+2022-05-13 21:05:39.285 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.ZkController
+          Register node as live in ZooKeeper:/live_nodes/127.0.0.1:39259_solr
+2022-05-13 21:05:39.287 INFO  (zkCallback-35-thread-1) [] o.a.s.c.c.ZkStateReader
+          Updated live nodes from ZooKeeper... (1) -> (2)
+2022-05-13 21:05:39.287 INFO  (zkCallback-44-thread-1) [] o.a.s.c.c.ZkStateReader
+          Updated live nodes from ZooKeeper... (1) -> (2)
+2022-05-13 21:05:39.288 INFO  (jetty-launcher-8-thread-1) [] o.a.s.p.PackageLoader
+          /packages.json updated to version -1
+2022-05-13 21:05:39.289 WARN  (jetty-launcher-8-thread-1) [] o.a.s.c.CoreContainer
+          Not all security plugins configured!  authentication=disabled authorization=disabled.  Solr is only as secure as you make it. Consider configuring authentication/authorization before exposing Solr to users internal or external.  See https://s.apache.org/solrsecurity for more info
+2022-05-13 21:05:39.450 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.CorePropertiesLocator
+          Found 0 core definitions underneath /tmp/solr.crossdc.SolrAndKafkaIntegrationTest_132C63BBEFAD73A6-001/tempDir-001/node2
+2022-05-13 21:05:39.450 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.CorePropertiesLocator
+          Found 0 core definitions underneath /tmp/solr.crossdc.SolrAndKafkaIntegrationTest_132C63BBEFAD73A6-001/tempDir-001/node1
+2022-05-13 21:05:39.473 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.MiniSolrCloudCluster
+          waitForAllNodes: numServers=2
+2022-05-13 21:05:39.474 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.c.ConnectionManager
+          Waiting for client to connect to ZooKeeper
+2022-05-13 21:05:39.476 INFO  (zkConnectionManagerCallback-59-thread-1) [] o.a.s.c.c.ConnectionManager
+          zkClient has connected
+2022-05-13 21:05:39.476 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.c.ConnectionManager
+          Client is connected to ZooKeeper
+2022-05-13 21:05:39.477 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.c.ZkStateReader
+          Updated live nodes from ZooKeeper... (0) -> (2)
+2022-05-13 21:05:39.478 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.s.i.ZkClientClusterStateProvider
+          Cluster at 127.0.0.1:39389/solr ready
+2022-05-13 21:05:39.630 INFO  (OverseerThreadFactory-43-thread-1-processing-n:127.0.0.1:38839_solr) [] o.a.s.c.a.c.CreateCollectionCmd
+          Create collection collection1
+2022-05-13 21:05:39.744 INFO  (OverseerStateUpdate-72130130720063495-127.0.0.1:38839_solr-n_0000000000) [] o.a.s.c.o.SliceMutator
+          createReplica() {
+  "core":"collection1_shard1_replica_n1",
+  "node_name":"127.0.0.1:38839_solr",
+  "base_url":"https://127.0.0.1:38839/solr",
+  "collection":"collection1",
+  "shard":"shard1",
+  "state":"down",
+  "type":"NRT",
+  "operation":"ADDREPLICA",
+  "waitForFinalState":"false"} 
+2022-05-13 21:05:39.980 INFO  (qtp731060547-240) [ x:x:collection1_shard1_replica_n1] o.a.s.h.a.CoreAdminOperation
+          core create command qt=/admin/cores&coreNodeName=core_node2&collection.configName=conf&newCollection=true&name=collection1_shard1_replica_n1&action=CREATE&numShards=1&collection=collection1&shard=shard1&wt=javabin&version=2&replicaType=NRT
+2022-05-13 21:05:39.982 INFO  (qtp731060547-240) [ x:x:collection1_shard1_replica_n1] o.a.s.c.TransientSolrCoreCacheDefault
+          Allocating transient core cache for max 2147483647 cores with initial capacity of 1024
+2022-05-13 21:05:39.999 WARN  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.SolrConfig
+          You should not use LATEST as luceneMatchVersion property: if you use this setting, and then Solr upgrades to a newer release of Lucene, sizable changes may happen. If precise back compatibility is important then you should instead explicitly specify an actual Lucene version.
+2022-05-13 21:05:39.999 INFO  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.SolrConfig
+          Using Lucene MatchVersion: 8.11.1
+2022-05-13 21:05:40.015 INFO  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.s.IndexSchema
+          Schema name=minimal
+2022-05-13 21:05:40.071 INFO  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.s.IndexSchema
+          Loaded schema minimal/1.1 with uniqueid field id
+2022-05-13 21:05:40.071 INFO  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.CoreContainer
+          Creating SolrCore 'collection1_shard1_replica_n1' using configuration from configset conf, trusted=true
+2022-05-13 21:05:40.082 INFO  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.SolrCore
+          [[collection1_shard1_replica_n1] ] Opening new SolrCore at [/tmp/solr.crossdc.SolrAndKafkaIntegrationTest_132C63BBEFAD73A6-001/tempDir-001/node2/collection1_shard1_replica_n1], dataDir=[/tmp/solr.crossdc.SolrAndKafkaIntegrationTest_132C63BBEFAD73A6-001/tempDir-001/node2/collection1_shard1_replica_n1/data/]
+2022-05-13 21:05:40.241 INFO  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.u.UpdateHandler
+          Using UpdateLog implementation: org.apache.solr.update.UpdateLog
+2022-05-13 21:05:40.241 INFO  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.u.UpdateLog
+          Initializing UpdateLog: dataDir=null defaultSyncLevel=FLUSH numRecordsToKeep=100 maxNumLogsToKeep=10 numVersionBuckets=65536
+2022-05-13 21:05:40.245 INFO  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.u.CommitTracker
+          Hard AutoCommit: if uncommitted for 60000ms; 
+2022-05-13 21:05:40.245 INFO  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.u.CommitTracker
+          Soft AutoCommit: disabled
+2022-05-13 21:05:40.257 INFO  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.r.ManagedResourceStorage
+          Configured ZooKeeperStorageIO with znodeBase: /configs/conf
+2022-05-13 21:05:40.258 INFO  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.r.ManagedResourceStorage
+          Loaded null at path _rest_managed.json using ZooKeeperStorageIO:path=/configs/conf
+2022-05-13 21:05:40.262 INFO  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.h.ReplicationHandler
+          Commits will be reserved for 10000 ms
+2022-05-13 21:05:40.264 INFO  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.u.UpdateLog
+          Could not find max version in index or recent updates, using new clock 1732765485905215488
+2022-05-13 21:05:40.268 INFO  (searcherExecutor-61-thread-1-processing-n:127.0.0.1:38839_solr x:collection1_shard1_replica_n1 c:collection1 s:shard1 r:core_node2) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.SolrCore
+          [collection1_shard1_replica_n1]  Registered new searcher autowarm time: 0 ms
+2022-05-13 21:05:40.273 INFO  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.ZkShardTerms
+          Successful update of terms at /collections/collection1/terms/shard1 to Terms{values={core_node2=0}, version=0}
+2022-05-13 21:05:40.274 INFO  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.ShardLeaderElectionContextBase
+          make sure parent is created /collections/collection1/leaders/shard1
+2022-05-13 21:05:40.279 INFO  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.ShardLeaderElectionContext
+          Enough replicas found to continue.
+2022-05-13 21:05:40.279 INFO  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.ShardLeaderElectionContext
+          I may be the new leader - try and sync
+2022-05-13 21:05:40.279 INFO  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.SyncStrategy
+          Sync replicas to https://127.0.0.1:38839/solr/collection1_shard1_replica_n1/
+2022-05-13 21:05:40.280 INFO  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.SyncStrategy
+          Sync Success - now sync replicas to me
+2022-05-13 21:05:40.280 INFO  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.SyncStrategy
+          https://127.0.0.1:38839/solr/collection1_shard1_replica_n1/ has no replicas
+2022-05-13 21:05:40.281 INFO  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.ShardLeaderElectionContextBase
+          Creating leader registration node /collections/collection1/leaders/shard1/leader after winning as /collections/collection1/leader_elect/shard1/election/72130130720063495-core_node2-n_0000000000
+2022-05-13 21:05:40.283 INFO  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.ShardLeaderElectionContext
+          I am the new leader: https://127.0.0.1:38839/solr/collection1_shard1_replica_n1/ shard1
+2022-05-13 21:05:40.384 INFO  (zkCallback-35-thread-1) [] o.a.s.c.c.ZkStateReader
+          A cluster state change: [WatchedEvent state:SyncConnected type:NodeDataChanged path:/collections/collection1/state.json] for collection [collection1] has occurred - updating... (live nodes size: [2])
+2022-05-13 21:05:40.385 INFO  (zkCallback-35-thread-2) [] o.a.s.c.c.ZkStateReader
+          A cluster state change: [WatchedEvent state:SyncConnected type:NodeDataChanged path:/collections/collection1/state.json] for collection [collection1] has occurred - updating... (live nodes size: [2])
+2022-05-13 21:05:40.385 INFO  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.ZkController
+          I am the leader, no recovery necessary
+2022-05-13 21:05:40.388 INFO  (qtp731060547-240) [] o.a.s.s.HttpSolrCall
+          [admin] webapp=null path=/admin/cores params={qt=/admin/cores&coreNodeName=core_node2&collection.configName=conf&newCollection=true&name=collection1_shard1_replica_n1&action=CREATE&numShards=1&collection=collection1&shard=shard1&wt=javabin&version=2&replicaType=NRT} status=0 QTime=408
+2022-05-13 21:05:40.398 INFO  (qtp731060547-238) [] o.a.s.h.a.CollectionsHandler
+          Wait for new collection to be active for at most 45 seconds. Check all shard replicas
+2022-05-13 21:05:40.488 INFO  (zkCallback-35-thread-2) [] o.a.s.c.c.ZkStateReader
+          A cluster state change: [WatchedEvent state:SyncConnected type:NodeDataChanged path:/collections/collection1/state.json] for collection [collection1] has occurred - updating... (live nodes size: [2])
+2022-05-13 21:05:40.488 INFO  (zkCallback-35-thread-1) [] o.a.s.c.c.ZkStateReader
+          A cluster state change: [WatchedEvent state:SyncConnected type:NodeDataChanged path:/collections/collection1/state.json] for collection [collection1] has occurred - updating... (live nodes size: [2])
+2022-05-13 21:05:40.489 INFO  (zkCallback-35-thread-3) [] o.a.s.c.c.ZkStateReader
+          A cluster state change: [WatchedEvent state:SyncConnected type:NodeDataChanged path:/collections/collection1/state.json] for collection [collection1] has occurred - updating... (live nodes size: [2])
+2022-05-13 21:05:40.490 INFO  (qtp731060547-238) [] o.a.s.s.HttpSolrCall
+          [admin] webapp=null path=/admin/collections params={collection.configName=conf&name=collection1&nrtReplicas=1&action=CREATE&numShards=1&wt=javabin&version=2} status=0 QTime=877
+2022-05-13 21:05:40.492 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.MiniSolrCloudCluster
+          waitForActiveCollection: collection1
+2022-05-13 21:05:40.497 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.SolrAndKafkaIntegrationTest
+          bootstrapServers=127.0.0.1:46231
+2022-05-13 21:05:40.500 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.c.Consumer$KafkaCrossDcConsumer
+          Creating Kafka consumer with configuration {group.id=group_1, bootstrap.servers=127.0.0.1:46231}
+2022-05-13 21:05:40.505 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.k.c.c.ConsumerConfig
+          ConsumerConfig values: 
+	allow.auto.create.topics = true
+	auto.commit.interval.ms = 5000
+	auto.offset.reset = latest
+	bootstrap.servers = [127.0.0.1:46231]
+	check.crcs = true
+	client.dns.lookup = use_all_dns_ips
+	client.id = consumer-group_1-1
+	client.rack = 
+	connections.max.idle.ms = 540000
+	default.api.timeout.ms = 60000
+	enable.auto.commit = true
+	exclude.internal.topics = true
+	fetch.max.bytes = 52428800
+	fetch.max.wait.ms = 500
+	fetch.min.bytes = 1
+	group.id = group_1
+	group.instance.id = null
+	heartbeat.interval.ms = 3000
+	interceptor.classes = []
+	internal.leave.group.on.close = true
+	internal.throw.on.fetch.stable.offset.unsupported = false
+	isolation.level = read_uncommitted
+	key.deserializer = class org.apache.kafka.common.serialization.StringDeserializer
+	max.partition.fetch.bytes = 1048576
+	max.poll.interval.ms = 300000
+	max.poll.records = 500
+	metadata.max.age.ms = 300000
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	partition.assignment.strategy = [class org.apache.kafka.clients.consumer.RangeAssignor]
+	receive.buffer.bytes = 65536
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 30000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.mechanism = GSSAPI
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	session.timeout.ms = 10000
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	value.deserializer = class org.apache.solr.crossdc.common.MirroredSolrRequestSerializer
+
+2022-05-13 21:05:40.522 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.k.c.u.AppInfoParser
+          Kafka version: 2.8.1
+2022-05-13 21:05:40.522 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.k.c.u.AppInfoParser
+          Kafka commitId: 839b886f9b732b15
+2022-05-13 21:05:40.522 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.k.c.u.AppInfoParser
+          Kafka startTimeMs: 1652493940522
+2022-05-13 21:05:40.522 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.c.Consumer$KafkaCrossDcConsumer
+          Creating Kafka resubmit producer
+2022-05-13 21:05:40.523 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.KafkaMirroringSink
+          Creating Kafka producer! Configurations org.apache.solr.crossdc.common.KafkaCrossDcConf@163e07ee 
+2022-05-13 21:05:40.525 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.k.c.p.ProducerConfig
+          ProducerConfig values: 
+	acks = 1
+	batch.size = 16384
+	bootstrap.servers = [127.0.0.1:46231]
+	buffer.memory = 33554432
+	client.dns.lookup = use_all_dns_ips
+	client.id = producer-1
+	compression.type = none
+	connections.max.idle.ms = 540000
+	delivery.timeout.ms = 120000
+	enable.idempotence = false
+	interceptor.classes = []
+	internal.auto.downgrade.txn.commit = false
+	key.serializer = class org.apache.kafka.common.serialization.StringSerializer
+	linger.ms = 0
+	max.block.ms = 60000
+	max.in.flight.requests.per.connection = 5
+	max.request.size = 1048576
+	metadata.max.age.ms = 300000
+	metadata.max.idle.ms = 300000
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	partitioner.class = class org.apache.kafka.clients.producer.internals.DefaultPartitioner
+	receive.buffer.bytes = 32768
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 30000
+	retries = 2147483647
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.mechanism = GSSAPI
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	transaction.timeout.ms = 60000
+	transactional.id = null
+	value.serializer = class org.apache.solr.crossdc.common.MirroredSolrRequestSerializer
+
+2022-05-13 21:05:40.531 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.k.c.u.AppInfoParser
+          Kafka version: 2.8.1
+2022-05-13 21:05:40.531 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.k.c.u.AppInfoParser
+          Kafka commitId: 839b886f9b732b15
+2022-05-13 21:05:40.531 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.k.c.u.AppInfoParser
+          Kafka startTimeMs: 1652493940531
+2022-05-13 21:05:40.532 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.KafkaMirroringSink
+          KafkaMirroringSink has been created. Producer & Topic have been created successfully! Configurations org.apache.solr.crossdc.common.KafkaCrossDcConf@163e07ee
+2022-05-13 21:05:40.532 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.c.Consumer$KafkaCrossDcConsumer
+          Created Kafka resubmit producer
+2022-05-13 21:05:40.532 INFO  (pool-11-thread-1) [] o.a.s.c.c.Consumer$KafkaCrossDcConsumer
+          About to start Kafka consumer thread...
+2022-05-13 21:05:40.532 INFO  (pool-11-thread-1) [] o.a.s.c.c.Consumer$KafkaCrossDcConsumer
+          Kafka consumer subscribing to topic topic=topic1
+2022-05-13 21:05:40.532 INFO  (pool-11-thread-1) [] o.a.k.c.c.KafkaConsumer
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] Subscribed to topic(s): topic1
+2022-05-13 21:05:40.536 INFO  (kafka-producer-network-thread | producer-1) [] o.a.k.c.Metadata
+          [Producer clientId=producer-1] Cluster ID: 7K4120m8TrOj9Qwok-culg
+2022-05-13 21:05:40.561 INFO  (pool-11-thread-1) [] o.a.k.c.Metadata
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] Cluster ID: 7K4120m8TrOj9Qwok-culg
+2022-05-13 21:05:40.562 INFO  (TEST-SolrAndKafkaIntegrationTest.test-seed#[132C63BBEFAD73A6]) [] o.a.s.SolrTestCaseJ4
+          ###Starting test
+2022-05-13 21:05:40.562 INFO  (TEST-SolrAndKafkaIntegrationTest.test-seed#[132C63BBEFAD73A6]) [] o.a.k.c.p.ProducerConfig
+          ProducerConfig values: 
+	acks = -1
+	batch.size = 1
+	bootstrap.servers = [127.0.0.1:46231]
+	buffer.memory = 33554432
+	client.dns.lookup = use_all_dns_ips
+	client.id = producer-2
+	compression.type = none
+	connections.max.idle.ms = 540000
+	delivery.timeout.ms = 120000
+	enable.idempotence = false
+	interceptor.classes = []
+	internal.auto.downgrade.txn.commit = false
+	key.serializer = class org.apache.kafka.common.serialization.StringSerializer
+	linger.ms = 1
+	max.block.ms = 60000
+	max.in.flight.requests.per.connection = 5
+	max.request.size = 1048576
+	metadata.max.age.ms = 300000
+	metadata.max.idle.ms = 300000
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	partitioner.class = class org.apache.kafka.clients.producer.internals.DefaultPartitioner
+	receive.buffer.bytes = 32768
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 30000
+	retries = 0
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.mechanism = GSSAPI
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	transaction.timeout.ms = 60000
+	transactional.id = null
+	value.serializer = class org.apache.solr.crossdc.common.MirroredSolrRequestSerializer
+
+2022-05-13 21:05:40.563 INFO  (data-plane-kafka-request-handler-3) [] k.z.AdminZkClient
+          Creating topic __consumer_offsets with configuration {compression.type=producer, cleanup.policy=compact, segment.bytes=104857600} and initial partition assignment HashMap(0 -> ArrayBuffer(0), 1 -> ArrayBuffer(0), 2 -> ArrayBuffer(0), 3 -> ArrayBuffer(0), 4 -> ArrayBuffer(0))
+2022-05-13 21:05:40.564 INFO  (TEST-SolrAndKafkaIntegrationTest.test-seed#[132C63BBEFAD73A6]) [] o.a.k.c.u.AppInfoParser
+          Kafka version: 2.8.1
+2022-05-13 21:05:40.564 INFO  (TEST-SolrAndKafkaIntegrationTest.test-seed#[132C63BBEFAD73A6]) [] o.a.k.c.u.AppInfoParser
+          Kafka commitId: 839b886f9b732b15
+2022-05-13 21:05:40.564 INFO  (TEST-SolrAndKafkaIntegrationTest.test-seed#[132C63BBEFAD73A6]) [] o.a.k.c.u.AppInfoParser
+          Kafka startTimeMs: 1652493940564
+2022-05-13 21:05:40.566 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] New topics: [Set(__consumer_offsets)], deleted topics: [HashSet()], new partition replica assignment [Set(TopicIdReplicaAssignment(__consumer_offsets,Some(RKtt0OCnSsShAqp3If1FBQ),HashMap(__consumer_offsets-4 -> ReplicaAssignment(replicas=0, addingReplicas=, removingReplicas=), __consumer_offsets-3 -> ReplicaAssignment(replicas=0, addingReplicas=, removingReplicas=), __consumer_offsets-2 -> ReplicaAssignment(replicas=0, addingReplicas=, removingReplicas=), __consumer_offsets-0 -> ReplicaAssignment(replicas=0, addingReplicas=, removingReplicas=), __consumer_offsets-1 -> ReplicaAssignment(replicas=0, addingReplicas=, removingReplicas=))))]
+2022-05-13 21:05:40.566 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] New partition creation callback for __consumer_offsets-4,__consumer_offsets-3,__consumer_offsets-2,__consumer_offsets-0,__consumer_offsets-1
+2022-05-13 21:05:40.566 INFO  (kafka-producer-network-thread | producer-2) [] o.a.k.c.Metadata
+          [Producer clientId=producer-2] Cluster ID: 7K4120m8TrOj9Qwok-culg
+2022-05-13 21:05:40.566 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Changed partition __consumer_offsets-4 state from NonExistentPartition to NewPartition with assigned replicas 0
+2022-05-13 21:05:40.566 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Changed partition __consumer_offsets-3 state from NonExistentPartition to NewPartition with assigned replicas 0
+2022-05-13 21:05:40.566 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Changed partition __consumer_offsets-2 state from NonExistentPartition to NewPartition with assigned replicas 0
+2022-05-13 21:05:40.566 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Changed partition __consumer_offsets-0 state from NonExistentPartition to NewPartition with assigned replicas 0
+2022-05-13 21:05:40.566 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Changed partition __consumer_offsets-1 state from NonExistentPartition to NewPartition with assigned replicas 0
+2022-05-13 21:05:40.566 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Sending UpdateMetadata request to brokers HashSet() for 0 partitions
+2022-05-13 21:05:40.567 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Sending UpdateMetadata request to brokers HashSet() for 0 partitions
+2022-05-13 21:05:40.570 INFO  (TEST-SolrAndKafkaIntegrationTest.test-seed#[132C63BBEFAD73A6]) [] o.a.s.c.c.MirroredSolrRequestSerializer
+          serialize request=org.apache.solr.client.solrj.request.UpdateRequest@7f45b447 docs=[{id=id=1652493940565}, {text=text=test}]
+2022-05-13 21:05:40.571 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Changed partition __consumer_offsets-4 from NewPartition to OnlinePartition with state LeaderAndIsr(leader=0, leaderEpoch=0, isr=List(0), zkVersion=0)
+2022-05-13 21:05:40.571 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Changed partition __consumer_offsets-3 from NewPartition to OnlinePartition with state LeaderAndIsr(leader=0, leaderEpoch=0, isr=List(0), zkVersion=0)
+2022-05-13 21:05:40.571 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Changed partition __consumer_offsets-2 from NewPartition to OnlinePartition with state LeaderAndIsr(leader=0, leaderEpoch=0, isr=List(0), zkVersion=0)
+2022-05-13 21:05:40.571 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Changed partition __consumer_offsets-0 from NewPartition to OnlinePartition with state LeaderAndIsr(leader=0, leaderEpoch=0, isr=List(0), zkVersion=0)
+2022-05-13 21:05:40.571 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Changed partition __consumer_offsets-1 from NewPartition to OnlinePartition with state LeaderAndIsr(leader=0, leaderEpoch=0, isr=List(0), zkVersion=0)
+2022-05-13 21:05:40.571 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Sending LeaderAndIsr request to broker 0 with 5 become-leader and 0 become-follower partitions
+2022-05-13 21:05:40.571 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Sending UpdateMetadata request to brokers HashSet(0) for 5 partitions
+2022-05-13 21:05:40.572 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Sending UpdateMetadata request to brokers HashSet() for 0 partitions
+2022-05-13 21:05:40.572 INFO  (data-plane-kafka-request-handler-0) [] s.c.logger
+          [Broker id=0] Handling LeaderAndIsr request correlationId 3 from controller 0 for 5 partitions
+2022-05-13 21:05:40.574 INFO  (data-plane-kafka-request-handler-0) [] k.s.ReplicaFetcherManager
+          [ReplicaFetcherManager on broker 0] Removed fetcher for partitions HashSet(__consumer_offsets-4, __consumer_offsets-3, __consumer_offsets-2, __consumer_offsets-0, __consumer_offsets-1)
+2022-05-13 21:05:40.574 INFO  (data-plane-kafka-request-handler-0) [] s.c.logger
+          [Broker id=0] Stopped fetchers as part of LeaderAndIsr request correlationId 3 from controller 0 epoch 1 as part of the become-leader transition for 5 partitions
+2022-05-13 21:05:40.576 INFO  (data-plane-kafka-request-handler-0) [] k.l.Log
+          [Log partition=__consumer_offsets-3, dir=/tmp/junit1856026067066757636/junit16585721094021545443] Loading producer state till offset 0 with message format version 2
+2022-05-13 21:05:40.576 INFO  (data-plane-kafka-request-handler-0) [] k.l.LogManager
+          Created log for partition __consumer_offsets-3 in /tmp/junit1856026067066757636/junit16585721094021545443/__consumer_offsets-3 with properties {cleanup.policy=compact, compression.type="producer", segment.bytes=104857600}
+2022-05-13 21:05:40.576 INFO  (data-plane-kafka-request-handler-0) [] k.c.Partition
+          [Partition __consumer_offsets-3 broker=0] No checkpointed highwatermark is found for partition __consumer_offsets-3
+2022-05-13 21:05:40.576 INFO  (data-plane-kafka-request-handler-0) [] k.c.Partition
+          [Partition __consumer_offsets-3 broker=0] Log loaded for partition __consumer_offsets-3 with initial high watermark 0
+2022-05-13 21:05:40.576 INFO  (data-plane-kafka-request-handler-0) [] s.c.logger
+          [Broker id=0] Leader __consumer_offsets-3 starts at leader epoch 0 from offset 0 with high watermark 0 ISR [0] addingReplicas [] removingReplicas []. Previous leader epoch was -1.
+2022-05-13 21:05:40.578 INFO  (data-plane-kafka-request-handler-0) [] k.l.Log
+          [Log partition=__consumer_offsets-2, dir=/tmp/junit1856026067066757636/junit16585721094021545443] Loading producer state till offset 0 with message format version 2
+2022-05-13 21:05:40.578 INFO  (data-plane-kafka-request-handler-0) [] k.l.LogManager
+          Created log for partition __consumer_offsets-2 in /tmp/junit1856026067066757636/junit16585721094021545443/__consumer_offsets-2 with properties {cleanup.policy=compact, compression.type="producer", segment.bytes=104857600}
+2022-05-13 21:05:40.579 INFO  (data-plane-kafka-request-handler-0) [] k.c.Partition
+          [Partition __consumer_offsets-2 broker=0] No checkpointed highwatermark is found for partition __consumer_offsets-2
+2022-05-13 21:05:40.579 INFO  (data-plane-kafka-request-handler-0) [] k.c.Partition
+          [Partition __consumer_offsets-2 broker=0] Log loaded for partition __consumer_offsets-2 with initial high watermark 0
+2022-05-13 21:05:40.579 INFO  (data-plane-kafka-request-handler-0) [] s.c.logger
+          [Broker id=0] Leader __consumer_offsets-2 starts at leader epoch 0 from offset 0 with high watermark 0 ISR [0] addingReplicas [] removingReplicas []. Previous leader epoch was -1.
+2022-05-13 21:05:40.580 INFO  (data-plane-kafka-request-handler-0) [] k.l.Log
+          [Log partition=__consumer_offsets-4, dir=/tmp/junit1856026067066757636/junit16585721094021545443] Loading producer state till offset 0 with message format version 2
+2022-05-13 21:05:40.581 INFO  (data-plane-kafka-request-handler-0) [] k.l.LogManager
+          Created log for partition __consumer_offsets-4 in /tmp/junit1856026067066757636/junit16585721094021545443/__consumer_offsets-4 with properties {cleanup.policy=compact, compression.type="producer", segment.bytes=104857600}
+2022-05-13 21:05:40.581 INFO  (data-plane-kafka-request-handler-0) [] k.c.Partition
+          [Partition __consumer_offsets-4 broker=0] No checkpointed highwatermark is found for partition __consumer_offsets-4
+2022-05-13 21:05:40.581 INFO  (data-plane-kafka-request-handler-0) [] k.c.Partition
+          [Partition __consumer_offsets-4 broker=0] Log loaded for partition __consumer_offsets-4 with initial high watermark 0
+2022-05-13 21:05:40.581 INFO  (data-plane-kafka-request-handler-0) [] s.c.logger
+          [Broker id=0] Leader __consumer_offsets-4 starts at leader epoch 0 from offset 0 with high watermark 0 ISR [0] addingReplicas [] removingReplicas []. Previous leader epoch was -1.
+2022-05-13 21:05:40.582 INFO  (data-plane-kafka-request-handler-0) [] k.l.Log
+          [Log partition=__consumer_offsets-1, dir=/tmp/junit1856026067066757636/junit16585721094021545443] Loading producer state till offset 0 with message format version 2
+2022-05-13 21:05:40.583 INFO  (data-plane-kafka-request-handler-0) [] k.l.LogManager
+          Created log for partition __consumer_offsets-1 in /tmp/junit1856026067066757636/junit16585721094021545443/__consumer_offsets-1 with properties {cleanup.policy=compact, compression.type="producer", segment.bytes=104857600}
+2022-05-13 21:05:40.583 INFO  (data-plane-kafka-request-handler-0) [] k.c.Partition
+          [Partition __consumer_offsets-1 broker=0] No checkpointed highwatermark is found for partition __consumer_offsets-1
+2022-05-13 21:05:40.583 INFO  (data-plane-kafka-request-handler-0) [] k.c.Partition
+          [Partition __consumer_offsets-1 broker=0] Log loaded for partition __consumer_offsets-1 with initial high watermark 0
+2022-05-13 21:05:40.583 INFO  (data-plane-kafka-request-handler-0) [] s.c.logger
+          [Broker id=0] Leader __consumer_offsets-1 starts at leader epoch 0 from offset 0 with high watermark 0 ISR [0] addingReplicas [] removingReplicas []. Previous leader epoch was -1.
+2022-05-13 21:05:40.585 INFO  (data-plane-kafka-request-handler-0) [] k.l.Log
+          [Log partition=__consumer_offsets-0, dir=/tmp/junit1856026067066757636/junit16585721094021545443] Loading producer state till offset 0 with message format version 2
+2022-05-13 21:05:40.585 INFO  (data-plane-kafka-request-handler-0) [] k.l.LogManager
+          Created log for partition __consumer_offsets-0 in /tmp/junit1856026067066757636/junit16585721094021545443/__consumer_offsets-0 with properties {cleanup.policy=compact, compression.type="producer", segment.bytes=104857600}
+2022-05-13 21:05:40.585 INFO  (data-plane-kafka-request-handler-0) [] k.c.Partition
+          [Partition __consumer_offsets-0 broker=0] No checkpointed highwatermark is found for partition __consumer_offsets-0
+2022-05-13 21:05:40.585 INFO  (data-plane-kafka-request-handler-0) [] k.c.Partition
+          [Partition __consumer_offsets-0 broker=0] Log loaded for partition __consumer_offsets-0 with initial high watermark 0
+2022-05-13 21:05:40.585 INFO  (data-plane-kafka-request-handler-0) [] s.c.logger
+          [Broker id=0] Leader __consumer_offsets-0 starts at leader epoch 0 from offset 0 with high watermark 0 ISR [0] addingReplicas [] removingReplicas []. Previous leader epoch was -1.
+2022-05-13 21:05:40.586 INFO  (data-plane-kafka-request-handler-0) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Elected as the group coordinator for partition 3 in epoch 0
+2022-05-13 21:05:40.586 INFO  (data-plane-kafka-request-handler-0) [] k.c.g.GroupMetadataManager
+          [GroupMetadataManager brokerId=0] Scheduling loading of offsets and group metadata from __consumer_offsets-3 for epoch 0
+2022-05-13 21:05:40.587 INFO  (data-plane-kafka-request-handler-0) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Elected as the group coordinator for partition 2 in epoch 0
+2022-05-13 21:05:40.587 INFO  (data-plane-kafka-request-handler-0) [] k.c.g.GroupMetadataManager
+          [GroupMetadataManager brokerId=0] Scheduling loading of offsets and group metadata from __consumer_offsets-2 for epoch 0
+2022-05-13 21:05:40.587 INFO  (data-plane-kafka-request-handler-0) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Elected as the group coordinator for partition 4 in epoch 0
+2022-05-13 21:05:40.587 INFO  (data-plane-kafka-request-handler-0) [] k.c.g.GroupMetadataManager
+          [GroupMetadataManager brokerId=0] Scheduling loading of offsets and group metadata from __consumer_offsets-4 for epoch 0
+2022-05-13 21:05:40.587 INFO  (data-plane-kafka-request-handler-0) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Elected as the group coordinator for partition 1 in epoch 0
+2022-05-13 21:05:40.587 INFO  (data-plane-kafka-request-handler-0) [] k.c.g.GroupMetadataManager
+          [GroupMetadataManager brokerId=0] Scheduling loading of offsets and group metadata from __consumer_offsets-1 for epoch 0
+2022-05-13 21:05:40.587 INFO  (data-plane-kafka-request-handler-0) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Elected as the group coordinator for partition 0 in epoch 0
+2022-05-13 21:05:40.587 INFO  (data-plane-kafka-request-handler-0) [] k.c.g.GroupMetadataManager
+          [GroupMetadataManager brokerId=0] Scheduling loading of offsets and group metadata from __consumer_offsets-0 for epoch 0
+2022-05-13 21:05:40.587 INFO  (data-plane-kafka-request-handler-0) [] s.c.logger
+          [Broker id=0] Finished LeaderAndIsr request in 0ms correlationId 3 from controller 0 for 5 partitions
+2022-05-13 21:05:40.589 INFO  (data-plane-kafka-request-handler-2) [] s.c.logger
+          [Broker id=0] Add 5 partitions and deleted 0 partitions from metadata cache in response to UpdateMetadata request sent by controller 0 epoch 1 with correlation id 4
+2022-05-13 21:05:40.590 INFO  (group-metadata-manager-0) [] k.c.g.GroupMetadataManager
+          [GroupMetadataManager brokerId=0] Finished loading offsets and group metadata from __consumer_offsets-3 in 4 milliseconds for epoch 0, of which 2 milliseconds was spent in the scheduler.
+2022-05-13 21:05:40.591 INFO  (group-metadata-manager-0) [] k.c.g.GroupMetadataManager
+          [GroupMetadataManager brokerId=0] Finished loading offsets and group metadata from __consumer_offsets-2 in 4 milliseconds for epoch 0, of which 3 milliseconds was spent in the scheduler.
+2022-05-13 21:05:40.591 INFO  (group-metadata-manager-0) [] k.c.g.GroupMetadataManager
+          [GroupMetadataManager brokerId=0] Finished loading offsets and group metadata from __consumer_offsets-4 in 4 milliseconds for epoch 0, of which 4 milliseconds was spent in the scheduler.
+2022-05-13 21:05:40.591 INFO  (group-metadata-manager-0) [] k.c.g.GroupMetadataManager
+          [GroupMetadataManager brokerId=0] Finished loading offsets and group metadata from __consumer_offsets-1 in 4 milliseconds for epoch 0, of which 4 milliseconds was spent in the scheduler.
+2022-05-13 21:05:40.591 INFO  (group-metadata-manager-0) [] k.c.g.GroupMetadataManager
+          [GroupMetadataManager brokerId=0] Finished loading offsets and group metadata from __consumer_offsets-0 in 4 milliseconds for epoch 0, of which 4 milliseconds was spent in the scheduler.
+2022-05-13 21:05:40.608 INFO  (kafka-producer-network-thread | producer-2) [] o.a.s.c.SolrAndKafkaIntegrationTest
+          Producer finished sending metadata=topic1-0@0, exception=null
+2022-05-13 21:05:40.609 INFO  (TEST-SolrAndKafkaIntegrationTest.test-seed#[132C63BBEFAD73A6]) [] o.a.k.c.p.KafkaProducer
+          [Producer clientId=producer-2] Closing the Kafka producer with timeoutMillis = 9223372036854775807 ms.
+2022-05-13 21:05:40.610 INFO  (TEST-SolrAndKafkaIntegrationTest.test-seed#[132C63BBEFAD73A6]) [] o.a.k.c.m.Metrics
+          Metrics scheduler closed
+2022-05-13 21:05:40.610 INFO  (TEST-SolrAndKafkaIntegrationTest.test-seed#[132C63BBEFAD73A6]) [] o.a.k.c.m.Metrics
+          Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2022-05-13 21:05:40.610 INFO  (TEST-SolrAndKafkaIntegrationTest.test-seed#[132C63BBEFAD73A6]) [] o.a.k.c.m.Metrics
+          Metrics reporters closed
+2022-05-13 21:05:40.610 INFO  (TEST-SolrAndKafkaIntegrationTest.test-seed#[132C63BBEFAD73A6]) [] o.a.k.c.u.AppInfoParser
+          App info kafka.producer for producer-2 unregistered
+2022-05-13 21:05:40.634 INFO  (qtp731060547-244) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.S.Request
+          [collection1_shard1_replica_n1]  webapp=/solr path=/select params={q=*:*&_stateVer_=collection1:4&wt=javabin&version=2} hits=0 status=0 QTime=19
+2022-05-13 21:05:40.638 INFO  (pool-11-thread-1) [] o.a.k.c.c.i.AbstractCoordinator
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] Discovered group coordinator localhost:46231 (id: 2147483647 rack: null)
+2022-05-13 21:05:40.639 INFO  (pool-11-thread-1) [] o.a.k.c.c.i.AbstractCoordinator
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] (Re-)joining group
+2022-05-13 21:05:40.650 INFO  (pool-11-thread-1) [] o.a.k.c.c.i.AbstractCoordinator
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] (Re-)joining group
+2022-05-13 21:05:40.653 INFO  (data-plane-kafka-request-handler-7) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Preparing to rebalance group group_1 in state PreparingRebalance with old generation 0 (__consumer_offsets-4) (reason: Adding new member consumer-group_1-1-c55018a4-9797-4e44-abc5-bca1c7c823a0 with group instance id None)
+2022-05-13 21:05:40.657 INFO  (executor-Rebalance) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Stabilized group group_1 generation 1 (__consumer_offsets-4) with 1 members
+2022-05-13 21:05:40.658 INFO  (pool-11-thread-1) [] o.a.k.c.c.i.AbstractCoordinator
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] Successfully joined group with generation Generation{generationId=1, memberId='consumer-group_1-1-c55018a4-9797-4e44-abc5-bca1c7c823a0', protocol='range'}
+2022-05-13 21:05:40.659 INFO  (pool-11-thread-1) [] o.a.k.c.c.i.ConsumerCoordinator
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] Finished assignment for group at generation 1: {consumer-group_1-1-c55018a4-9797-4e44-abc5-bca1c7c823a0=Assignment(partitions=[topic1-0])}
+2022-05-13 21:05:40.663 INFO  (data-plane-kafka-request-handler-2) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Assignment received from leader for group group_1 for generation 1. The group has 1 members, 0 of which are static.
+2022-05-13 21:05:40.671 INFO  (pool-11-thread-1) [] o.a.k.c.c.i.AbstractCoordinator
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] Successfully synced group in generation Generation{generationId=1, memberId='consumer-group_1-1-c55018a4-9797-4e44-abc5-bca1c7c823a0', protocol='range'}
+2022-05-13 21:05:40.671 INFO  (pool-11-thread-1) [] o.a.k.c.c.i.ConsumerCoordinator
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] Notifying assignor about the new Assignment(partitions=[topic1-0])
+2022-05-13 21:05:40.672 INFO  (pool-11-thread-1) [] o.a.k.c.c.i.ConsumerCoordinator
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] Adding newly assigned partitions: topic1-0
+2022-05-13 21:05:40.678 INFO  (pool-11-thread-1) [] o.a.k.c.c.i.ConsumerCoordinator
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] Found no committed offset for partition topic1-0
+2022-05-13 21:05:40.684 INFO  (pool-11-thread-1) [] o.a.k.c.c.i.SubscriptionState
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] Resetting offset for partition topic1-0 to position FetchPosition{offset=1, offsetEpoch=Optional.empty, currentLeader=LeaderAndEpoch{leader=Optional[localhost:46231 (id: 0 rack: null)], epoch=0}}.
+2022-05-13 21:05:41.142 INFO  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.S.Request
+          [collection1_shard1_replica_n1]  webapp=/solr path=/select params={q=*:*&_stateVer_=collection1:4&wt=javabin&version=2} hits=0 status=0 QTime=1
+2022-05-13 21:05:41.633 INFO  (OverseerCollectionConfigSetProcessor-72130130720063495-127.0.0.1:38839_solr-n_0000000000) [] o.a.s.c.OverseerTaskQueue
+          Response ZK path: /overseer/collection-queue-work/qnr-0000000000 doesn't exist. Requestor may have disconnected from ZooKeeper
+2022-05-13 21:05:41.649 INFO  (qtp731060547-238) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.S.Request
+          [collection1_shard1_replica_n1]  webapp=/solr path=/select params={q=*:*&_stateVer_=collection1:4&wt=javabin&version=2} hits=0 status=0 QTime=1
+2022-05-13 21:05:42.157 INFO  (qtp731060547-244) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.S.Request
+          [collection1_shard1_replica_n1]  webapp=/solr path=/select params={q=*:*&_stateVer_=collection1:4&wt=javabin&version=2} hits=0 status=0 QTime=1
+2022-05-13 21:05:42.663 INFO  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.S.Request
+          [collection1_shard1_replica_n1]  webapp=/solr path=/select params={q=*:*&_stateVer_=collection1:4&wt=javabin&version=2} hits=0 status=0 QTime=1
+2022-05-13 21:05:43.166 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Processing automatic preferred replica leader election
+2022-05-13 21:05:43.171 INFO  (qtp731060547-238) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.S.Request
+          [collection1_shard1_replica_n1]  webapp=/solr path=/select params={q=*:*&_stateVer_=collection1:4&wt=javabin&version=2} hits=0 status=0 QTime=1
+2022-05-13 21:05:43.676 INFO  (qtp731060547-244) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.S.Request
+          [collection1_shard1_replica_n1]  webapp=/solr path=/select params={q=*:*&_stateVer_=collection1:4&wt=javabin&version=2} hits=0 status=0 QTime=1
+2022-05-13 21:05:44.184 INFO  (qtp731060547-240) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.S.Request
+          [collection1_shard1_replica_n1]  webapp=/solr path=/select params={q=*:*&_stateVer_=collection1:4&wt=javabin&version=2} hits=0 status=0 QTime=1
+2022-05-13 21:05:44.691 INFO  (qtp731060547-238) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.S.Request
+          [collection1_shard1_replica_n1]  webapp=/solr path=/select params={q=*:*&_stateVer_=collection1:4&wt=javabin&version=2} hits=0 status=0 QTime=1
+2022-05-13 21:05:45.199 INFO  (qtp731060547-244) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.S.Request
+          [collection1_shard1_replica_n1]  webapp=/solr path=/select params={q=*:*&_stateVer_=collection1:4&wt=javabin&version=2} hits=0 status=0 QTime=1
+2022-05-13 21:05:45.702 INFO  (TEST-SolrAndKafkaIntegrationTest.test-seed#[132C63BBEFAD73A6]) [] o.a.s.SolrTestCaseJ4
+          ###Ending test
+2022-05-13 21:05:45.705 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.c.Consumer$KafkaCrossDcConsumer
+          Shutdown called on KafkaCrossDcConsumer
+2022-05-13 21:05:45.706 INFO  (pool-11-thread-1) [] o.a.s.c.c.Consumer$KafkaCrossDcConsumer
+          Caught wakeup exception, shutting down KafkaSolrRequestConsumer
+2022-05-13 21:05:45.706 INFO  (pool-11-thread-1) [] o.a.s.c.c.Consumer$KafkaCrossDcConsumer
+          Closed kafka consumer. Exiting now.
+2022-05-13 21:05:45.706 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.KafkaServer
+          [KafkaServer id=0] shutting down
+2022-05-13 21:05:45.706 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.KafkaServer
+          [KafkaServer id=0] Starting controlled shutdown
+2022-05-13 21:05:45.707 INFO  (pool-11-thread-1) [] o.a.k.c.c.i.ConsumerCoordinator
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] Revoke previously assigned partitions topic1-0
+2022-05-13 21:05:45.707 INFO  (pool-11-thread-1) [] o.a.k.c.c.i.AbstractCoordinator
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] Member consumer-group_1-1-c55018a4-9797-4e44-abc5-bca1c7c823a0 sending LeaveGroup request to coordinator localhost:46231 (id: 2147483647 rack: null) due to the consumer is being closed
+2022-05-13 21:05:45.709 INFO  (data-plane-kafka-request-handler-1) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Member[group.instance.id None, member.id consumer-group_1-1-c55018a4-9797-4e44-abc5-bca1c7c823a0] in group group_1 has left, removing it from the group
+2022-05-13 21:05:45.710 INFO  (data-plane-kafka-request-handler-1) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Preparing to rebalance group group_1 in state PreparingRebalance with old generation 1 (__consumer_offsets-4) (reason: removing member consumer-group_1-1-c55018a4-9797-4e44-abc5-bca1c7c823a0 on LeaveGroup)
+2022-05-13 21:05:45.710 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Shutting down broker 0
+2022-05-13 21:05:45.710 INFO  (data-plane-kafka-request-handler-1) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Group group_1 with generation 2 is now empty (__consumer_offsets-4)
+2022-05-13 21:05:45.711 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Sending UpdateMetadata request to brokers HashSet() for 0 partitions
+2022-05-13 21:05:45.712 INFO  (pool-11-thread-1) [] o.a.k.c.m.Metrics
+          Metrics scheduler closed
+2022-05-13 21:05:45.712 INFO  (pool-11-thread-1) [] o.a.k.c.m.Metrics
+          Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2022-05-13 21:05:45.712 INFO  (pool-11-thread-1) [] o.a.k.c.m.Metrics
+          Metrics reporters closed
+2022-05-13 21:05:45.712 INFO  (pool-11-thread-1) [] o.a.k.c.u.AppInfoParser
+          App info kafka.consumer for consumer-group_1-1 unregistered
+2022-05-13 21:05:45.712 INFO  (pool-11-thread-1) [] o.a.k.c.p.KafkaProducer
+          [Producer clientId=producer-1] Closing the Kafka producer with timeoutMillis = 9223372036854775807 ms.
+2022-05-13 21:05:45.713 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.KafkaServer
+          [KafkaServer id=0] Controlled shutdown succeeded
+2022-05-13 21:05:45.713 INFO  (pool-11-thread-1) [] o.a.k.c.m.Metrics
+          Metrics scheduler closed
+2022-05-13 21:05:45.713 INFO  (pool-11-thread-1) [] o.a.k.c.m.Metrics
+          Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2022-05-13 21:05:45.713 INFO  (pool-11-thread-1) [] o.a.k.c.m.Metrics
+          Metrics reporters closed
+2022-05-13 21:05:45.713 INFO  (pool-11-thread-1) [] o.a.k.c.u.AppInfoParser
+          App info kafka.producer for producer-1 unregistered
+2022-05-13 21:05:45.714 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.c.ZkNodeChangeNotificationListener$ChangeEventProcessThread
+          [/config/changes-event-process-thread]: Shutting down
+2022-05-13 21:05:45.714 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.c.ZkNodeChangeNotificationListener$ChangeEventProcessThread
+          [/config/changes-event-process-thread]: Shutdown completed
+2022-05-13 21:05:45.714 INFO  (/config/changes-event-process-thread) [] k.c.ZkNodeChangeNotificationListener$ChangeEventProcessThread
+          [/config/changes-event-process-thread]: Stopped
+2022-05-13 21:05:45.714 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.n.SocketServer
+          [SocketServer listenerType=ZK_BROKER, nodeId=0] Stopping socket server request processors
+2022-05-13 21:05:45.716 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.n.SocketServer
+          [SocketServer listenerType=ZK_BROKER, nodeId=0] Stopped socket server request processors
+2022-05-13 21:05:45.716 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.KafkaRequestHandlerPool
+          [data-plane Kafka Request Handler on Broker 0], shutting down
+2022-05-13 21:05:45.717 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.KafkaRequestHandlerPool
+          [data-plane Kafka Request Handler on Broker 0], shut down completely
+2022-05-13 21:05:45.717 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-AlterAcls]: Shutting down
+2022-05-13 21:05:45.746 INFO  (ExpirationReaper-0-AlterAcls) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-AlterAcls]: Stopped
+2022-05-13 21:05:45.746 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-AlterAcls]: Shutdown completed
+2022-05-13 21:05:45.746 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.KafkaApis
+          [KafkaApi-0] Shutdown complete.
+2022-05-13 21:05:45.746 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-topic]: Shutting down
+2022-05-13 21:05:45.903 INFO  (ExpirationReaper-0-topic) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-topic]: Stopped
+2022-05-13 21:05:45.903 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-topic]: Shutdown completed
+2022-05-13 21:05:45.906 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.c.t.TransactionCoordinator
+          [TransactionCoordinator id=0] Shutting down.
+2022-05-13 21:05:45.907 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.c.t.ProducerIdManager
+          [ProducerId Manager 0]: Shutdown complete: last producerId assigned 0
+2022-05-13 21:05:45.908 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.c.t.TransactionStateManager
+          [Transaction State Manager 0]: Shutdown complete
+2022-05-13 21:05:45.908 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.c.t.TransactionMarkerChannelManager
+          [Transaction Marker Channel Manager 0]: Shutting down
+2022-05-13 21:05:45.909 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.c.t.TransactionMarkerChannelManager
+          [Transaction Marker Channel Manager 0]: Shutdown completed
+2022-05-13 21:05:45.909 INFO  (TxnMarkerSenderThread-0) [] k.c.t.TransactionMarkerChannelManager
+          [Transaction Marker Channel Manager 0]: Stopped
+2022-05-13 21:05:45.910 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.c.t.TransactionCoordinator
+          [TransactionCoordinator id=0] Shutdown complete.
+2022-05-13 21:05:45.911 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Shutting down.
+2022-05-13 21:05:45.912 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Heartbeat]: Shutting down
+2022-05-13 21:05:46.105 INFO  (ExpirationReaper-0-Heartbeat) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Heartbeat]: Stopped
+2022-05-13 21:05:46.105 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Heartbeat]: Shutdown completed
+2022-05-13 21:05:46.106 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Rebalance]: Shutting down
+2022-05-13 21:05:46.257 INFO  (ExpirationReaper-0-Rebalance) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Rebalance]: Stopped
+2022-05-13 21:05:46.257 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Rebalance]: Shutdown completed
+2022-05-13 21:05:46.259 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Shutdown complete.
+2022-05-13 21:05:46.261 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.ReplicaManager
+          [ReplicaManager broker=0] Shutting down
+2022-05-13 21:05:46.262 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.ReplicaManager$LogDirFailureHandler
+          [LogDirFailureHandler]: Shutting down
+2022-05-13 21:05:46.262 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.ReplicaManager$LogDirFailureHandler
+          [LogDirFailureHandler]: Shutdown completed
+2022-05-13 21:05:46.262 INFO  (LogDirFailureHandler) [] k.s.ReplicaManager$LogDirFailureHandler
+          [LogDirFailureHandler]: Stopped
+2022-05-13 21:05:46.263 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.ReplicaFetcherManager
+          [ReplicaFetcherManager on broker 0] shutting down
+2022-05-13 21:05:46.265 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.ReplicaFetcherManager
+          [ReplicaFetcherManager on broker 0] shutdown completed
+2022-05-13 21:05:46.265 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.ReplicaAlterLogDirsManager
+          [ReplicaAlterLogDirsManager on broker 0] shutting down
+2022-05-13 21:05:46.266 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.ReplicaAlterLogDirsManager
+          [ReplicaAlterLogDirsManager on broker 0] shutdown completed
+2022-05-13 21:05:46.266 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Fetch]: Shutting down
+2022-05-13 21:05:46.365 INFO  (ExpirationReaper-0-Fetch) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Fetch]: Stopped
+2022-05-13 21:05:46.365 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Fetch]: Shutdown completed
+2022-05-13 21:05:46.365 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Produce]: Shutting down
+2022-05-13 21:05:46.443 INFO  (ExpirationReaper-0-Produce) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Produce]: Stopped
+2022-05-13 21:05:46.443 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Produce]: Shutdown completed
+2022-05-13 21:05:46.444 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-DeleteRecords]: Shutting down
+2022-05-13 21:05:46.644 INFO  (ExpirationReaper-0-DeleteRecords) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-DeleteRecords]: Stopped
+2022-05-13 21:05:46.644 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-DeleteRecords]: Shutdown completed
+2022-05-13 21:05:46.644 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-ElectLeader]: Shutting down
+2022-05-13 21:05:46.843 INFO  (ExpirationReaper-0-ElectLeader) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-ElectLeader]: Stopped
+2022-05-13 21:05:46.843 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-ElectLeader]: Shutdown completed
+2022-05-13 21:05:46.846 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.ReplicaManager
+          [ReplicaManager broker=0] Shut down completely
+2022-05-13 21:05:46.846 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.BrokerToControllerRequestThread
+          [broker-0-to-controller-send-thread]: Shutting down
+2022-05-13 21:05:46.847 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.BrokerToControllerRequestThread
+          [broker-0-to-controller-send-thread]: Shutdown completed
+2022-05-13 21:05:46.847 INFO  (broker-0-to-controller-send-thread) [] k.s.BrokerToControllerRequestThread
+          [broker-0-to-controller-send-thread]: Stopped
+2022-05-13 21:05:46.850 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.BrokerToControllerChannelManagerImpl
+          Broker to controller channel manager for alterIsrChannel shutdown
+2022-05-13 21:05:46.853 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.l.LogManager
+          Shutting down.
+2022-05-13 21:05:46.853 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.l.LogCleaner
+          Shutting down the log cleaner.
+2022-05-13 21:05:46.853 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.l.LogCleaner
+          [kafka-log-cleaner-thread-0]: Shutting down
+2022-05-13 21:05:46.854 INFO  (kafka-log-cleaner-thread-0) [] k.l.LogCleaner
+          [kafka-log-cleaner-thread-0]: Stopped
+2022-05-13 21:05:46.854 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.l.LogCleaner
+          [kafka-log-cleaner-thread-0]: Shutdown completed
+2022-05-13 21:05:46.866 INFO  (pool-12-thread-1) [] k.l.ProducerStateManager
+          [ProducerStateManager partition=topic1-0] Writing producer snapshot at offset 1
+2022-05-13 21:05:46.866 INFO  (pool-12-thread-1) [] k.l.ProducerStateManager
+          [ProducerStateManager partition=__consumer_offsets-4] Writing producer snapshot at offset 4
+2022-05-13 21:05:46.869 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.l.LogManager
+          Shutdown complete.
+2022-05-13 21:05:46.869 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.c.ControllerEventManager$ControllerEventThread
+          [ControllerEventThread controllerId=0] Shutting down
+2022-05-13 21:05:46.869 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.c.ControllerEventManager$ControllerEventThread
+          [ControllerEventThread controllerId=0] Shutdown completed
+2022-05-13 21:05:46.869 INFO  (controller-event-thread) [] k.c.ControllerEventManager$ControllerEventThread
+          [ControllerEventThread controllerId=0] Stopped
+2022-05-13 21:05:46.870 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.c.ZkPartitionStateMachine
+          [PartitionStateMachine controllerId=0] Stopped partition state machine
+2022-05-13 21:05:46.871 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.c.ZkReplicaStateMachine
+          [ReplicaStateMachine controllerId=0] Stopped replica state machine
+2022-05-13 21:05:46.872 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.c.RequestSendThread
+          [RequestSendThread controllerId=0] Shutting down
+2022-05-13 21:05:46.872 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.c.RequestSendThread
+          [RequestSendThread controllerId=0] Shutdown completed
+2022-05-13 21:05:46.872 INFO  (Controller-0-to-broker-0-send-thread) [] k.c.RequestSendThread
+          [RequestSendThread controllerId=0] Stopped
+2022-05-13 21:05:46.873 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.c.KafkaController
+          [Controller id=0] Resigned
+2022-05-13 21:05:46.873 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.FinalizedFeatureChangeListener$ChangeNotificationProcessorThread
+          [feature-zk-node-event-process-thread]: Shutting down
+2022-05-13 21:05:46.873 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.FinalizedFeatureChangeListener$ChangeNotificationProcessorThread
+          [feature-zk-node-event-process-thread]: Shutdown completed
+2022-05-13 21:05:46.873 INFO  (feature-zk-node-event-process-thread) [] k.s.FinalizedFeatureChangeListener$ChangeNotificationProcessorThread
+          [feature-zk-node-event-process-thread]: Stopped
+2022-05-13 21:05:46.874 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.z.ZooKeeperClient
+          [ZooKeeperClient Kafka server] Closing.
+2022-05-13 21:05:46.977 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.z.ZooKeeperClient
+          [ZooKeeperClient Kafka server] Closed.
+2022-05-13 21:05:46.978 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-Fetch]: Shutting down
+2022-05-13 21:05:47.803 INFO  (ThrottledChannelReaper-Fetch) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-Fetch]: Stopped
+2022-05-13 21:05:47.803 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-Fetch]: Shutdown completed
+2022-05-13 21:05:47.804 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-Produce]: Shutting down
+2022-05-13 21:05:48.804 INFO  (ThrottledChannelReaper-Produce) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-Produce]: Stopped
+2022-05-13 21:05:48.804 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-Produce]: Shutdown completed
+2022-05-13 21:05:48.804 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-Request]: Shutting down
+2022-05-13 21:05:49.804 INFO  (ThrottledChannelReaper-Request) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-Request]: Stopped
+2022-05-13 21:05:49.804 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-Request]: Shutdown completed
+2022-05-13 21:05:49.804 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-ControllerMutation]: Shutting down
+2022-05-13 21:05:49.805 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-ControllerMutation]: Shutdown completed
+2022-05-13 21:05:49.805 INFO  (ThrottledChannelReaper-ControllerMutation) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-ControllerMutation]: Stopped
+2022-05-13 21:05:49.807 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.n.SocketServer
+          [SocketServer listenerType=ZK_BROKER, nodeId=0] Shutting down socket server
+2022-05-13 21:05:49.828 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.n.SocketServer
+          [SocketServer listenerType=ZK_BROKER, nodeId=0] Shutdown completed
+2022-05-13 21:05:49.828 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.k.c.m.Metrics
+          Metrics scheduler closed
+2022-05-13 21:05:49.828 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.k.c.m.Metrics
+          Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2022-05-13 21:05:49.828 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.k.c.m.Metrics
+          Metrics reporters closed
+2022-05-13 21:05:49.829 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.BrokerTopicStats
+          Broker and topic stats closed
+2022-05-13 21:05:49.829 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.k.c.u.AppInfoParser
+          App info kafka.server for 0 unregistered
+2022-05-13 21:05:49.830 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] k.s.KafkaServer
+          [KafkaServer id=0] shut down completed
+2022-05-13 21:05:49.950 INFO  (jetty-closer-67-thread-1) [] o.a.s.c.CoreContainer
+          Shutting down CoreContainer instance=1210170524
+2022-05-13 21:05:49.950 INFO  (jetty-closer-67-thread-2) [] o.a.s.c.CoreContainer
+          Shutting down CoreContainer instance=1702832340
+2022-05-13 21:05:49.950 INFO  (jetty-closer-67-thread-1) [] o.a.s.c.ZkController
+          Remove node as live in ZooKeeper:/live_nodes/127.0.0.1:38839_solr
+2022-05-13 21:05:49.950 INFO  (jetty-closer-67-thread-2) [] o.a.s.c.ZkController
+          Remove node as live in ZooKeeper:/live_nodes/127.0.0.1:39259_solr
+2022-05-13 21:05:49.952 INFO  (jetty-closer-67-thread-1) [] o.a.s.c.ZkController
+          Publish this node as DOWN...
+2022-05-13 21:05:49.952 INFO  (jetty-closer-67-thread-2) [] o.a.s.c.ZkController
+          Publish this node as DOWN...
+2022-05-13 21:05:49.952 INFO  (jetty-closer-67-thread-1) [] o.a.s.c.ZkController
+          Publish node=127.0.0.1:38839_solr as DOWN
+2022-05-13 21:05:49.952 INFO  (jetty-closer-67-thread-2) [] o.a.s.c.ZkController
+          Publish node=127.0.0.1:39259_solr as DOWN
+2022-05-13 21:05:49.962 INFO  (zkCallback-35-thread-3) [] o.a.s.c.c.ZkStateReader
+          A cluster state change: [WatchedEvent state:SyncConnected type:NodeDataChanged path:/collections/collection1/state.json] for collection [collection1] has occurred - updating... (live nodes size: [2])
+2022-05-13 21:05:49.962 INFO  (zkCallback-35-thread-1) [] o.a.s.c.c.ZkStateReader
+          A cluster state change: [WatchedEvent state:SyncConnected type:NodeDataChanged path:/collections/collection1/state.json] for collection [collection1] has occurred - updating... (live nodes size: [2])
+2022-05-13 21:05:49.962 INFO  (zkCallback-35-thread-2) [] o.a.s.c.c.ZkStateReader
+          A cluster state change: [WatchedEvent state:SyncConnected type:NodeDataChanged path:/collections/collection1/state.json] for collection [collection1] has occurred - updating... (live nodes size: [2])
+2022-05-13 21:05:49.965 INFO  (jetty-closer-67-thread-2) [] o.a.s.m.SolrMetricManager
+          Closing metric reporters for registry=solr.node tag=null
+2022-05-13 21:05:49.966 INFO  (coreCloseExecutor-75-thread-1) [] o.a.s.c.SolrCore
+          [collection1_shard1_replica_n1]  CLOSING SolrCore org.apache.solr.core.SolrCore@2c81632b
+2022-05-13 21:05:49.966 INFO  (jetty-closer-67-thread-2) [] o.a.s.m.SolrMetricManager
+          Closing metric reporters for registry=solr.jvm tag=null
+2022-05-13 21:05:49.966 INFO  (coreCloseExecutor-75-thread-1) [] o.a.s.m.SolrMetricManager
+          Closing metric reporters for registry=solr.core.collection1.shard1.replica_n1 tag=SolrCore@2c81632b
+2022-05-13 21:05:49.966 INFO  (jetty-closer-67-thread-2) [] o.a.s.m.SolrMetricManager
+          Closing metric reporters for registry=solr.jetty tag=null
+2022-05-13 21:05:49.966 INFO  (coreCloseExecutor-75-thread-1) [] o.a.s.m.SolrMetricManager
+          Closing metric reporters for registry=solr.collection.collection1.shard1.leader tag=SolrCore@2c81632b
+2022-05-13 21:05:49.967 INFO  (jetty-closer-67-thread-2) [] o.a.s.m.SolrMetricManager
+          Closing metric reporters for registry=solr.cluster tag=null
+2022-05-13 21:05:49.972 INFO  (zkCallback-35-thread-3) [] o.a.s.c.c.ZkStateReader
+          Updated live nodes from ZooKeeper... (2) -> (1)
+2022-05-13 21:05:49.972 INFO  (coreCloseExecutor-75-thread-1) [] o.a.s.u.DirectUpdateHandler2
+          Committing on IndexWriter.close()  ... SKIPPED (unnecessary).
+2022-05-13 21:05:49.978 INFO  (jetty-closer-67-thread-1) [] o.a.s.m.SolrMetricManager
+          Closing metric reporters for registry=solr.node tag=null
+2022-05-13 21:05:49.978 INFO  (jetty-closer-67-thread-1) [] o.a.s.m.SolrMetricManager
+          Closing metric reporters for registry=solr.jvm tag=null
+2022-05-13 21:05:49.978 INFO  (jetty-closer-67-thread-1) [] o.a.s.m.SolrMetricManager
+          Closing metric reporters for registry=solr.jetty tag=null
+2022-05-13 21:05:49.979 INFO  (jetty-closer-67-thread-1) [] o.a.s.m.SolrMetricManager
+          Closing metric reporters for registry=solr.cluster tag=null
+2022-05-13 21:05:49.979 INFO  (closeThreadPool-78-thread-1) [] o.a.s.c.Overseer
+          Overseer (id=72130130720063495-127.0.0.1:38839_solr-n_0000000000) closing
+2022-05-13 21:05:49.979 INFO  (OverseerStateUpdate-72130130720063495-127.0.0.1:38839_solr-n_0000000000) [] o.a.s.c.Overseer
+          Overseer Loop exiting : 127.0.0.1:38839_solr
+2022-05-13 21:05:49.980 INFO  (OverseerAutoScalingTriggerThread-72130130720063495-127.0.0.1:38839_solr-n_0000000000) [] o.a.s.c.a.OverseerTriggerThread
+          OverseerTriggerThread woken up but we are closed, exiting.
+2022-05-13 21:05:49.981 INFO  (closeThreadPool-78-thread-2) [] o.a.s.c.Overseer
+          Overseer (id=72130130720063495-127.0.0.1:38839_solr-n_0000000000) closing
+2022-05-13 21:05:50.077 INFO  (jetty-closer-67-thread-2) [] o.e.j.s.AbstractConnector
+          Stopped ServerConnector@299f4a9e{ssl, (ssl, alpn, http/1.1, h2)}{127.0.0.1:0}
+2022-05-13 21:05:50.079 INFO  (jetty-closer-67-thread-2) [] o.e.j.s.h.ContextHandler
+          Stopped o.e.j.s.ServletContextHandler@79837a5e{/solr,null,STOPPED}
+2022-05-13 21:05:50.079 INFO  (jetty-closer-67-thread-2) [] o.e.j.s.session
+          node0 Stopped scavenging
+2022-05-13 21:05:50.172 INFO  (jetty-closer-67-thread-1) [] o.a.s.c.Overseer
+          Overseer (id=72130130720063495-127.0.0.1:38839_solr-n_0000000000) closing
+2022-05-13 21:05:50.175 INFO  (jetty-closer-67-thread-1) [] o.e.j.s.AbstractConnector
+          Stopped ServerConnector@937f85{ssl, (ssl, alpn, http/1.1, h2)}{127.0.0.1:0}
+2022-05-13 21:05:50.176 INFO  (jetty-closer-67-thread-1) [] o.e.j.s.h.ContextHandler
+          Stopped o.e.j.s.ServletContextHandler@3bafef85{/solr,null,STOPPED}
+2022-05-13 21:05:50.176 INFO  (jetty-closer-67-thread-1) [] o.e.j.s.session
+          node0 Stopped scavenging
+2022-05-13 21:05:50.177 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.ZkTestServer
+          Shutting down ZkTestServer.
+2022-05-13 21:05:50.382 WARN  (ZkTestServer Run Thread) [] o.a.s.c.ZkTestServer
+          Watch limit violations: 
+Maximum concurrent create/delete watches above limit:
+
+	3	/solr/aliases.json
+	2	/solr/packages.json
+	2	/solr/security.json
+	2	/solr/collections/collection1/terms/shard1
+
+Maximum concurrent data watches above limit:
+
+	13	/solr/collections/collection1/state.json
+	3	/solr/clusterstate.json
+	3	/solr/clusterprops.json
+
+Maximum concurrent children watches above limit:
+
+	15	/solr/overseer/queue
+	7	/solr/live_nodes
+	6	/solr/collections
+	5	/solr/collections/collection1/state.json
+	4	/solr/overseer/collection-queue-work
+
+2022-05-13 21:05:50.382 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.ZkTestServer
+          waitForServerDown: 127.0.0.1:39389
+2022-05-13 21:05:50.383 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.ZkTestServer
+          parse host and port list: 127.0.0.1:39389
+2022-05-13 21:05:50.383 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.ZkTestServer
+          connecting to 127.0.0.1 39389
+2022-05-13 21:05:50.383 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.ZkTestServer
+          Shutting down ZkTestServer.
+2022-05-13 21:05:50.383 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.ZkTestServer
+          waitForServerDown: 127.0.0.1:39389
+2022-05-13 21:05:50.383 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.ZkTestServer
+          parse host and port list: 127.0.0.1:39389
+2022-05-13 21:05:50.383 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.c.ZkTestServer
+          connecting to 127.0.0.1 39389
+2022-05-13 21:05:50.383 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.u.ErrorLogMuter
+          Closing ErrorLogMuter-regex-1 after mutting 0 log messages
+2022-05-13 21:05:50.383 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[132C63BBEFAD73A6]-worker) [] o.a.s.u.ErrorLogMuter
+          Creating ErrorLogMuter-regex-2 for ERROR logs matching regex: ignore_exception

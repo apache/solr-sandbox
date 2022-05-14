@@ -18,11 +18,13 @@ package org.apache.solr.crossdc.consumer;
 
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
+import org.apache.solr.common.util.IOUtils;
 import org.apache.solr.crossdc.KafkaMirroringSink;
 import org.apache.solr.crossdc.MirroringException;
 import org.apache.solr.crossdc.ResubmitBackoffPolicy;
@@ -124,6 +126,8 @@ public class Consumer {
         private final String topicName;
         SolrMessageProcessor messageProcessor;
 
+        CloudSolrClient solrClient;
+
         /**
          * @param conf The Kafka consumer configuration
          */
@@ -134,12 +138,9 @@ public class Consumer {
 
             kafkaConsumerProp.put("bootstrap.servers", conf.getBootStrapServers());
 
-            kafkaConsumerProp.put("key.deserializer", StringDeserializer.class.getName());
-            kafkaConsumerProp.put("value.deserializer", MirroredSolrRequestSerializer.class.getName());
-
             kafkaConsumerProp.put("group.id", "group_1");
 
-            CloudSolrClient solrClient = new CloudSolrClient.Builder(Collections.singletonList(conf.getSolrZkConnectString()), Optional.empty()).build();
+            solrClient = new CloudSolrClient.Builder(Collections.singletonList(conf.getSolrZkConnectString()), Optional.of("/solr")).build();
 
             messageProcessor = new SolrMessageProcessor(solrClient, new ResubmitBackoffPolicy() {
                 @Override public long getBackoffTimeMs(MirroredSolrRequest resubmitRequest) {
@@ -158,7 +159,7 @@ public class Consumer {
         }
 
         private KafkaConsumer<String, MirroredSolrRequest> createConsumer(Properties properties) {
-            KafkaConsumer kafkaConsumer = new KafkaConsumer(properties);
+            KafkaConsumer kafkaConsumer = new KafkaConsumer(properties, new StringDeserializer(), new MirroredSolrRequestSerializer());
             return kafkaConsumer;
         }
 
@@ -191,6 +192,8 @@ public class Consumer {
             } catch (Exception e) {
                 log.warn("Failed to close kafka mirroring sink", e);
             }
+
+            IOUtils.closeQuietly(solrClient);
 
         }
 
@@ -240,6 +243,11 @@ public class Consumer {
                         return false;
                     } catch (Exception e) {
                         // If there is any exception returned by handleItem, then reset the offset.
+
+                        if (e instanceof ClassCastException || e instanceof ClassNotFoundException || e instanceof SerializationException) {
+                            log.error("Non retryable error", e);
+                            break;
+                        }
                         log.warn("Exception occurred in Kafka consumer thread, but we will continue.", e);
                         resetOffsetForPartition(partition, partitionRecords);
                         break;
@@ -249,6 +257,13 @@ public class Consumer {
                 log.info("Caught wakeup exception, shutting down KafkaSolrRequestConsumer");
                 return false;
             } catch (Exception e) {
+
+                e.printStackTrace();
+                if (e instanceof ClassCastException || e instanceof ClassNotFoundException || e instanceof SerializationException) {
+                    log.error("Non retryable error", e);
+                    return false;
+                }
+
                 log.error("Exception occurred in Kafka consumer thread, but we will continue.", e);
             }
             return true;

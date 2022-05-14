@@ -1,0 +1,2654 @@
+2022-05-13 18:52:46.490 WARN  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.SolrTestCase
+          System property 'solr.default.confdir' is not already set, but test-framework derived value ('/home/markmiller/solr-sandbox/crossdc-consumer/server/solr/configsets/_default/conf') either does not exist or is not a readable directory, you may need to set the property yourself for tests to run properly
+2022-05-13 18:52:46.492 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.SolrTestCaseJ4
+          SecureRandom sanity checks: test.solr.allowed.securerandom=null & java.security.egd=file:/dev/./urandom
+2022-05-13 18:52:46.498 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.u.ErrorLogMuter
+          Creating ErrorLogMuter-regex-1 for ERROR logs matching regex: ignore_exception
+2022-05-13 18:52:46.500 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.SolrTestCaseJ4
+          Created dataDir: /tmp/solr.crossdc.SolrAndKafkaIntegrationTest_CBF5642C25987FE7-001/data-dir-1-001
+2022-05-13 18:52:46.523 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.SolrTestCaseJ4
+          Using TrieFields (NUMERIC_POINTS_SYSPROP=false) w/NUMERIC_DOCVALUES_SYSPROP=false
+2022-05-13 18:52:46.535 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.e.j.u.log
+          Logging initialized @764ms to org.eclipse.jetty.util.log.Slf4jLog
+2022-05-13 18:52:46.537 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.SolrTestCaseJ4
+          Randomized ssl (false) and clientAuth (false) via: @org.apache.solr.util.RandomizeSSL(reason="", value=0.0/0.0, ssl=0.0/0.0, clientAuth=0.0/0.0)
+2022-05-13 18:52:46.543 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.SolrCloudTestCase
+          Using per-replica state
+2022-05-13 18:52:46.588 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.u.Log4jControllerRegistration$
+          Registered kafka:type=kafka.Log4jController MBean
+2022-05-13 18:52:46.617 WARN  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.z.s.ServerCnxnFactory
+          maxCnxns is not configured, using default value 0.
+2022-05-13 18:52:46.756 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.KafkaConfig
+          KafkaConfig values: 
+	advertised.host.name = null
+	advertised.listeners = null
+	advertised.port = null
+	alter.config.policy.class.name = null
+	alter.log.dirs.replication.quota.window.num = 11
+	alter.log.dirs.replication.quota.window.size.seconds = 1
+	authorizer.class.name = 
+	auto.create.topics.enable = true
+	auto.leader.rebalance.enable = true
+	background.threads = 10
+	broker.heartbeat.interval.ms = 2000
+	broker.id = 0
+	broker.id.generation.enable = true
+	broker.rack = null
+	broker.session.timeout.ms = 9000
+	client.quota.callback.class = null
+	compression.type = producer
+	connection.failed.authentication.delay.ms = 100
+	connections.max.idle.ms = 600000
+	connections.max.reauth.ms = 0
+	control.plane.listener.name = null
+	controlled.shutdown.enable = true
+	controlled.shutdown.max.retries = 3
+	controlled.shutdown.retry.backoff.ms = 5000
+	controller.listener.names = null
+	controller.quorum.append.linger.ms = 25
+	controller.quorum.election.backoff.max.ms = 1000
+	controller.quorum.election.timeout.ms = 1000
+	controller.quorum.fetch.timeout.ms = 2000
+	controller.quorum.request.timeout.ms = 2000
+	controller.quorum.retry.backoff.ms = 20
+	controller.quorum.voters = []
+	controller.quota.window.num = 11
+	controller.quota.window.size.seconds = 1
+	controller.socket.timeout.ms = 30000
+	create.topic.policy.class.name = null
+	default.replication.factor = 1
+	delegation.token.expiry.check.interval.ms = 3600000
+	delegation.token.expiry.time.ms = 86400000
+	delegation.token.master.key = null
+	delegation.token.max.lifetime.ms = 604800000
+	delegation.token.secret.key = null
+	delete.records.purgatory.purge.interval.requests = 1
+	delete.topic.enable = true
+	fetch.max.bytes = 57671680
+	fetch.purgatory.purge.interval.requests = 1000
+	group.initial.rebalance.delay.ms = 0
+	group.max.session.timeout.ms = 1800000
+	group.max.size = 2147483647
+	group.min.session.timeout.ms = 0
+	host.name = localhost
+	initial.broker.registration.timeout.ms = 60000
+	inter.broker.listener.name = null
+	inter.broker.protocol.version = 2.8-IV1
+	kafka.metrics.polling.interval.secs = 10
+	kafka.metrics.reporters = []
+	leader.imbalance.check.interval.seconds = 300
+	leader.imbalance.per.broker.percentage = 10
+	listener.security.protocol.map = PLAINTEXT:PLAINTEXT,SSL:SSL,SASL_PLAINTEXT:SASL_PLAINTEXT,SASL_SSL:SASL_SSL
+	listeners = null
+	log.cleaner.backoff.ms = 15000
+	log.cleaner.dedupe.buffer.size = 2097152
+	log.cleaner.delete.retention.ms = 86400000
+	log.cleaner.enable = true
+	log.cleaner.io.buffer.load.factor = 0.9
+	log.cleaner.io.buffer.size = 524288
+	log.cleaner.io.max.bytes.per.second = 1.7976931348623157E308
+	log.cleaner.max.compaction.lag.ms = 9223372036854775807
+	log.cleaner.min.cleanable.ratio = 0.5
+	log.cleaner.min.compaction.lag.ms = 0
+	log.cleaner.threads = 1
+	log.cleanup.policy = [delete]
+	log.dir = /tmp/junit5218460758484725972/junit3431912741549809524
+	log.dirs = null
+	log.flush.interval.messages = 9223372036854775807
+	log.flush.interval.ms = null
+	log.flush.offset.checkpoint.interval.ms = 60000
+	log.flush.scheduler.interval.ms = 9223372036854775807
+	log.flush.start.offset.checkpoint.interval.ms = 60000
+	log.index.interval.bytes = 4096
+	log.index.size.max.bytes = 10485760
+	log.message.downconversion.enable = true
+	log.message.format.version = 2.8-IV1
+	log.message.timestamp.difference.max.ms = 9223372036854775807
+	log.message.timestamp.type = CreateTime
+	log.preallocate = false
+	log.retention.bytes = -1
+	log.retention.check.interval.ms = 300000
+	log.retention.hours = 168
+	log.retention.minutes = null
+	log.retention.ms = null
+	log.roll.hours = 168
+	log.roll.jitter.hours = 0
+	log.roll.jitter.ms = null
+	log.roll.ms = null
+	log.segment.bytes = 1073741824
+	log.segment.delete.delay.ms = 60000
+	max.connection.creation.rate = 2147483647
+	max.connections = 2147483647
+	max.connections.per.ip = 2147483647
+	max.connections.per.ip.overrides = 
+	max.incremental.fetch.session.cache.slots = 1000
+	message.max.bytes = 1000000
+	metadata.log.dir = null
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	min.insync.replicas = 1
+	node.id = -1
+	num.io.threads = 8
+	num.network.threads = 3
+	num.partitions = 1
+	num.recovery.threads.per.data.dir = 1
+	num.replica.alter.log.dirs.threads = null
+	num.replica.fetchers = 1
+	offset.metadata.max.bytes = 4096
+	offsets.commit.required.acks = -1
+	offsets.commit.timeout.ms = 5000
+	offsets.load.buffer.size = 5242880
+	offsets.retention.check.interval.ms = 600000
+	offsets.retention.minutes = 10080
+	offsets.topic.compression.codec = 0
+	offsets.topic.num.partitions = 5
+	offsets.topic.replication.factor = 1
+	offsets.topic.segment.bytes = 104857600
+	password.encoder.cipher.algorithm = AES/CBC/PKCS5Padding
+	password.encoder.iterations = 4096
+	password.encoder.key.length = 128
+	password.encoder.keyfactory.algorithm = null
+	password.encoder.old.secret = null
+	password.encoder.secret = null
+	port = 0
+	principal.builder.class = null
+	process.roles = []
+	producer.purgatory.purge.interval.requests = 1000
+	queued.max.request.bytes = -1
+	queued.max.requests = 500
+	quota.consumer.default = 9223372036854775807
+	quota.producer.default = 9223372036854775807
+	quota.window.num = 11
+	quota.window.size.seconds = 1
+	replica.fetch.backoff.ms = 1000
+	replica.fetch.max.bytes = 1048576
+	replica.fetch.min.bytes = 1
+	replica.fetch.response.max.bytes = 10485760
+	replica.fetch.wait.max.ms = 500
+	replica.high.watermark.checkpoint.interval.ms = 5000
+	replica.lag.time.max.ms = 30000
+	replica.selector.class = null
+	replica.socket.receive.buffer.bytes = 65536
+	replica.socket.timeout.ms = 30000
+	replication.quota.window.num = 11
+	replication.quota.window.size.seconds = 1
+	request.timeout.ms = 30000
+	reserved.broker.max.id = 1000
+	sasl.client.callback.handler.class = null
+	sasl.enabled.mechanisms = [GSSAPI]
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.principal.to.local.rules = [DEFAULT]
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.mechanism.controller.protocol = GSSAPI
+	sasl.mechanism.inter.broker.protocol = GSSAPI
+	sasl.server.callback.handler.class = null
+	security.inter.broker.protocol = PLAINTEXT
+	security.providers = null
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	socket.receive.buffer.bytes = 102400
+	socket.request.max.bytes = 104857600
+	socket.send.buffer.bytes = 102400
+	ssl.cipher.suites = []
+	ssl.client.auth = none
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.principal.mapping.rules = DEFAULT
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	transaction.abort.timed.out.transaction.cleanup.interval.ms = 10000
+	transaction.max.timeout.ms = 900000
+	transaction.remove.expired.transaction.cleanup.interval.ms = 3600000
+	transaction.state.log.load.buffer.size = 5242880
+	transaction.state.log.min.isr = 2
+	transaction.state.log.num.partitions = 5
+	transaction.state.log.replication.factor = 3
+	transaction.state.log.segment.bytes = 104857600
+	transactional.id.expiration.ms = 604800000
+	unclean.leader.election.enable = true
+	zookeeper.clientCnxnSocket = null
+	zookeeper.connect = 127.0.0.1:34543
+	zookeeper.connection.timeout.ms = null
+	zookeeper.max.in.flight.requests = 10
+	zookeeper.session.timeout.ms = 10000
+	zookeeper.set.acl = false
+	zookeeper.ssl.cipher.suites = null
+	zookeeper.ssl.client.enable = false
+	zookeeper.ssl.crl.enable = false
+	zookeeper.ssl.enabled.protocols = null
+	zookeeper.ssl.endpoint.identification.algorithm = HTTPS
+	zookeeper.ssl.keystore.location = null
+	zookeeper.ssl.keystore.password = null
+	zookeeper.ssl.keystore.type = null
+	zookeeper.ssl.ocsp.enable = false
+	zookeeper.ssl.protocol = TLSv1.2
+	zookeeper.ssl.truststore.location = null
+	zookeeper.ssl.truststore.password = null
+	zookeeper.ssl.truststore.type = null
+	zookeeper.sync.time.ms = 2000
+
+2022-05-13 18:52:46.806 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.KafkaServer
+          starting
+2022-05-13 18:52:46.806 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.KafkaServer
+          Connecting to zookeeper on 127.0.0.1:34543
+2022-05-13 18:52:46.815 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.z.ZooKeeperClient
+          [ZooKeeperClient Kafka server] Initializing a new session to 127.0.0.1:34543.
+2022-05-13 18:52:46.822 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.z.ZooKeeperClient
+          [ZooKeeperClient Kafka server] Waiting until connected.
+2022-05-13 18:52:46.833 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.z.ZooKeeperClient
+          [ZooKeeperClient Kafka server] Connected.
+2022-05-13 18:52:46.875 INFO  (feature-zk-node-event-process-thread) [] k.s.FinalizedFeatureChangeListener$ChangeNotificationProcessorThread
+          [feature-zk-node-event-process-thread]: Starting
+2022-05-13 18:52:46.880 INFO  (feature-zk-node-event-process-thread) [] k.s.FinalizedFeatureChangeListener
+          Feature ZK node at path: /feature does not exist
+2022-05-13 18:52:46.880 INFO  (feature-zk-node-event-process-thread) [] k.s.FinalizedFeatureCache
+          Cleared cache
+2022-05-13 18:52:46.961 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.KafkaServer
+          Cluster ID = D7zGWoulRNKvSYjCUwdj9Q
+2022-05-13 18:52:46.962 WARN  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.BrokerMetadataCheckpoint
+          No meta.properties file under dir /tmp/junit5218460758484725972/junit3431912741549809524/meta.properties
+2022-05-13 18:52:46.985 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.KafkaConfig
+          KafkaConfig values: 
+	advertised.host.name = null
+	advertised.listeners = null
+	advertised.port = null
+	alter.config.policy.class.name = null
+	alter.log.dirs.replication.quota.window.num = 11
+	alter.log.dirs.replication.quota.window.size.seconds = 1
+	authorizer.class.name = 
+	auto.create.topics.enable = true
+	auto.leader.rebalance.enable = true
+	background.threads = 10
+	broker.heartbeat.interval.ms = 2000
+	broker.id = 0
+	broker.id.generation.enable = true
+	broker.rack = null
+	broker.session.timeout.ms = 9000
+	client.quota.callback.class = null
+	compression.type = producer
+	connection.failed.authentication.delay.ms = 100
+	connections.max.idle.ms = 600000
+	connections.max.reauth.ms = 0
+	control.plane.listener.name = null
+	controlled.shutdown.enable = true
+	controlled.shutdown.max.retries = 3
+	controlled.shutdown.retry.backoff.ms = 5000
+	controller.listener.names = null
+	controller.quorum.append.linger.ms = 25
+	controller.quorum.election.backoff.max.ms = 1000
+	controller.quorum.election.timeout.ms = 1000
+	controller.quorum.fetch.timeout.ms = 2000
+	controller.quorum.request.timeout.ms = 2000
+	controller.quorum.retry.backoff.ms = 20
+	controller.quorum.voters = []
+	controller.quota.window.num = 11
+	controller.quota.window.size.seconds = 1
+	controller.socket.timeout.ms = 30000
+	create.topic.policy.class.name = null
+	default.replication.factor = 1
+	delegation.token.expiry.check.interval.ms = 3600000
+	delegation.token.expiry.time.ms = 86400000
+	delegation.token.master.key = null
+	delegation.token.max.lifetime.ms = 604800000
+	delegation.token.secret.key = null
+	delete.records.purgatory.purge.interval.requests = 1
+	delete.topic.enable = true
+	fetch.max.bytes = 57671680
+	fetch.purgatory.purge.interval.requests = 1000
+	group.initial.rebalance.delay.ms = 0
+	group.max.session.timeout.ms = 1800000
+	group.max.size = 2147483647
+	group.min.session.timeout.ms = 0
+	host.name = localhost
+	initial.broker.registration.timeout.ms = 60000
+	inter.broker.listener.name = null
+	inter.broker.protocol.version = 2.8-IV1
+	kafka.metrics.polling.interval.secs = 10
+	kafka.metrics.reporters = []
+	leader.imbalance.check.interval.seconds = 300
+	leader.imbalance.per.broker.percentage = 10
+	listener.security.protocol.map = PLAINTEXT:PLAINTEXT,SSL:SSL,SASL_PLAINTEXT:SASL_PLAINTEXT,SASL_SSL:SASL_SSL
+	listeners = null
+	log.cleaner.backoff.ms = 15000
+	log.cleaner.dedupe.buffer.size = 2097152
+	log.cleaner.delete.retention.ms = 86400000
+	log.cleaner.enable = true
+	log.cleaner.io.buffer.load.factor = 0.9
+	log.cleaner.io.buffer.size = 524288
+	log.cleaner.io.max.bytes.per.second = 1.7976931348623157E308
+	log.cleaner.max.compaction.lag.ms = 9223372036854775807
+	log.cleaner.min.cleanable.ratio = 0.5
+	log.cleaner.min.compaction.lag.ms = 0
+	log.cleaner.threads = 1
+	log.cleanup.policy = [delete]
+	log.dir = /tmp/junit5218460758484725972/junit3431912741549809524
+	log.dirs = null
+	log.flush.interval.messages = 9223372036854775807
+	log.flush.interval.ms = null
+	log.flush.offset.checkpoint.interval.ms = 60000
+	log.flush.scheduler.interval.ms = 9223372036854775807
+	log.flush.start.offset.checkpoint.interval.ms = 60000
+	log.index.interval.bytes = 4096
+	log.index.size.max.bytes = 10485760
+	log.message.downconversion.enable = true
+	log.message.format.version = 2.8-IV1
+	log.message.timestamp.difference.max.ms = 9223372036854775807
+	log.message.timestamp.type = CreateTime
+	log.preallocate = false
+	log.retention.bytes = -1
+	log.retention.check.interval.ms = 300000
+	log.retention.hours = 168
+	log.retention.minutes = null
+	log.retention.ms = null
+	log.roll.hours = 168
+	log.roll.jitter.hours = 0
+	log.roll.jitter.ms = null
+	log.roll.ms = null
+	log.segment.bytes = 1073741824
+	log.segment.delete.delay.ms = 60000
+	max.connection.creation.rate = 2147483647
+	max.connections = 2147483647
+	max.connections.per.ip = 2147483647
+	max.connections.per.ip.overrides = 
+	max.incremental.fetch.session.cache.slots = 1000
+	message.max.bytes = 1000000
+	metadata.log.dir = null
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	min.insync.replicas = 1
+	node.id = -1
+	num.io.threads = 8
+	num.network.threads = 3
+	num.partitions = 1
+	num.recovery.threads.per.data.dir = 1
+	num.replica.alter.log.dirs.threads = null
+	num.replica.fetchers = 1
+	offset.metadata.max.bytes = 4096
+	offsets.commit.required.acks = -1
+	offsets.commit.timeout.ms = 5000
+	offsets.load.buffer.size = 5242880
+	offsets.retention.check.interval.ms = 600000
+	offsets.retention.minutes = 10080
+	offsets.topic.compression.codec = 0
+	offsets.topic.num.partitions = 5
+	offsets.topic.replication.factor = 1
+	offsets.topic.segment.bytes = 104857600
+	password.encoder.cipher.algorithm = AES/CBC/PKCS5Padding
+	password.encoder.iterations = 4096
+	password.encoder.key.length = 128
+	password.encoder.keyfactory.algorithm = null
+	password.encoder.old.secret = null
+	password.encoder.secret = null
+	port = 0
+	principal.builder.class = null
+	process.roles = []
+	producer.purgatory.purge.interval.requests = 1000
+	queued.max.request.bytes = -1
+	queued.max.requests = 500
+	quota.consumer.default = 9223372036854775807
+	quota.producer.default = 9223372036854775807
+	quota.window.num = 11
+	quota.window.size.seconds = 1
+	replica.fetch.backoff.ms = 1000
+	replica.fetch.max.bytes = 1048576
+	replica.fetch.min.bytes = 1
+	replica.fetch.response.max.bytes = 10485760
+	replica.fetch.wait.max.ms = 500
+	replica.high.watermark.checkpoint.interval.ms = 5000
+	replica.lag.time.max.ms = 30000
+	replica.selector.class = null
+	replica.socket.receive.buffer.bytes = 65536
+	replica.socket.timeout.ms = 30000
+	replication.quota.window.num = 11
+	replication.quota.window.size.seconds = 1
+	request.timeout.ms = 30000
+	reserved.broker.max.id = 1000
+	sasl.client.callback.handler.class = null
+	sasl.enabled.mechanisms = [GSSAPI]
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.principal.to.local.rules = [DEFAULT]
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.mechanism.controller.protocol = GSSAPI
+	sasl.mechanism.inter.broker.protocol = GSSAPI
+	sasl.server.callback.handler.class = null
+	security.inter.broker.protocol = PLAINTEXT
+	security.providers = null
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	socket.receive.buffer.bytes = 102400
+	socket.request.max.bytes = 104857600
+	socket.send.buffer.bytes = 102400
+	ssl.cipher.suites = []
+	ssl.client.auth = none
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.principal.mapping.rules = DEFAULT
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	transaction.abort.timed.out.transaction.cleanup.interval.ms = 10000
+	transaction.max.timeout.ms = 900000
+	transaction.remove.expired.transaction.cleanup.interval.ms = 3600000
+	transaction.state.log.load.buffer.size = 5242880
+	transaction.state.log.min.isr = 2
+	transaction.state.log.num.partitions = 5
+	transaction.state.log.replication.factor = 3
+	transaction.state.log.segment.bytes = 104857600
+	transactional.id.expiration.ms = 604800000
+	unclean.leader.election.enable = true
+	zookeeper.clientCnxnSocket = null
+	zookeeper.connect = 127.0.0.1:34543
+	zookeeper.connection.timeout.ms = null
+	zookeeper.max.in.flight.requests = 10
+	zookeeper.session.timeout.ms = 10000
+	zookeeper.set.acl = false
+	zookeeper.ssl.cipher.suites = null
+	zookeeper.ssl.client.enable = false
+	zookeeper.ssl.crl.enable = false
+	zookeeper.ssl.enabled.protocols = null
+	zookeeper.ssl.endpoint.identification.algorithm = HTTPS
+	zookeeper.ssl.keystore.location = null
+	zookeeper.ssl.keystore.password = null
+	zookeeper.ssl.keystore.type = null
+	zookeeper.ssl.ocsp.enable = false
+	zookeeper.ssl.protocol = TLSv1.2
+	zookeeper.ssl.truststore.location = null
+	zookeeper.ssl.truststore.password = null
+	zookeeper.ssl.truststore.type = null
+	zookeeper.sync.time.ms = 2000
+
+2022-05-13 18:52:46.991 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.KafkaConfig
+          KafkaConfig values: 
+	advertised.host.name = null
+	advertised.listeners = null
+	advertised.port = null
+	alter.config.policy.class.name = null
+	alter.log.dirs.replication.quota.window.num = 11
+	alter.log.dirs.replication.quota.window.size.seconds = 1
+	authorizer.class.name = 
+	auto.create.topics.enable = true
+	auto.leader.rebalance.enable = true
+	background.threads = 10
+	broker.heartbeat.interval.ms = 2000
+	broker.id = 0
+	broker.id.generation.enable = true
+	broker.rack = null
+	broker.session.timeout.ms = 9000
+	client.quota.callback.class = null
+	compression.type = producer
+	connection.failed.authentication.delay.ms = 100
+	connections.max.idle.ms = 600000
+	connections.max.reauth.ms = 0
+	control.plane.listener.name = null
+	controlled.shutdown.enable = true
+	controlled.shutdown.max.retries = 3
+	controlled.shutdown.retry.backoff.ms = 5000
+	controller.listener.names = null
+	controller.quorum.append.linger.ms = 25
+	controller.quorum.election.backoff.max.ms = 1000
+	controller.quorum.election.timeout.ms = 1000
+	controller.quorum.fetch.timeout.ms = 2000
+	controller.quorum.request.timeout.ms = 2000
+	controller.quorum.retry.backoff.ms = 20
+	controller.quorum.voters = []
+	controller.quota.window.num = 11
+	controller.quota.window.size.seconds = 1
+	controller.socket.timeout.ms = 30000
+	create.topic.policy.class.name = null
+	default.replication.factor = 1
+	delegation.token.expiry.check.interval.ms = 3600000
+	delegation.token.expiry.time.ms = 86400000
+	delegation.token.master.key = null
+	delegation.token.max.lifetime.ms = 604800000
+	delegation.token.secret.key = null
+	delete.records.purgatory.purge.interval.requests = 1
+	delete.topic.enable = true
+	fetch.max.bytes = 57671680
+	fetch.purgatory.purge.interval.requests = 1000
+	group.initial.rebalance.delay.ms = 0
+	group.max.session.timeout.ms = 1800000
+	group.max.size = 2147483647
+	group.min.session.timeout.ms = 0
+	host.name = localhost
+	initial.broker.registration.timeout.ms = 60000
+	inter.broker.listener.name = null
+	inter.broker.protocol.version = 2.8-IV1
+	kafka.metrics.polling.interval.secs = 10
+	kafka.metrics.reporters = []
+	leader.imbalance.check.interval.seconds = 300
+	leader.imbalance.per.broker.percentage = 10
+	listener.security.protocol.map = PLAINTEXT:PLAINTEXT,SSL:SSL,SASL_PLAINTEXT:SASL_PLAINTEXT,SASL_SSL:SASL_SSL
+	listeners = null
+	log.cleaner.backoff.ms = 15000
+	log.cleaner.dedupe.buffer.size = 2097152
+	log.cleaner.delete.retention.ms = 86400000
+	log.cleaner.enable = true
+	log.cleaner.io.buffer.load.factor = 0.9
+	log.cleaner.io.buffer.size = 524288
+	log.cleaner.io.max.bytes.per.second = 1.7976931348623157E308
+	log.cleaner.max.compaction.lag.ms = 9223372036854775807
+	log.cleaner.min.cleanable.ratio = 0.5
+	log.cleaner.min.compaction.lag.ms = 0
+	log.cleaner.threads = 1
+	log.cleanup.policy = [delete]
+	log.dir = /tmp/junit5218460758484725972/junit3431912741549809524
+	log.dirs = null
+	log.flush.interval.messages = 9223372036854775807
+	log.flush.interval.ms = null
+	log.flush.offset.checkpoint.interval.ms = 60000
+	log.flush.scheduler.interval.ms = 9223372036854775807
+	log.flush.start.offset.checkpoint.interval.ms = 60000
+	log.index.interval.bytes = 4096
+	log.index.size.max.bytes = 10485760
+	log.message.downconversion.enable = true
+	log.message.format.version = 2.8-IV1
+	log.message.timestamp.difference.max.ms = 9223372036854775807
+	log.message.timestamp.type = CreateTime
+	log.preallocate = false
+	log.retention.bytes = -1
+	log.retention.check.interval.ms = 300000
+	log.retention.hours = 168
+	log.retention.minutes = null
+	log.retention.ms = null
+	log.roll.hours = 168
+	log.roll.jitter.hours = 0
+	log.roll.jitter.ms = null
+	log.roll.ms = null
+	log.segment.bytes = 1073741824
+	log.segment.delete.delay.ms = 60000
+	max.connection.creation.rate = 2147483647
+	max.connections = 2147483647
+	max.connections.per.ip = 2147483647
+	max.connections.per.ip.overrides = 
+	max.incremental.fetch.session.cache.slots = 1000
+	message.max.bytes = 1000000
+	metadata.log.dir = null
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	min.insync.replicas = 1
+	node.id = -1
+	num.io.threads = 8
+	num.network.threads = 3
+	num.partitions = 1
+	num.recovery.threads.per.data.dir = 1
+	num.replica.alter.log.dirs.threads = null
+	num.replica.fetchers = 1
+	offset.metadata.max.bytes = 4096
+	offsets.commit.required.acks = -1
+	offsets.commit.timeout.ms = 5000
+	offsets.load.buffer.size = 5242880
+	offsets.retention.check.interval.ms = 600000
+	offsets.retention.minutes = 10080
+	offsets.topic.compression.codec = 0
+	offsets.topic.num.partitions = 5
+	offsets.topic.replication.factor = 1
+	offsets.topic.segment.bytes = 104857600
+	password.encoder.cipher.algorithm = AES/CBC/PKCS5Padding
+	password.encoder.iterations = 4096
+	password.encoder.key.length = 128
+	password.encoder.keyfactory.algorithm = null
+	password.encoder.old.secret = null
+	password.encoder.secret = null
+	port = 0
+	principal.builder.class = null
+	process.roles = []
+	producer.purgatory.purge.interval.requests = 1000
+	queued.max.request.bytes = -1
+	queued.max.requests = 500
+	quota.consumer.default = 9223372036854775807
+	quota.producer.default = 9223372036854775807
+	quota.window.num = 11
+	quota.window.size.seconds = 1
+	replica.fetch.backoff.ms = 1000
+	replica.fetch.max.bytes = 1048576
+	replica.fetch.min.bytes = 1
+	replica.fetch.response.max.bytes = 10485760
+	replica.fetch.wait.max.ms = 500
+	replica.high.watermark.checkpoint.interval.ms = 5000
+	replica.lag.time.max.ms = 30000
+	replica.selector.class = null
+	replica.socket.receive.buffer.bytes = 65536
+	replica.socket.timeout.ms = 30000
+	replication.quota.window.num = 11
+	replication.quota.window.size.seconds = 1
+	request.timeout.ms = 30000
+	reserved.broker.max.id = 1000
+	sasl.client.callback.handler.class = null
+	sasl.enabled.mechanisms = [GSSAPI]
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.principal.to.local.rules = [DEFAULT]
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.mechanism.controller.protocol = GSSAPI
+	sasl.mechanism.inter.broker.protocol = GSSAPI
+	sasl.server.callback.handler.class = null
+	security.inter.broker.protocol = PLAINTEXT
+	security.providers = null
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	socket.receive.buffer.bytes = 102400
+	socket.request.max.bytes = 104857600
+	socket.send.buffer.bytes = 102400
+	ssl.cipher.suites = []
+	ssl.client.auth = none
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.principal.mapping.rules = DEFAULT
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	transaction.abort.timed.out.transaction.cleanup.interval.ms = 10000
+	transaction.max.timeout.ms = 900000
+	transaction.remove.expired.transaction.cleanup.interval.ms = 3600000
+	transaction.state.log.load.buffer.size = 5242880
+	transaction.state.log.min.isr = 2
+	transaction.state.log.num.partitions = 5
+	transaction.state.log.replication.factor = 3
+	transaction.state.log.segment.bytes = 104857600
+	transactional.id.expiration.ms = 604800000
+	unclean.leader.election.enable = true
+	zookeeper.clientCnxnSocket = null
+	zookeeper.connect = 127.0.0.1:34543
+	zookeeper.connection.timeout.ms = null
+	zookeeper.max.in.flight.requests = 10
+	zookeeper.session.timeout.ms = 10000
+	zookeeper.set.acl = false
+	zookeeper.ssl.cipher.suites = null
+	zookeeper.ssl.client.enable = false
+	zookeeper.ssl.crl.enable = false
+	zookeeper.ssl.enabled.protocols = null
+	zookeeper.ssl.endpoint.identification.algorithm = HTTPS
+	zookeeper.ssl.keystore.location = null
+	zookeeper.ssl.keystore.password = null
+	zookeeper.ssl.keystore.type = null
+	zookeeper.ssl.ocsp.enable = false
+	zookeeper.ssl.protocol = TLSv1.2
+	zookeeper.ssl.truststore.location = null
+	zookeeper.ssl.truststore.password = null
+	zookeeper.ssl.truststore.type = null
+	zookeeper.sync.time.ms = 2000
+
+2022-05-13 18:52:47.008 INFO  (ThrottledChannelReaper-Fetch) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-Fetch]: Starting
+2022-05-13 18:52:47.008 INFO  (ThrottledChannelReaper-Produce) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-Produce]: Starting
+2022-05-13 18:52:47.009 INFO  (ThrottledChannelReaper-Request) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-Request]: Starting
+2022-05-13 18:52:47.009 INFO  (ThrottledChannelReaper-ControllerMutation) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-ControllerMutation]: Starting
+2022-05-13 18:52:47.024 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.l.LogManager
+          Loading logs from log dirs ArraySeq(/tmp/junit5218460758484725972/junit3431912741549809524)
+2022-05-13 18:52:47.026 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.l.LogManager
+          Attempting recovery for all logs in /tmp/junit5218460758484725972/junit3431912741549809524 since no clean shutdown file was found
+2022-05-13 18:52:47.028 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.l.LogManager
+          Loaded 0 logs in 0ms.
+2022-05-13 18:52:47.029 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.l.LogManager
+          Starting log cleanup with a period of 300000 ms.
+2022-05-13 18:52:47.030 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.l.LogManager
+          Starting log flusher with a default period of 9223372036854775807 ms.
+2022-05-13 18:52:47.036 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.l.LogCleaner
+          Starting the log cleaner
+2022-05-13 18:52:47.041 INFO  (kafka-log-cleaner-thread-0) [] k.l.LogCleaner
+          [kafka-log-cleaner-thread-0]: Starting
+2022-05-13 18:52:47.195 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.n.ConnectionQuotas
+          Updated connection-accept-rate max connection creation rate to 2147483647
+2022-05-13 18:52:47.197 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.n.Acceptor
+          Awaiting socket connections on localhost:34601.
+2022-05-13 18:52:47.214 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.n.SocketServer
+          [SocketServer listenerType=ZK_BROKER, nodeId=0] Created data-plane acceptor and processors for endpoint : ListenerName(PLAINTEXT)
+2022-05-13 18:52:47.230 INFO  (broker-0-to-controller-send-thread) [] k.s.BrokerToControllerRequestThread
+          [broker-0-to-controller-send-thread]: Starting
+2022-05-13 18:52:47.240 INFO  (ExpirationReaper-0-Produce) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Produce]: Starting
+2022-05-13 18:52:47.240 INFO  (ExpirationReaper-0-Fetch) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Fetch]: Starting
+2022-05-13 18:52:47.241 INFO  (ExpirationReaper-0-DeleteRecords) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-DeleteRecords]: Starting
+2022-05-13 18:52:47.241 INFO  (ExpirationReaper-0-ElectLeader) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-ElectLeader]: Starting
+2022-05-13 18:52:47.248 INFO  (LogDirFailureHandler) [] k.s.ReplicaManager$LogDirFailureHandler
+          [LogDirFailureHandler]: Starting
+2022-05-13 18:52:47.260 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.z.KafkaZkClient
+          Creating /brokers/ids/0 (is it secure? false)
+2022-05-13 18:52:47.267 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.z.KafkaZkClient
+          Stat of the created znode at /brokers/ids/0 is: 25,25,1652485967264,1652485967264,1,0,0,72129608288239616,204,0,25
+
+2022-05-13 18:52:47.267 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.z.KafkaZkClient
+          Registered broker 0 at path /brokers/ids/0 with addresses: PLAINTEXT://localhost:34601, czxid (broker epoch): 25
+2022-05-13 18:52:47.288 INFO  (controller-event-thread) [] k.c.ControllerEventManager$ControllerEventThread
+          [ControllerEventThread controllerId=0] Starting
+2022-05-13 18:52:47.292 INFO  (ExpirationReaper-0-topic) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-topic]: Starting
+2022-05-13 18:52:47.294 INFO  (ExpirationReaper-0-Heartbeat) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Heartbeat]: Starting
+2022-05-13 18:52:47.295 INFO  (ExpirationReaper-0-Rebalance) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Rebalance]: Starting
+2022-05-13 18:52:47.296 INFO  (controller-event-thread) [] k.z.KafkaZkClient
+          Successfully created /controller_epoch with initial epoch 0
+2022-05-13 18:52:47.300 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] 0 successfully elected as the controller. Epoch incremented to 1 and epoch zk version is now 1
+2022-05-13 18:52:47.302 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Creating FeatureZNode at path: /feature with contents: FeatureZNode(Enabled,Features{})
+2022-05-13 18:52:47.303 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker-EventThread) [] k.s.FinalizedFeatureChangeListener
+          Feature ZK node created at path: /feature
+2022-05-13 18:52:47.306 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Starting up.
+2022-05-13 18:52:47.309 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Startup complete.
+2022-05-13 18:52:47.317 INFO  (feature-zk-node-event-process-thread) [] k.s.FinalizedFeatureCache
+          Updated cache from existing <empty> to latest FinalizedFeaturesAndEpoch(features=Features{}, epoch=0).
+2022-05-13 18:52:47.317 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Registering handlers
+2022-05-13 18:52:47.319 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Deleting log dir event notifications
+2022-05-13 18:52:47.320 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Deleting isr change notifications
+2022-05-13 18:52:47.321 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Initializing controller context
+2022-05-13 18:52:47.324 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.c.t.ProducerIdManager
+          [ProducerId Manager 0]: Acquired new producerId block (brokerId:0,blockStartProducerId:0,blockEndProducerId:999) by writing to Zk with path version 1
+2022-05-13 18:52:47.325 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.c.t.TransactionCoordinator
+          [TransactionCoordinator id=0] Starting up.
+2022-05-13 18:52:47.327 INFO  (TxnMarkerSenderThread-0) [] k.c.t.TransactionMarkerChannelManager
+          [Transaction Marker Channel Manager 0]: Starting
+2022-05-13 18:52:47.327 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.c.t.TransactionCoordinator
+          [TransactionCoordinator id=0] Startup complete.
+2022-05-13 18:52:47.327 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Initialized broker epochs cache: HashMap(0 -> 25)
+2022-05-13 18:52:47.338 INFO  (Controller-0-to-broker-0-send-thread) [] k.c.RequestSendThread
+          [RequestSendThread controllerId=0] Starting
+2022-05-13 18:52:47.339 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Currently active brokers in the cluster: Set(0)
+2022-05-13 18:52:47.339 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Currently shutting brokers in the cluster: HashSet()
+2022-05-13 18:52:47.339 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Current list of topics in the cluster: HashSet()
+2022-05-13 18:52:47.339 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Fetching topic deletions in progress
+2022-05-13 18:52:47.341 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] List of topics to be deleted: 
+2022-05-13 18:52:47.341 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] List of topics ineligible for deletion: 
+2022-05-13 18:52:47.341 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Initializing topic deletion manager
+2022-05-13 18:52:47.341 INFO  (controller-event-thread) [] k.c.TopicDeletionManager
+          [Topic Deletion Manager 0] Initializing manager with initial deletions: Set(), initial ineligible deletions: HashSet()
+2022-05-13 18:52:47.342 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Sending update metadata request
+2022-05-13 18:52:47.343 INFO  (ExpirationReaper-0-AlterAcls) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-AlterAcls]: Starting
+2022-05-13 18:52:47.343 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Sending UpdateMetadata request to brokers HashSet(0) for 0 partitions
+2022-05-13 18:52:47.347 INFO  (controller-event-thread) [] k.c.ZkReplicaStateMachine
+          [ReplicaStateMachine controllerId=0] Initializing replica state
+2022-05-13 18:52:47.347 INFO  (controller-event-thread) [] k.c.ZkReplicaStateMachine
+          [ReplicaStateMachine controllerId=0] Triggering online replica state changes
+2022-05-13 18:52:47.349 INFO  (controller-event-thread) [] k.c.ZkReplicaStateMachine
+          [ReplicaStateMachine controllerId=0] Triggering offline replica state changes
+2022-05-13 18:52:47.349 INFO  (controller-event-thread) [] k.c.ZkPartitionStateMachine
+          [PartitionStateMachine controllerId=0] Initializing partition state
+2022-05-13 18:52:47.349 INFO  (controller-event-thread) [] k.c.ZkPartitionStateMachine
+          [PartitionStateMachine controllerId=0] Triggering online partition state changes
+2022-05-13 18:52:47.350 INFO  (Controller-0-to-broker-0-send-thread) [] k.c.RequestSendThread
+          [RequestSendThread controllerId=0] Controller 0 connected to localhost:34601 (id: 0 rack: null) for sending state change requests
+2022-05-13 18:52:47.351 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Ready to serve as the new controller with epoch 1
+2022-05-13 18:52:47.353 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Partitions undergoing preferred replica election: 
+2022-05-13 18:52:47.353 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Partitions that completed preferred replica election: 
+2022-05-13 18:52:47.353 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Skipping preferred replica election for partitions due to topic deletion: 
+2022-05-13 18:52:47.353 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Resuming preferred replica election for partitions: 
+2022-05-13 18:52:47.354 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Starting replica leader election (PREFERRED) for partitions  triggered by ZkTriggered
+2022-05-13 18:52:47.355 INFO  (/config/changes-event-process-thread) [] k.c.ZkNodeChangeNotificationListener$ChangeEventProcessThread
+          [/config/changes-event-process-thread]: Starting
+2022-05-13 18:52:47.358 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Starting the controller scheduler
+2022-05-13 18:52:47.359 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.n.SocketServer
+          [SocketServer listenerType=ZK_BROKER, nodeId=0] Starting socket server acceptors and processors
+2022-05-13 18:52:47.362 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.n.SocketServer
+          [SocketServer listenerType=ZK_BROKER, nodeId=0] Started data-plane acceptor and processor(s) for endpoint : ListenerName(PLAINTEXT)
+2022-05-13 18:52:47.363 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.n.SocketServer
+          [SocketServer listenerType=ZK_BROKER, nodeId=0] Started socket server acceptors and processors
+2022-05-13 18:52:47.364 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.k.c.u.AppInfoParser
+          Kafka version: 2.8.1
+2022-05-13 18:52:47.364 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.k.c.u.AppInfoParser
+          Kafka commitId: 839b886f9b732b15
+2022-05-13 18:52:47.364 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.k.c.u.AppInfoParser
+          Kafka startTimeMs: 1652485966544
+2022-05-13 18:52:47.365 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.KafkaServer
+          [KafkaServer id=0] started
+2022-05-13 18:52:47.367 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.k.c.a.AdminClientConfig
+          AdminClientConfig values: 
+	bootstrap.servers = [localhost:34601]
+	client.dns.lookup = use_all_dns_ips
+	client.id = 
+	connections.max.idle.ms = 300000
+	default.api.timeout.ms = 60000
+	metadata.max.age.ms = 300000
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	receive.buffer.bytes = 65536
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 30000
+	retries = 2147483647
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.mechanism = GSSAPI
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+
+2022-05-13 18:52:47.378 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.k.c.u.AppInfoParser
+          Kafka version: 2.8.1
+2022-05-13 18:52:47.378 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.k.c.u.AppInfoParser
+          Kafka commitId: 839b886f9b732b15
+2022-05-13 18:52:47.378 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.k.c.u.AppInfoParser
+          Kafka startTimeMs: 1652485967378
+2022-05-13 18:52:47.405 INFO  (data-plane-kafka-request-handler-4) [] k.z.AdminZkClient
+          Creating topic topic1 with configuration {} and initial partition assignment HashMap(0 -> ArrayBuffer(0))
+2022-05-13 18:52:47.415 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] New topics: [Set(topic1)], deleted topics: [HashSet()], new partition replica assignment [Set(TopicIdReplicaAssignment(topic1,Some(IHagCSG8RfmkirD4fBGutQ),Map(topic1-0 -> ReplicaAssignment(replicas=0, addingReplicas=, removingReplicas=))))]
+2022-05-13 18:52:47.415 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] New partition creation callback for topic1-0
+2022-05-13 18:52:47.416 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Changed partition topic1-0 state from NonExistentPartition to NewPartition with assigned replicas 0
+2022-05-13 18:52:47.417 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Sending UpdateMetadata request to brokers HashSet() for 0 partitions
+2022-05-13 18:52:47.418 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Sending UpdateMetadata request to brokers HashSet() for 0 partitions
+2022-05-13 18:52:47.426 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Changed partition topic1-0 from NewPartition to OnlinePartition with state LeaderAndIsr(leader=0, leaderEpoch=0, isr=List(0), zkVersion=0)
+2022-05-13 18:52:47.427 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Sending LeaderAndIsr request to broker 0 with 1 become-leader and 0 become-follower partitions
+2022-05-13 18:52:47.428 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Sending UpdateMetadata request to brokers HashSet(0) for 1 partitions
+2022-05-13 18:52:47.429 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Sending UpdateMetadata request to brokers HashSet() for 0 partitions
+2022-05-13 18:52:47.431 INFO  (data-plane-kafka-request-handler-5) [] s.c.logger
+          [Broker id=0] Handling LeaderAndIsr request correlationId 1 from controller 0 for 1 partitions
+2022-05-13 18:52:47.441 INFO  (broker-0-to-controller-send-thread) [] k.s.BrokerToControllerRequestThread
+          [broker-0-to-controller-send-thread]: Recorded new controller, from now on will use broker localhost:34601 (id: 0 rack: null)
+2022-05-13 18:52:47.447 INFO  (data-plane-kafka-request-handler-5) [] k.s.ReplicaFetcherManager
+          [ReplicaFetcherManager on broker 0] Removed fetcher for partitions Set(topic1-0)
+2022-05-13 18:52:47.448 INFO  (data-plane-kafka-request-handler-5) [] s.c.logger
+          [Broker id=0] Stopped fetchers as part of LeaderAndIsr request correlationId 1 from controller 0 epoch 1 as part of the become-leader transition for 1 partitions
+2022-05-13 18:52:47.476 INFO  (data-plane-kafka-request-handler-5) [] k.l.Log
+          [Log partition=topic1-0, dir=/tmp/junit5218460758484725972/junit3431912741549809524] Loading producer state till offset 0 with message format version 2
+2022-05-13 18:52:47.478 INFO  (data-plane-kafka-request-handler-5) [] k.l.LogManager
+          Created log for partition topic1-0 in /tmp/junit5218460758484725972/junit3431912741549809524/topic1-0 with properties {}
+2022-05-13 18:52:47.479 INFO  (data-plane-kafka-request-handler-5) [] k.c.Partition
+          [Partition topic1-0 broker=0] No checkpointed highwatermark is found for partition topic1-0
+2022-05-13 18:52:47.479 INFO  (data-plane-kafka-request-handler-5) [] k.c.Partition
+          [Partition topic1-0 broker=0] Log loaded for partition topic1-0 with initial high watermark 0
+2022-05-13 18:52:47.480 INFO  (data-plane-kafka-request-handler-5) [] s.c.logger
+          [Broker id=0] Leader topic1-0 starts at leader epoch 0 from offset 0 with high watermark 0 ISR [0] addingReplicas [] removingReplicas []. Previous leader epoch was -1.
+2022-05-13 18:52:47.485 INFO  (data-plane-kafka-request-handler-5) [] s.c.logger
+          [Broker id=0] Finished LeaderAndIsr request in 0ms correlationId 1 from controller 0 for 1 partitions
+2022-05-13 18:52:47.489 INFO  (data-plane-kafka-request-handler-6) [] s.c.logger
+          [Broker id=0] Add 1 partitions and deleted 0 partitions from metadata cache in response to UpdateMetadata request sent by controller 0 epoch 1 with correlation id 2
+2022-05-13 18:52:47.493 INFO  (kafka-admin-client-thread | adminclient-1) [] o.a.k.c.u.AppInfoParser
+          App info kafka.admin.client for adminclient-1 unregistered
+2022-05-13 18:52:47.494 INFO  (kafka-admin-client-thread | adminclient-1) [] o.a.k.c.m.Metrics
+          Metrics scheduler closed
+2022-05-13 18:52:47.495 INFO  (kafka-admin-client-thread | adminclient-1) [] o.a.k.c.m.Metrics
+          Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2022-05-13 18:52:47.495 INFO  (kafka-admin-client-thread | adminclient-1) [] o.a.k.c.m.Metrics
+          Metrics reporters closed
+2022-05-13 18:52:47.501 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.MiniSolrCloudCluster
+          Starting cluster of 2 servers in /tmp/solr.crossdc.SolrAndKafkaIntegrationTest_CBF5642C25987FE7-001/tempDir-001
+2022-05-13 18:52:47.502 WARN  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.ZkTestServer
+          TEST_HOME() does not exist - solrj test?
+2022-05-13 18:52:47.505 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.ZkTestServer
+          STARTING ZK TEST SERVER
+2022-05-13 18:52:47.505 INFO  (ZkTestServer Run Thread) [] o.a.s.c.ZkTestServer
+          client port: 0.0.0.0/0.0.0.0:0
+2022-05-13 18:52:47.506 INFO  (ZkTestServer Run Thread) [] o.a.s.c.ZkTestServer
+          Starting server
+2022-05-13 18:52:47.506 WARN  (ZkTestServer Run Thread) [] o.a.z.s.ServerCnxnFactory
+          maxCnxns is not configured, using default value 0.
+2022-05-13 18:52:47.605 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.ZkTestServer
+          start zk server on port: 34525
+2022-05-13 18:52:47.606 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.ZkTestServer
+          waitForServerUp: 127.0.0.1:34525
+2022-05-13 18:52:47.609 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.ZkTestServer
+          parse host and port list: 127.0.0.1:34525
+2022-05-13 18:52:47.610 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.ZkTestServer
+          connecting to 127.0.0.1 34525
+2022-05-13 18:52:47.630 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.c.ConnectionManager
+          Waiting for client to connect to ZooKeeper
+2022-05-13 18:52:47.633 INFO  (zkConnectionManagerCallback-3-thread-1) [] o.a.s.c.c.ConnectionManager
+          zkClient has connected
+2022-05-13 18:52:47.633 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.c.ConnectionManager
+          Client is connected to ZooKeeper
+2022-05-13 18:52:47.636 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.c.ConnectionManager
+          Waiting for client to connect to ZooKeeper
+2022-05-13 18:52:47.637 INFO  (zkConnectionManagerCallback-5-thread-1) [] o.a.s.c.c.ConnectionManager
+          zkClient has connected
+2022-05-13 18:52:47.637 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.c.ConnectionManager
+          Client is connected to ZooKeeper
+2022-05-13 18:52:47.638 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.c.ConnectionManager
+          Waiting for client to connect to ZooKeeper
+2022-05-13 18:52:47.638 INFO  (zkConnectionManagerCallback-7-thread-1) [] o.a.s.c.c.ConnectionManager
+          zkClient has connected
+2022-05-13 18:52:47.639 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.c.ConnectionManager
+          Client is connected to ZooKeeper
+2022-05-13 18:52:47.827 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.s.e.JettySolrRunner
+          Start Jetty (configured port=0, binding port=0)
+2022-05-13 18:52:47.827 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.s.e.JettySolrRunner
+          Start Jetty (configured port=0, binding port=0)
+2022-05-13 18:52:47.827 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.s.e.JettySolrRunner
+          Trying to start Jetty on port 0 try number 2 ...
+2022-05-13 18:52:47.827 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.s.e.JettySolrRunner
+          Trying to start Jetty on port 0 try number 2 ...
+2022-05-13 18:52:47.830 INFO  (jetty-launcher-8-thread-2) [] o.e.j.s.Server
+          jetty-9.4.44.v20210927; built: 2021-09-27T23:02:44.612Z; git: 8da83308eeca865e495e53ef315a249d63ba9332; jvm 11.0.15+3
+2022-05-13 18:52:47.830 INFO  (jetty-launcher-8-thread-1) [] o.e.j.s.Server
+          jetty-9.4.44.v20210927; built: 2021-09-27T23:02:44.612Z; git: 8da83308eeca865e495e53ef315a249d63ba9332; jvm 11.0.15+3
+2022-05-13 18:52:47.834 INFO  (jetty-launcher-8-thread-2) [] o.e.j.s.session
+          DefaultSessionIdManager workerName=node0
+2022-05-13 18:52:47.834 INFO  (jetty-launcher-8-thread-1) [] o.e.j.s.session
+          DefaultSessionIdManager workerName=node0
+2022-05-13 18:52:47.834 INFO  (jetty-launcher-8-thread-2) [] o.e.j.s.session
+          No SessionScavenger set, using defaults
+2022-05-13 18:52:47.834 INFO  (jetty-launcher-8-thread-1) [] o.e.j.s.session
+          No SessionScavenger set, using defaults
+2022-05-13 18:52:47.835 INFO  (jetty-launcher-8-thread-2) [] o.e.j.s.session
+          node0 Scavenging every 600000ms
+2022-05-13 18:52:47.835 INFO  (jetty-launcher-8-thread-1) [] o.e.j.s.session
+          node0 Scavenging every 600000ms
+2022-05-13 18:52:47.839 INFO  (jetty-launcher-8-thread-1) [] o.e.j.s.h.ContextHandler
+          Started o.e.j.s.ServletContextHandler@496dffcd{/solr,null,AVAILABLE}
+2022-05-13 18:52:47.839 INFO  (jetty-launcher-8-thread-2) [] o.e.j.s.h.ContextHandler
+          Started o.e.j.s.ServletContextHandler@1c933135{/solr,null,AVAILABLE}
+2022-05-13 18:52:47.843 INFO  (jetty-launcher-8-thread-2) [] o.e.j.s.AbstractConnector
+          Started ServerConnector@51ff2e5a{HTTP/1.1, (http/1.1, h2c)}{127.0.0.1:35709}
+2022-05-13 18:52:47.843 INFO  (jetty-launcher-8-thread-1) [] o.e.j.s.AbstractConnector
+          Started ServerConnector@77196761{HTTP/1.1, (http/1.1, h2c)}{127.0.0.1:38743}
+2022-05-13 18:52:47.843 INFO  (jetty-launcher-8-thread-1) [] o.e.j.s.Server
+          Started @2074ms
+2022-05-13 18:52:47.843 INFO  (jetty-launcher-8-thread-2) [] o.e.j.s.Server
+          Started @2074ms
+2022-05-13 18:52:47.843 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.s.e.JettySolrRunner
+          Jetty properties: {hostContext=/solr, hostPort=35709, zkHost=127.0.0.1:34525/solr}
+2022-05-13 18:52:47.843 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.s.e.JettySolrRunner
+          Jetty properties: {hostContext=/solr, hostPort=38743, zkHost=127.0.0.1:34525/solr}
+2022-05-13 18:52:47.861 ERROR (jetty-launcher-8-thread-1) [] o.a.s.u.StartupLoggingUtils
+          Missing Java Option solr.log.dir. Logging may be missing or incomplete.
+2022-05-13 18:52:47.861 ERROR (jetty-launcher-8-thread-2) [] o.a.s.u.StartupLoggingUtils
+          Missing Java Option solr.log.dir. Logging may be missing or incomplete.
+2022-05-13 18:52:47.861 INFO  (jetty-launcher-8-thread-1) [] o.a.s.s.SolrDispatchFilter
+          Using logger factory org.apache.logging.slf4j.Log4jLoggerFactory
+2022-05-13 18:52:47.861 INFO  (jetty-launcher-8-thread-2) [] o.a.s.s.SolrDispatchFilter
+          Using logger factory org.apache.logging.slf4j.Log4jLoggerFactory
+2022-05-13 18:52:47.861 INFO  (jetty-launcher-8-thread-2) [] o.a.s.s.SolrDispatchFilter
+           ___      _       Welcome to Apache Solr™ version 8.11.1
+2022-05-13 18:52:47.861 INFO  (jetty-launcher-8-thread-1) [] o.a.s.s.SolrDispatchFilter
+           ___      _       Welcome to Apache Solr™ version 8.11.1
+2022-05-13 18:52:47.861 INFO  (jetty-launcher-8-thread-2) [] o.a.s.s.SolrDispatchFilter
+          / __| ___| |_ _   Starting in cloud mode on port null
+2022-05-13 18:52:47.861 INFO  (jetty-launcher-8-thread-1) [] o.a.s.s.SolrDispatchFilter
+          / __| ___| |_ _   Starting in cloud mode on port null
+2022-05-13 18:52:47.861 INFO  (jetty-launcher-8-thread-2) [] o.a.s.s.SolrDispatchFilter
+          \__ \/ _ \ | '_|  Install dir: null
+2022-05-13 18:52:47.861 INFO  (jetty-launcher-8-thread-1) [] o.a.s.s.SolrDispatchFilter
+          \__ \/ _ \ | '_|  Install dir: null
+2022-05-13 18:52:47.862 INFO  (jetty-launcher-8-thread-2) [] o.a.s.s.SolrDispatchFilter
+          |___/\___/_|_|    Start time: 2022-05-13T23:52:47.862012Z
+2022-05-13 18:52:47.862 INFO  (jetty-launcher-8-thread-1) [] o.a.s.s.SolrDispatchFilter
+          |___/\___/_|_|    Start time: 2022-05-13T23:52:47.862012Z
+2022-05-13 18:52:47.862 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.c.ConnectionManager
+          Waiting for client to connect to ZooKeeper
+2022-05-13 18:52:47.862 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.c.ConnectionManager
+          Waiting for client to connect to ZooKeeper
+2022-05-13 18:52:47.864 INFO  (zkConnectionManagerCallback-12-thread-1) [] o.a.s.c.c.ConnectionManager
+          zkClient has connected
+2022-05-13 18:52:47.864 INFO  (zkConnectionManagerCallback-11-thread-1) [] o.a.s.c.c.ConnectionManager
+          zkClient has connected
+2022-05-13 18:52:47.864 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.c.ConnectionManager
+          Client is connected to ZooKeeper
+2022-05-13 18:52:47.864 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.c.ConnectionManager
+          Client is connected to ZooKeeper
+2022-05-13 18:52:47.865 INFO  (jetty-launcher-8-thread-2) [] o.a.s.s.SolrDispatchFilter
+          solr.xml found in ZooKeeper. Loading...
+2022-05-13 18:52:47.865 INFO  (jetty-launcher-8-thread-1) [] o.a.s.s.SolrDispatchFilter
+          solr.xml found in ZooKeeper. Loading...
+2022-05-13 18:52:47.896 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.SolrXmlConfig
+          Metrics collection is disabled.
+2022-05-13 18:52:47.896 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.SolrXmlConfig
+          Metrics collection is disabled.
+2022-05-13 18:52:48.208 INFO  (jetty-launcher-8-thread-1) [] o.a.s.h.c.HttpShardHandlerFactory
+          Host whitelist initialized: WhitelistHostChecker [whitelistHosts=null, whitelistHostCheckingEnabled=true]
+2022-05-13 18:52:48.208 INFO  (jetty-launcher-8-thread-2) [] o.a.s.h.c.HttpShardHandlerFactory
+          Host whitelist initialized: WhitelistHostChecker [whitelistHosts=null, whitelistHostCheckingEnabled=true]
+2022-05-13 18:52:48.258 WARN  (jetty-launcher-8-thread-1) [] o.e.j.u.s.S.config
+          Trusting all certificates configured for Client@60d45b26[provider=null,keyStore=null,trustStore=null]
+2022-05-13 18:52:48.258 WARN  (jetty-launcher-8-thread-2) [] o.e.j.u.s.S.config
+          Trusting all certificates configured for Client@3c501d1c[provider=null,keyStore=null,trustStore=null]
+2022-05-13 18:52:48.258 WARN  (jetty-launcher-8-thread-1) [] o.e.j.u.s.S.config
+          No Client EndPointIdentificationAlgorithm configured for Client@60d45b26[provider=null,keyStore=null,trustStore=null]
+2022-05-13 18:52:48.258 WARN  (jetty-launcher-8-thread-2) [] o.e.j.u.s.S.config
+          No Client EndPointIdentificationAlgorithm configured for Client@3c501d1c[provider=null,keyStore=null,trustStore=null]
+2022-05-13 18:52:48.307 WARN  (jetty-launcher-8-thread-2) [] o.e.j.u.s.S.config
+          Trusting all certificates configured for Client@7d5e5dbe[provider=null,keyStore=null,trustStore=null]
+2022-05-13 18:52:48.307 WARN  (jetty-launcher-8-thread-1) [] o.e.j.u.s.S.config
+          Trusting all certificates configured for Client@63ee9c51[provider=null,keyStore=null,trustStore=null]
+2022-05-13 18:52:48.307 WARN  (jetty-launcher-8-thread-2) [] o.e.j.u.s.S.config
+          No Client EndPointIdentificationAlgorithm configured for Client@7d5e5dbe[provider=null,keyStore=null,trustStore=null]
+2022-05-13 18:52:48.307 WARN  (jetty-launcher-8-thread-1) [] o.e.j.u.s.S.config
+          No Client EndPointIdentificationAlgorithm configured for Client@63ee9c51[provider=null,keyStore=null,trustStore=null]
+2022-05-13 18:52:48.327 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.ZkContainer
+          Zookeeper client=127.0.0.1:34525/solr
+2022-05-13 18:52:48.327 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.ZkContainer
+          Zookeeper client=127.0.0.1:34525/solr
+2022-05-13 18:52:48.332 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.c.ConnectionManager
+          Waiting for client to connect to ZooKeeper
+2022-05-13 18:52:48.333 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.c.ConnectionManager
+          Waiting for client to connect to ZooKeeper
+2022-05-13 18:52:48.334 INFO  (zkConnectionManagerCallback-34-thread-1) [] o.a.s.c.c.ConnectionManager
+          zkClient has connected
+2022-05-13 18:52:48.334 INFO  (zkConnectionManagerCallback-33-thread-1) [] o.a.s.c.c.ConnectionManager
+          zkClient has connected
+2022-05-13 18:52:48.334 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.c.ConnectionManager
+          Client is connected to ZooKeeper
+2022-05-13 18:52:48.334 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.c.ConnectionManager
+          Client is connected to ZooKeeper
+2022-05-13 18:52:48.442 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.c.ConnectionManager
+          Waiting for client to connect to ZooKeeper
+2022-05-13 18:52:48.443 INFO  (zkConnectionManagerCallback-36-thread-1) [] o.a.s.c.c.ConnectionManager
+          zkClient has connected
+2022-05-13 18:52:48.443 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.c.ConnectionManager
+          Client is connected to ZooKeeper
+2022-05-13 18:52:48.478 WARN  (jetty-launcher-8-thread-2) [] o.a.s.c.ZkController
+          The _default configset could not be uploaded. Please provide 'solr.default.confdir' parameter that points to a configset intended to be the default. Current 'solr.default.confdir' value: {}
+2022-05-13 18:52:48.479 WARN  (jetty-launcher-8-thread-2) [] o.a.s.c.ZkController
+          Contents of zookeeper /security.json are world-readable; consider setting up ACLs as described in https://solr.apache.org/guide/zookeeper-access-control.html
+2022-05-13 18:52:48.494 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.OverseerElectionContext
+          I am going to be the leader 127.0.0.1:35709_solr
+2022-05-13 18:52:48.496 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.Overseer
+          Overseer (id=72129608345714695-127.0.0.1:35709_solr-n_0000000000) starting
+2022-05-13 18:52:48.530 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.ZkController
+          Register node as live in ZooKeeper:/live_nodes/127.0.0.1:35709_solr
+2022-05-13 18:52:48.531 INFO  (OverseerStateUpdate-72129608345714695-127.0.0.1:35709_solr-n_0000000000) [] o.a.s.c.Overseer
+          Starting to work on the main queue : 127.0.0.1:35709_solr
+2022-05-13 18:52:48.533 INFO  (OverseerStateUpdate-72129608345714695-127.0.0.1:35709_solr-n_0000000000) [] o.a.s.c.c.ZkStateReader
+          Updated live nodes from ZooKeeper... (0) -> (1)
+2022-05-13 18:52:48.536 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.c.ConnectionManager
+          Waiting for client to connect to ZooKeeper
+2022-05-13 18:52:48.537 INFO  (zkConnectionManagerCallback-45-thread-1) [] o.a.s.c.c.ConnectionManager
+          zkClient has connected
+2022-05-13 18:52:48.537 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.c.ConnectionManager
+          Client is connected to ZooKeeper
+2022-05-13 18:52:48.540 WARN  (jetty-launcher-8-thread-1) [] o.a.s.c.ZkController
+          The _default configset could not be uploaded. Please provide 'solr.default.confdir' parameter that points to a configset intended to be the default. Current 'solr.default.confdir' value: {}
+2022-05-13 18:52:48.541 WARN  (jetty-launcher-8-thread-1) [] o.a.s.c.ZkController
+          Contents of zookeeper /security.json are world-readable; consider setting up ACLs as described in https://solr.apache.org/guide/zookeeper-access-control.html
+2022-05-13 18:52:48.542 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.c.ZkStateReader
+          Updated live nodes from ZooKeeper... (0) -> (1)
+2022-05-13 18:52:48.542 INFO  (jetty-launcher-8-thread-2) [] o.a.s.p.PackageLoader
+          /packages.json updated to version -1
+2022-05-13 18:52:48.546 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.ZkController
+          Publish node=127.0.0.1:38743_solr as DOWN
+2022-05-13 18:52:48.548 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.TransientSolrCoreCacheDefault
+          Allocating transient core cache for max 2147483647 cores with initial capacity of 1024
+2022-05-13 18:52:48.548 WARN  (jetty-launcher-8-thread-2) [] o.a.s.c.CoreContainer
+          Not all security plugins configured!  authentication=disabled authorization=disabled.  Solr is only as secure as you make it. Consider configuring authentication/authorization before exposing Solr to users internal or external.  See https://s.apache.org/solrsecurity for more info
+2022-05-13 18:52:48.554 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.ZkController
+          Register node as live in ZooKeeper:/live_nodes/127.0.0.1:38743_solr
+2022-05-13 18:52:48.556 INFO  (zkCallback-35-thread-1) [] o.a.s.c.c.ZkStateReader
+          Updated live nodes from ZooKeeper... (1) -> (2)
+2022-05-13 18:52:48.556 INFO  (zkCallback-44-thread-1) [] o.a.s.c.c.ZkStateReader
+          Updated live nodes from ZooKeeper... (1) -> (2)
+2022-05-13 18:52:48.557 INFO  (jetty-launcher-8-thread-1) [] o.a.s.p.PackageLoader
+          /packages.json updated to version -1
+2022-05-13 18:52:48.558 WARN  (jetty-launcher-8-thread-1) [] o.a.s.c.CoreContainer
+          Not all security plugins configured!  authentication=disabled authorization=disabled.  Solr is only as secure as you make it. Consider configuring authentication/authorization before exposing Solr to users internal or external.  See https://s.apache.org/solrsecurity for more info
+2022-05-13 18:52:48.737 INFO  (jetty-launcher-8-thread-2) [] o.a.s.c.CorePropertiesLocator
+          Found 0 core definitions underneath /tmp/solr.crossdc.SolrAndKafkaIntegrationTest_CBF5642C25987FE7-001/tempDir-001/node2
+2022-05-13 18:52:48.737 INFO  (jetty-launcher-8-thread-1) [] o.a.s.c.CorePropertiesLocator
+          Found 0 core definitions underneath /tmp/solr.crossdc.SolrAndKafkaIntegrationTest_CBF5642C25987FE7-001/tempDir-001/node1
+2022-05-13 18:52:48.761 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.MiniSolrCloudCluster
+          waitForAllNodes: numServers=2
+2022-05-13 18:52:48.762 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.c.ConnectionManager
+          Waiting for client to connect to ZooKeeper
+2022-05-13 18:52:48.763 INFO  (zkConnectionManagerCallback-59-thread-1) [] o.a.s.c.c.ConnectionManager
+          zkClient has connected
+2022-05-13 18:52:48.764 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.c.ConnectionManager
+          Client is connected to ZooKeeper
+2022-05-13 18:52:48.765 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.c.ZkStateReader
+          Updated live nodes from ZooKeeper... (0) -> (2)
+2022-05-13 18:52:48.767 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.s.i.ZkClientClusterStateProvider
+          Cluster at 127.0.0.1:34525/solr ready
+2022-05-13 18:52:48.871 INFO  (OverseerThreadFactory-43-thread-1-processing-n:127.0.0.1:35709_solr) [] o.a.s.c.a.c.CreateCollectionCmd
+          Create collection collection1
+2022-05-13 18:52:49.002 INFO  (OverseerStateUpdate-72129608345714695-127.0.0.1:35709_solr-n_0000000000) [] o.a.s.c.o.SliceMutator
+          createReplica() {
+  "core":"collection1_shard1_replica_n1",
+  "node_name":"127.0.0.1:35709_solr",
+  "base_url":"http://127.0.0.1:35709/solr",
+  "collection":"collection1",
+  "shard":"shard1",
+  "state":"down",
+  "type":"NRT",
+  "operation":"ADDREPLICA",
+  "waitForFinalState":"false"} 
+2022-05-13 18:52:49.209 INFO  (qtp255577815-243) [ x:x:collection1_shard1_replica_n1] o.a.s.h.a.CoreAdminOperation
+          core create command qt=/admin/cores&coreNodeName=core_node2&collection.configName=conf&newCollection=true&name=collection1_shard1_replica_n1&action=CREATE&numShards=1&collection=collection1&shard=shard1&wt=javabin&version=2&replicaType=NRT
+2022-05-13 18:52:49.211 INFO  (qtp255577815-243) [ x:x:collection1_shard1_replica_n1] o.a.s.c.TransientSolrCoreCacheDefault
+          Allocating transient core cache for max 2147483647 cores with initial capacity of 1024
+2022-05-13 18:52:49.232 WARN  (qtp255577815-243) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.SolrConfig
+          You should not use LATEST as luceneMatchVersion property: if you use this setting, and then Solr upgrades to a newer release of Lucene, sizable changes may happen. If precise back compatibility is important then you should instead explicitly specify an actual Lucene version.
+2022-05-13 18:52:49.232 INFO  (qtp255577815-243) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.SolrConfig
+          Using Lucene MatchVersion: 8.11.1
+2022-05-13 18:52:49.251 INFO  (qtp255577815-243) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.s.IndexSchema
+          Schema name=minimal
+2022-05-13 18:52:49.299 INFO  (qtp255577815-243) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.s.IndexSchema
+          Loaded schema minimal/1.1 with uniqueid field id
+2022-05-13 18:52:49.299 INFO  (qtp255577815-243) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.CoreContainer
+          Creating SolrCore 'collection1_shard1_replica_n1' using configuration from configset conf, trusted=true
+2022-05-13 18:52:49.309 INFO  (qtp255577815-243) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.SolrCore
+          [[collection1_shard1_replica_n1] ] Opening new SolrCore at [/tmp/solr.crossdc.SolrAndKafkaIntegrationTest_CBF5642C25987FE7-001/tempDir-001/node2/collection1_shard1_replica_n1], dataDir=[/tmp/solr.crossdc.SolrAndKafkaIntegrationTest_CBF5642C25987FE7-001/tempDir-001/node2/collection1_shard1_replica_n1/data/]
+2022-05-13 18:52:49.516 INFO  (qtp255577815-243) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.u.UpdateHandler
+          Using UpdateLog implementation: org.apache.solr.update.UpdateLog
+2022-05-13 18:52:49.517 INFO  (qtp255577815-243) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.u.UpdateLog
+          Initializing UpdateLog: dataDir=null defaultSyncLevel=FLUSH numRecordsToKeep=100 maxNumLogsToKeep=10 numVersionBuckets=65536
+2022-05-13 18:52:49.521 INFO  (qtp255577815-243) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.u.CommitTracker
+          Hard AutoCommit: if uncommitted for 60000ms; 
+2022-05-13 18:52:49.521 INFO  (qtp255577815-243) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.u.CommitTracker
+          Soft AutoCommit: disabled
+2022-05-13 18:52:49.539 INFO  (qtp255577815-243) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.r.ManagedResourceStorage
+          Configured ZooKeeperStorageIO with znodeBase: /configs/conf
+2022-05-13 18:52:49.541 INFO  (qtp255577815-243) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.r.ManagedResourceStorage
+          Loaded null at path _rest_managed.json using ZooKeeperStorageIO:path=/configs/conf
+2022-05-13 18:52:49.545 INFO  (qtp255577815-243) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.h.ReplicationHandler
+          Commits will be reserved for 10000 ms
+2022-05-13 18:52:49.546 INFO  (qtp255577815-243) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.u.UpdateLog
+          Could not find max version in index or recent updates, using new clock 1732757128002666496
+2022-05-13 18:52:49.551 INFO  (searcherExecutor-61-thread-1-processing-n:127.0.0.1:35709_solr x:collection1_shard1_replica_n1 c:collection1 s:shard1 r:core_node2) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.SolrCore
+          [collection1_shard1_replica_n1]  Registered new searcher autowarm time: 0 ms
+2022-05-13 18:52:49.555 INFO  (qtp255577815-243) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.ZkShardTerms
+          Successful update of terms at /collections/collection1/terms/shard1 to Terms{values={core_node2=0}, version=0}
+2022-05-13 18:52:49.556 INFO  (qtp255577815-243) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.ShardLeaderElectionContextBase
+          make sure parent is created /collections/collection1/leaders/shard1
+2022-05-13 18:52:49.560 INFO  (qtp255577815-243) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.ShardLeaderElectionContext
+          Enough replicas found to continue.
+2022-05-13 18:52:49.561 INFO  (qtp255577815-243) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.ShardLeaderElectionContext
+          I may be the new leader - try and sync
+2022-05-13 18:52:49.561 INFO  (qtp255577815-243) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.SyncStrategy
+          Sync replicas to http://127.0.0.1:35709/solr/collection1_shard1_replica_n1/
+2022-05-13 18:52:49.562 INFO  (qtp255577815-243) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.SyncStrategy
+          Sync Success - now sync replicas to me
+2022-05-13 18:52:49.562 INFO  (qtp255577815-243) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.SyncStrategy
+          http://127.0.0.1:35709/solr/collection1_shard1_replica_n1/ has no replicas
+2022-05-13 18:52:49.563 INFO  (qtp255577815-243) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.ShardLeaderElectionContextBase
+          Creating leader registration node /collections/collection1/leaders/shard1/leader after winning as /collections/collection1/leader_elect/shard1/election/72129608345714695-core_node2-n_0000000000
+2022-05-13 18:52:49.564 INFO  (qtp255577815-243) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.ShardLeaderElectionContext
+          I am the new leader: http://127.0.0.1:35709/solr/collection1_shard1_replica_n1/ shard1
+2022-05-13 18:52:49.668 INFO  (zkCallback-35-thread-1) [] o.a.s.c.c.ZkStateReader
+          A cluster state change: [WatchedEvent state:SyncConnected type:NodeDataChanged path:/collections/collection1/state.json] for collection [collection1] has occurred - updating... (live nodes size: [2])
+2022-05-13 18:52:49.668 INFO  (zkCallback-35-thread-2) [] o.a.s.c.c.ZkStateReader
+          A cluster state change: [WatchedEvent state:SyncConnected type:NodeDataChanged path:/collections/collection1/state.json] for collection [collection1] has occurred - updating... (live nodes size: [2])
+2022-05-13 18:52:49.672 INFO  (qtp255577815-243) [c:c:collection1 s:s:shard1 r:r:core_node2 x:x:collection1_shard1_replica_n1] o.a.s.c.ZkController
+          I am the leader, no recovery necessary
+2022-05-13 18:52:49.687 INFO  (qtp255577815-243) [] o.a.s.s.HttpSolrCall
+          [admin] webapp=null path=/admin/cores params={qt=/admin/cores&coreNodeName=core_node2&collection.configName=conf&newCollection=true&name=collection1_shard1_replica_n1&action=CREATE&numShards=1&collection=collection1&shard=shard1&wt=javabin&version=2&replicaType=NRT} status=0 QTime=478
+2022-05-13 18:52:49.703 INFO  (qtp255577815-238) [] o.a.s.h.a.CollectionsHandler
+          Wait for new collection to be active for at most 45 seconds. Check all shard replicas
+2022-05-13 18:52:49.781 INFO  (zkCallback-35-thread-2) [] o.a.s.c.c.ZkStateReader
+          A cluster state change: [WatchedEvent state:SyncConnected type:NodeDataChanged path:/collections/collection1/state.json] for collection [collection1] has occurred - updating... (live nodes size: [2])
+2022-05-13 18:52:49.781 INFO  (zkCallback-35-thread-1) [] o.a.s.c.c.ZkStateReader
+          A cluster state change: [WatchedEvent state:SyncConnected type:NodeDataChanged path:/collections/collection1/state.json] for collection [collection1] has occurred - updating... (live nodes size: [2])
+2022-05-13 18:52:49.781 INFO  (zkCallback-35-thread-3) [] o.a.s.c.c.ZkStateReader
+          A cluster state change: [WatchedEvent state:SyncConnected type:NodeDataChanged path:/collections/collection1/state.json] for collection [collection1] has occurred - updating... (live nodes size: [2])
+2022-05-13 18:52:49.783 INFO  (qtp255577815-238) [] o.a.s.s.HttpSolrCall
+          [admin] webapp=null path=/admin/collections params={collection.configName=conf&name=collection1&nrtReplicas=1&action=CREATE&numShards=1&wt=javabin&version=2} status=0 QTime=932
+2022-05-13 18:52:49.785 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.MiniSolrCloudCluster
+          waitForActiveCollection: collection1
+2022-05-13 18:52:49.793 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.SolrAndKafkaIntegrationTest
+          bootstrapServers=127.0.0.1:34601
+2022-05-13 18:52:49.797 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.c.Consumer$KafkaCrossDcConsumer
+          Creating Kafka consumer with configuration {group.id=group_1, bootstrap.servers=127.0.0.1:34601}
+2022-05-13 18:52:49.803 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.k.c.c.ConsumerConfig
+          ConsumerConfig values: 
+	allow.auto.create.topics = true
+	auto.commit.interval.ms = 5000
+	auto.offset.reset = latest
+	bootstrap.servers = [127.0.0.1:34601]
+	check.crcs = true
+	client.dns.lookup = use_all_dns_ips
+	client.id = consumer-group_1-1
+	client.rack = 
+	connections.max.idle.ms = 540000
+	default.api.timeout.ms = 60000
+	enable.auto.commit = true
+	exclude.internal.topics = true
+	fetch.max.bytes = 52428800
+	fetch.max.wait.ms = 500
+	fetch.min.bytes = 1
+	group.id = group_1
+	group.instance.id = null
+	heartbeat.interval.ms = 3000
+	interceptor.classes = []
+	internal.leave.group.on.close = true
+	internal.throw.on.fetch.stable.offset.unsupported = false
+	isolation.level = read_uncommitted
+	key.deserializer = class org.apache.kafka.common.serialization.StringDeserializer
+	max.partition.fetch.bytes = 1048576
+	max.poll.interval.ms = 300000
+	max.poll.records = 500
+	metadata.max.age.ms = 300000
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	partition.assignment.strategy = [class org.apache.kafka.clients.consumer.RangeAssignor]
+	receive.buffer.bytes = 65536
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 30000
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.mechanism = GSSAPI
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	session.timeout.ms = 10000
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	value.deserializer = class org.apache.solr.crossdc.common.MirroredSolrRequestSerializer
+
+2022-05-13 18:52:49.819 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.k.c.u.AppInfoParser
+          Kafka version: 2.8.1
+2022-05-13 18:52:49.819 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.k.c.u.AppInfoParser
+          Kafka commitId: 839b886f9b732b15
+2022-05-13 18:52:49.819 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.k.c.u.AppInfoParser
+          Kafka startTimeMs: 1652485969819
+2022-05-13 18:52:49.819 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.c.Consumer$KafkaCrossDcConsumer
+          Creating Kafka resubmit producer
+2022-05-13 18:52:49.819 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.KafkaMirroringSink
+          Creating Kafka producer! Configurations org.apache.solr.crossdc.common.KafkaCrossDcConf@3040d0ba 
+2022-05-13 18:52:49.822 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.k.c.p.ProducerConfig
+          ProducerConfig values: 
+	acks = 1
+	batch.size = 16384
+	bootstrap.servers = [127.0.0.1:34601]
+	buffer.memory = 33554432
+	client.dns.lookup = use_all_dns_ips
+	client.id = producer-1
+	compression.type = none
+	connections.max.idle.ms = 540000
+	delivery.timeout.ms = 120000
+	enable.idempotence = false
+	interceptor.classes = []
+	internal.auto.downgrade.txn.commit = false
+	key.serializer = class org.apache.kafka.common.serialization.StringSerializer
+	linger.ms = 0
+	max.block.ms = 60000
+	max.in.flight.requests.per.connection = 5
+	max.request.size = 1048576
+	metadata.max.age.ms = 300000
+	metadata.max.idle.ms = 300000
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	partitioner.class = class org.apache.kafka.clients.producer.internals.DefaultPartitioner
+	receive.buffer.bytes = 32768
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 30000
+	retries = 2147483647
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.mechanism = GSSAPI
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	transaction.timeout.ms = 60000
+	transactional.id = null
+	value.serializer = class org.apache.solr.crossdc.common.MirroredSolrRequestSerializer
+
+2022-05-13 18:52:49.828 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.k.c.u.AppInfoParser
+          Kafka version: 2.8.1
+2022-05-13 18:52:49.828 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.k.c.u.AppInfoParser
+          Kafka commitId: 839b886f9b732b15
+2022-05-13 18:52:49.828 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.k.c.u.AppInfoParser
+          Kafka startTimeMs: 1652485969828
+2022-05-13 18:52:49.828 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.KafkaMirroringSink
+          KafkaMirroringSink has been created. Producer & Topic have been created successfully! Configurations org.apache.solr.crossdc.common.KafkaCrossDcConf@3040d0ba
+2022-05-13 18:52:49.828 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.c.Consumer$KafkaCrossDcConsumer
+          Created Kafka resubmit producer
+2022-05-13 18:52:49.829 INFO  (pool-11-thread-1) [] o.a.s.c.c.Consumer$KafkaCrossDcConsumer
+          About to start Kafka consumer thread...
+2022-05-13 18:52:49.829 INFO  (pool-11-thread-1) [] o.a.s.c.c.Consumer$KafkaCrossDcConsumer
+          Kafka consumer subscribing to topic topic=topic1
+2022-05-13 18:52:49.829 INFO  (pool-11-thread-1) [] o.a.k.c.c.KafkaConsumer
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] Subscribed to topic(s): topic1
+2022-05-13 18:52:49.833 INFO  (kafka-producer-network-thread | producer-1) [] o.a.k.c.Metadata
+          [Producer clientId=producer-1] Cluster ID: D7zGWoulRNKvSYjCUwdj9Q
+2022-05-13 18:52:49.858 INFO  (pool-11-thread-1) [] o.a.k.c.Metadata
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] Cluster ID: D7zGWoulRNKvSYjCUwdj9Q
+2022-05-13 18:52:49.858 INFO  (TEST-SolrAndKafkaIntegrationTest.test-seed#[CBF5642C25987FE7]) [] o.a.s.SolrTestCaseJ4
+          ###Starting test
+2022-05-13 18:52:49.859 INFO  (data-plane-kafka-request-handler-1) [] k.z.AdminZkClient
+          Creating topic __consumer_offsets with configuration {compression.type=producer, cleanup.policy=compact, segment.bytes=104857600} and initial partition assignment HashMap(0 -> ArrayBuffer(0), 1 -> ArrayBuffer(0), 2 -> ArrayBuffer(0), 3 -> ArrayBuffer(0), 4 -> ArrayBuffer(0))
+2022-05-13 18:52:49.862 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] New topics: [Set(__consumer_offsets)], deleted topics: [HashSet()], new partition replica assignment [Set(TopicIdReplicaAssignment(__consumer_offsets,Some(4XPl95PxQYyq7TrTrxV7Ng),HashMap(__consumer_offsets-4 -> ReplicaAssignment(replicas=0, addingReplicas=, removingReplicas=), __consumer_offsets-3 -> ReplicaAssignment(replicas=0, addingReplicas=, removingReplicas=), __consumer_offsets-2 -> ReplicaAssignment(replicas=0, addingReplicas=, removingReplicas=), __consumer_offsets-0 -> ReplicaAssignment(replicas=0, addingReplicas=, removingReplicas=), __consumer_offsets-1 -> ReplicaAssignment(replicas=0, addingReplicas=, removingReplicas=))))]
+2022-05-13 18:52:49.862 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] New partition creation callback for __consumer_offsets-4,__consumer_offsets-3,__consumer_offsets-2,__consumer_offsets-0,__consumer_offsets-1
+2022-05-13 18:52:49.862 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Changed partition __consumer_offsets-4 state from NonExistentPartition to NewPartition with assigned replicas 0
+2022-05-13 18:52:49.862 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Changed partition __consumer_offsets-3 state from NonExistentPartition to NewPartition with assigned replicas 0
+2022-05-13 18:52:49.862 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Changed partition __consumer_offsets-2 state from NonExistentPartition to NewPartition with assigned replicas 0
+2022-05-13 18:52:49.862 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Changed partition __consumer_offsets-0 state from NonExistentPartition to NewPartition with assigned replicas 0
+2022-05-13 18:52:49.862 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Changed partition __consumer_offsets-1 state from NonExistentPartition to NewPartition with assigned replicas 0
+2022-05-13 18:52:49.862 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Sending UpdateMetadata request to brokers HashSet() for 0 partitions
+2022-05-13 18:52:49.862 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Sending UpdateMetadata request to brokers HashSet() for 0 partitions
+2022-05-13 18:52:49.866 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Changed partition __consumer_offsets-4 from NewPartition to OnlinePartition with state LeaderAndIsr(leader=0, leaderEpoch=0, isr=List(0), zkVersion=0)
+2022-05-13 18:52:49.866 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Changed partition __consumer_offsets-3 from NewPartition to OnlinePartition with state LeaderAndIsr(leader=0, leaderEpoch=0, isr=List(0), zkVersion=0)
+2022-05-13 18:52:49.866 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Changed partition __consumer_offsets-2 from NewPartition to OnlinePartition with state LeaderAndIsr(leader=0, leaderEpoch=0, isr=List(0), zkVersion=0)
+2022-05-13 18:52:49.866 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Changed partition __consumer_offsets-0 from NewPartition to OnlinePartition with state LeaderAndIsr(leader=0, leaderEpoch=0, isr=List(0), zkVersion=0)
+2022-05-13 18:52:49.866 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Changed partition __consumer_offsets-1 from NewPartition to OnlinePartition with state LeaderAndIsr(leader=0, leaderEpoch=0, isr=List(0), zkVersion=0)
+2022-05-13 18:52:49.866 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Sending LeaderAndIsr request to broker 0 with 5 become-leader and 0 become-follower partitions
+2022-05-13 18:52:49.866 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Sending UpdateMetadata request to brokers HashSet(0) for 5 partitions
+2022-05-13 18:52:49.866 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Sending UpdateMetadata request to brokers HashSet() for 0 partitions
+2022-05-13 18:52:49.867 INFO  (data-plane-kafka-request-handler-2) [] s.c.logger
+          [Broker id=0] Handling LeaderAndIsr request correlationId 3 from controller 0 for 5 partitions
+2022-05-13 18:52:49.868 INFO  (data-plane-kafka-request-handler-2) [] k.s.ReplicaFetcherManager
+          [ReplicaFetcherManager on broker 0] Removed fetcher for partitions HashSet(__consumer_offsets-4, __consumer_offsets-3, __consumer_offsets-2, __consumer_offsets-0, __consumer_offsets-1)
+2022-05-13 18:52:49.868 INFO  (data-plane-kafka-request-handler-2) [] s.c.logger
+          [Broker id=0] Stopped fetchers as part of LeaderAndIsr request correlationId 3 from controller 0 epoch 1 as part of the become-leader transition for 5 partitions
+2022-05-13 18:52:49.870 INFO  (data-plane-kafka-request-handler-2) [] k.l.Log
+          [Log partition=__consumer_offsets-3, dir=/tmp/junit5218460758484725972/junit3431912741549809524] Loading producer state till offset 0 with message format version 2
+2022-05-13 18:52:49.871 INFO  (data-plane-kafka-request-handler-2) [] k.l.LogManager
+          Created log for partition __consumer_offsets-3 in /tmp/junit5218460758484725972/junit3431912741549809524/__consumer_offsets-3 with properties {cleanup.policy=compact, compression.type="producer", segment.bytes=104857600}
+2022-05-13 18:52:49.871 INFO  (data-plane-kafka-request-handler-2) [] k.c.Partition
+          [Partition __consumer_offsets-3 broker=0] No checkpointed highwatermark is found for partition __consumer_offsets-3
+2022-05-13 18:52:49.871 INFO  (data-plane-kafka-request-handler-2) [] k.c.Partition
+          [Partition __consumer_offsets-3 broker=0] Log loaded for partition __consumer_offsets-3 with initial high watermark 0
+2022-05-13 18:52:49.871 INFO  (data-plane-kafka-request-handler-2) [] s.c.logger
+          [Broker id=0] Leader __consumer_offsets-3 starts at leader epoch 0 from offset 0 with high watermark 0 ISR [0] addingReplicas [] removingReplicas []. Previous leader epoch was -1.
+2022-05-13 18:52:49.873 INFO  (data-plane-kafka-request-handler-2) [] k.l.Log
+          [Log partition=__consumer_offsets-2, dir=/tmp/junit5218460758484725972/junit3431912741549809524] Loading producer state till offset 0 with message format version 2
+2022-05-13 18:52:49.873 INFO  (data-plane-kafka-request-handler-2) [] k.l.LogManager
+          Created log for partition __consumer_offsets-2 in /tmp/junit5218460758484725972/junit3431912741549809524/__consumer_offsets-2 with properties {cleanup.policy=compact, compression.type="producer", segment.bytes=104857600}
+2022-05-13 18:52:49.873 INFO  (data-plane-kafka-request-handler-2) [] k.c.Partition
+          [Partition __consumer_offsets-2 broker=0] No checkpointed highwatermark is found for partition __consumer_offsets-2
+2022-05-13 18:52:49.873 INFO  (data-plane-kafka-request-handler-2) [] k.c.Partition
+          [Partition __consumer_offsets-2 broker=0] Log loaded for partition __consumer_offsets-2 with initial high watermark 0
+2022-05-13 18:52:49.873 INFO  (data-plane-kafka-request-handler-2) [] s.c.logger
+          [Broker id=0] Leader __consumer_offsets-2 starts at leader epoch 0 from offset 0 with high watermark 0 ISR [0] addingReplicas [] removingReplicas []. Previous leader epoch was -1.
+2022-05-13 18:52:49.875 INFO  (data-plane-kafka-request-handler-2) [] k.l.Log
+          [Log partition=__consumer_offsets-4, dir=/tmp/junit5218460758484725972/junit3431912741549809524] Loading producer state till offset 0 with message format version 2
+2022-05-13 18:52:49.875 INFO  (data-plane-kafka-request-handler-2) [] k.l.LogManager
+          Created log for partition __consumer_offsets-4 in /tmp/junit5218460758484725972/junit3431912741549809524/__consumer_offsets-4 with properties {cleanup.policy=compact, compression.type="producer", segment.bytes=104857600}
+2022-05-13 18:52:49.875 INFO  (data-plane-kafka-request-handler-2) [] k.c.Partition
+          [Partition __consumer_offsets-4 broker=0] No checkpointed highwatermark is found for partition __consumer_offsets-4
+2022-05-13 18:52:49.875 INFO  (data-plane-kafka-request-handler-2) [] k.c.Partition
+          [Partition __consumer_offsets-4 broker=0] Log loaded for partition __consumer_offsets-4 with initial high watermark 0
+2022-05-13 18:52:49.875 INFO  (data-plane-kafka-request-handler-2) [] s.c.logger
+          [Broker id=0] Leader __consumer_offsets-4 starts at leader epoch 0 from offset 0 with high watermark 0 ISR [0] addingReplicas [] removingReplicas []. Previous leader epoch was -1.
+2022-05-13 18:52:49.877 INFO  (data-plane-kafka-request-handler-2) [] k.l.Log
+          [Log partition=__consumer_offsets-1, dir=/tmp/junit5218460758484725972/junit3431912741549809524] Loading producer state till offset 0 with message format version 2
+2022-05-13 18:52:49.878 INFO  (data-plane-kafka-request-handler-2) [] k.l.LogManager
+          Created log for partition __consumer_offsets-1 in /tmp/junit5218460758484725972/junit3431912741549809524/__consumer_offsets-1 with properties {cleanup.policy=compact, compression.type="producer", segment.bytes=104857600}
+2022-05-13 18:52:49.878 INFO  (data-plane-kafka-request-handler-2) [] k.c.Partition
+          [Partition __consumer_offsets-1 broker=0] No checkpointed highwatermark is found for partition __consumer_offsets-1
+2022-05-13 18:52:49.878 INFO  (data-plane-kafka-request-handler-2) [] k.c.Partition
+          [Partition __consumer_offsets-1 broker=0] Log loaded for partition __consumer_offsets-1 with initial high watermark 0
+2022-05-13 18:52:49.878 INFO  (data-plane-kafka-request-handler-2) [] s.c.logger
+          [Broker id=0] Leader __consumer_offsets-1 starts at leader epoch 0 from offset 0 with high watermark 0 ISR [0] addingReplicas [] removingReplicas []. Previous leader epoch was -1.
+2022-05-13 18:52:49.879 INFO  (data-plane-kafka-request-handler-2) [] k.l.Log
+          [Log partition=__consumer_offsets-0, dir=/tmp/junit5218460758484725972/junit3431912741549809524] Loading producer state till offset 0 with message format version 2
+2022-05-13 18:52:49.880 INFO  (data-plane-kafka-request-handler-2) [] k.l.LogManager
+          Created log for partition __consumer_offsets-0 in /tmp/junit5218460758484725972/junit3431912741549809524/__consumer_offsets-0 with properties {cleanup.policy=compact, compression.type="producer", segment.bytes=104857600}
+2022-05-13 18:52:49.880 INFO  (data-plane-kafka-request-handler-2) [] k.c.Partition
+          [Partition __consumer_offsets-0 broker=0] No checkpointed highwatermark is found for partition __consumer_offsets-0
+2022-05-13 18:52:49.880 INFO  (data-plane-kafka-request-handler-2) [] k.c.Partition
+          [Partition __consumer_offsets-0 broker=0] Log loaded for partition __consumer_offsets-0 with initial high watermark 0
+2022-05-13 18:52:49.880 INFO  (data-plane-kafka-request-handler-2) [] s.c.logger
+          [Broker id=0] Leader __consumer_offsets-0 starts at leader epoch 0 from offset 0 with high watermark 0 ISR [0] addingReplicas [] removingReplicas []. Previous leader epoch was -1.
+2022-05-13 18:52:49.880 INFO  (data-plane-kafka-request-handler-2) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Elected as the group coordinator for partition 3 in epoch 0
+2022-05-13 18:52:49.881 INFO  (data-plane-kafka-request-handler-2) [] k.c.g.GroupMetadataManager
+          [GroupMetadataManager brokerId=0] Scheduling loading of offsets and group metadata from __consumer_offsets-3 for epoch 0
+2022-05-13 18:52:49.882 INFO  (data-plane-kafka-request-handler-2) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Elected as the group coordinator for partition 2 in epoch 0
+2022-05-13 18:52:49.882 INFO  (data-plane-kafka-request-handler-2) [] k.c.g.GroupMetadataManager
+          [GroupMetadataManager brokerId=0] Scheduling loading of offsets and group metadata from __consumer_offsets-2 for epoch 0
+2022-05-13 18:52:49.882 INFO  (data-plane-kafka-request-handler-2) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Elected as the group coordinator for partition 4 in epoch 0
+2022-05-13 18:52:49.882 INFO  (data-plane-kafka-request-handler-2) [] k.c.g.GroupMetadataManager
+          [GroupMetadataManager brokerId=0] Scheduling loading of offsets and group metadata from __consumer_offsets-4 for epoch 0
+2022-05-13 18:52:49.882 INFO  (data-plane-kafka-request-handler-2) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Elected as the group coordinator for partition 1 in epoch 0
+2022-05-13 18:52:49.882 INFO  (data-plane-kafka-request-handler-2) [] k.c.g.GroupMetadataManager
+          [GroupMetadataManager brokerId=0] Scheduling loading of offsets and group metadata from __consumer_offsets-1 for epoch 0
+2022-05-13 18:52:49.882 INFO  (data-plane-kafka-request-handler-2) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Elected as the group coordinator for partition 0 in epoch 0
+2022-05-13 18:52:49.882 INFO  (data-plane-kafka-request-handler-2) [] k.c.g.GroupMetadataManager
+          [GroupMetadataManager brokerId=0] Scheduling loading of offsets and group metadata from __consumer_offsets-0 for epoch 0
+2022-05-13 18:52:49.882 INFO  (data-plane-kafka-request-handler-2) [] s.c.logger
+          [Broker id=0] Finished LeaderAndIsr request in 0ms correlationId 3 from controller 0 for 5 partitions
+2022-05-13 18:52:49.883 INFO  (data-plane-kafka-request-handler-3) [] s.c.logger
+          [Broker id=0] Add 5 partitions and deleted 0 partitions from metadata cache in response to UpdateMetadata request sent by controller 0 epoch 1 with correlation id 4
+2022-05-13 18:52:49.885 INFO  (group-metadata-manager-0) [] k.c.g.GroupMetadataManager
+          [GroupMetadataManager brokerId=0] Finished loading offsets and group metadata from __consumer_offsets-3 in 4 milliseconds for epoch 0, of which 1 milliseconds was spent in the scheduler.
+2022-05-13 18:52:49.886 INFO  (group-metadata-manager-0) [] k.c.g.GroupMetadataManager
+          [GroupMetadataManager brokerId=0] Finished loading offsets and group metadata from __consumer_offsets-2 in 4 milliseconds for epoch 0, of which 4 milliseconds was spent in the scheduler.
+2022-05-13 18:52:49.886 INFO  (group-metadata-manager-0) [] k.c.g.GroupMetadataManager
+          [GroupMetadataManager brokerId=0] Finished loading offsets and group metadata from __consumer_offsets-4 in 4 milliseconds for epoch 0, of which 4 milliseconds was spent in the scheduler.
+2022-05-13 18:52:49.886 INFO  (group-metadata-manager-0) [] k.c.g.GroupMetadataManager
+          [GroupMetadataManager brokerId=0] Finished loading offsets and group metadata from __consumer_offsets-1 in 4 milliseconds for epoch 0, of which 4 milliseconds was spent in the scheduler.
+2022-05-13 18:52:49.886 INFO  (group-metadata-manager-0) [] k.c.g.GroupMetadataManager
+          [GroupMetadataManager brokerId=0] Finished loading offsets and group metadata from __consumer_offsets-0 in 4 milliseconds for epoch 0, of which 4 milliseconds was spent in the scheduler.
+2022-05-13 18:52:49.935 INFO  (pool-11-thread-1) [] o.a.k.c.c.i.AbstractCoordinator
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] Discovered group coordinator localhost:34601 (id: 2147483647 rack: null)
+2022-05-13 18:52:49.936 INFO  (pool-11-thread-1) [] o.a.k.c.c.i.AbstractCoordinator
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] (Re-)joining group
+2022-05-13 18:52:49.947 INFO  (pool-11-thread-1) [] o.a.k.c.c.i.AbstractCoordinator
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] (Re-)joining group
+2022-05-13 18:52:49.950 INFO  (data-plane-kafka-request-handler-1) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Preparing to rebalance group group_1 in state PreparingRebalance with old generation 0 (__consumer_offsets-4) (reason: Adding new member consumer-group_1-1-f361e347-2cd6-457b-83f2-5e50bf615c51 with group instance id None)
+2022-05-13 18:52:49.954 INFO  (executor-Rebalance) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Stabilized group group_1 generation 1 (__consumer_offsets-4) with 1 members
+2022-05-13 18:52:49.955 INFO  (pool-11-thread-1) [] o.a.k.c.c.i.AbstractCoordinator
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] Successfully joined group with generation Generation{generationId=1, memberId='consumer-group_1-1-f361e347-2cd6-457b-83f2-5e50bf615c51', protocol='range'}
+2022-05-13 18:52:49.956 INFO  (pool-11-thread-1) [] o.a.k.c.c.i.ConsumerCoordinator
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] Finished assignment for group at generation 1: {consumer-group_1-1-f361e347-2cd6-457b-83f2-5e50bf615c51=Assignment(partitions=[topic1-0])}
+2022-05-13 18:52:49.960 INFO  (data-plane-kafka-request-handler-2) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Assignment received from leader for group group_1 for generation 1. The group has 1 members, 0 of which are static.
+2022-05-13 18:52:49.985 INFO  (pool-11-thread-1) [] o.a.k.c.c.i.AbstractCoordinator
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] Successfully synced group in generation Generation{generationId=1, memberId='consumer-group_1-1-f361e347-2cd6-457b-83f2-5e50bf615c51', protocol='range'}
+2022-05-13 18:52:49.985 INFO  (pool-11-thread-1) [] o.a.k.c.c.i.ConsumerCoordinator
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] Notifying assignor about the new Assignment(partitions=[topic1-0])
+2022-05-13 18:52:49.986 INFO  (pool-11-thread-1) [] o.a.k.c.c.i.ConsumerCoordinator
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] Adding newly assigned partitions: topic1-0
+2022-05-13 18:52:49.990 INFO  (pool-11-thread-1) [] o.a.k.c.c.i.ConsumerCoordinator
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] Found no committed offset for partition topic1-0
+2022-05-13 18:52:49.997 INFO  (pool-11-thread-1) [] o.a.k.c.c.i.SubscriptionState
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] Resetting offset for partition topic1-0 to position FetchPosition{offset=0, offsetEpoch=Optional.empty, currentLeader=LeaderAndEpoch{leader=Optional[localhost:34601 (id: 0 rack: null)], epoch=0}}.
+2022-05-13 18:52:50.874 INFO  (OverseerCollectionConfigSetProcessor-72129608345714695-127.0.0.1:35709_solr-n_0000000000) [] o.a.s.c.OverseerTaskQueue
+          Response ZK path: /overseer/collection-queue-work/qnr-0000000000 doesn't exist. Requestor may have disconnected from ZooKeeper
+2022-05-13 18:52:52.360 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Processing automatic preferred replica leader election
+2022-05-13 18:52:59.860 INFO  (TEST-SolrAndKafkaIntegrationTest.test-seed#[CBF5642C25987FE7]) [] o.a.k.c.p.ProducerConfig
+          ProducerConfig values: 
+	acks = -1
+	batch.size = 1
+	bootstrap.servers = [127.0.0.1:34601]
+	buffer.memory = 33554432
+	client.dns.lookup = use_all_dns_ips
+	client.id = producer-2
+	compression.type = none
+	connections.max.idle.ms = 540000
+	delivery.timeout.ms = 120000
+	enable.idempotence = false
+	interceptor.classes = []
+	internal.auto.downgrade.txn.commit = false
+	key.serializer = class org.apache.kafka.common.serialization.StringSerializer
+	linger.ms = 1
+	max.block.ms = 60000
+	max.in.flight.requests.per.connection = 5
+	max.request.size = 1048576
+	metadata.max.age.ms = 300000
+	metadata.max.idle.ms = 300000
+	metric.reporters = []
+	metrics.num.samples = 2
+	metrics.recording.level = INFO
+	metrics.sample.window.ms = 30000
+	partitioner.class = class org.apache.kafka.clients.producer.internals.DefaultPartitioner
+	receive.buffer.bytes = 32768
+	reconnect.backoff.max.ms = 1000
+	reconnect.backoff.ms = 50
+	request.timeout.ms = 30000
+	retries = 0
+	retry.backoff.ms = 100
+	sasl.client.callback.handler.class = null
+	sasl.jaas.config = null
+	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+	sasl.kerberos.min.time.before.relogin = 60000
+	sasl.kerberos.service.name = null
+	sasl.kerberos.ticket.renew.jitter = 0.05
+	sasl.kerberos.ticket.renew.window.factor = 0.8
+	sasl.login.callback.handler.class = null
+	sasl.login.class = null
+	sasl.login.refresh.buffer.seconds = 300
+	sasl.login.refresh.min.period.seconds = 60
+	sasl.login.refresh.window.factor = 0.8
+	sasl.login.refresh.window.jitter = 0.05
+	sasl.mechanism = GSSAPI
+	security.protocol = PLAINTEXT
+	security.providers = null
+	send.buffer.bytes = 131072
+	socket.connection.setup.timeout.max.ms = 30000
+	socket.connection.setup.timeout.ms = 10000
+	ssl.cipher.suites = null
+	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+	ssl.endpoint.identification.algorithm = https
+	ssl.engine.factory.class = null
+	ssl.key.password = null
+	ssl.keymanager.algorithm = SunX509
+	ssl.keystore.certificate.chain = null
+	ssl.keystore.key = null
+	ssl.keystore.location = null
+	ssl.keystore.password = null
+	ssl.keystore.type = JKS
+	ssl.protocol = TLSv1.3
+	ssl.provider = null
+	ssl.secure.random.implementation = null
+	ssl.trustmanager.algorithm = PKIX
+	ssl.truststore.certificates = null
+	ssl.truststore.location = null
+	ssl.truststore.password = null
+	ssl.truststore.type = JKS
+	transaction.timeout.ms = 60000
+	transactional.id = null
+	value.serializer = class org.apache.solr.crossdc.common.MirroredSolrRequestSerializer
+
+2022-05-13 18:52:59.866 INFO  (TEST-SolrAndKafkaIntegrationTest.test-seed#[CBF5642C25987FE7]) [] o.a.k.c.u.AppInfoParser
+          Kafka version: 2.8.1
+2022-05-13 18:52:59.866 INFO  (TEST-SolrAndKafkaIntegrationTest.test-seed#[CBF5642C25987FE7]) [] o.a.k.c.u.AppInfoParser
+          Kafka commitId: 839b886f9b732b15
+2022-05-13 18:52:59.867 INFO  (TEST-SolrAndKafkaIntegrationTest.test-seed#[CBF5642C25987FE7]) [] o.a.k.c.u.AppInfoParser
+          Kafka startTimeMs: 1652485979866
+2022-05-13 18:52:59.872 INFO  (kafka-producer-network-thread | producer-2) [] o.a.k.c.Metadata
+          [Producer clientId=producer-2] Cluster ID: D7zGWoulRNKvSYjCUwdj9Q
+2022-05-13 18:52:59.877 INFO  (TEST-SolrAndKafkaIntegrationTest.test-seed#[CBF5642C25987FE7]) [] o.a.s.c.c.MirroredSolrRequestSerializer
+          serialize request=org.apache.solr.client.solrj.request.UpdateRequest@3dfa5bff docs=[{id=id=1652485979869}, {text=text=test}]
+2022-05-13 18:52:59.888 INFO  (kafka-producer-network-thread | producer-2) [] o.a.s.c.SolrAndKafkaIntegrationTest
+          Producer finished sending metadata=topic1-0@0, exception=null
+2022-05-13 18:52:59.888 INFO  (TEST-SolrAndKafkaIntegrationTest.test-seed#[CBF5642C25987FE7]) [] o.a.k.c.p.KafkaProducer
+          [Producer clientId=producer-2] Closing the Kafka producer with timeoutMillis = 9223372036854775807 ms.
+2022-05-13 18:52:59.889 INFO  (TEST-SolrAndKafkaIntegrationTest.test-seed#[CBF5642C25987FE7]) [] o.a.k.c.m.Metrics
+          Metrics scheduler closed
+2022-05-13 18:52:59.889 INFO  (TEST-SolrAndKafkaIntegrationTest.test-seed#[CBF5642C25987FE7]) [] o.a.k.c.m.Metrics
+          Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2022-05-13 18:52:59.889 INFO  (TEST-SolrAndKafkaIntegrationTest.test-seed#[CBF5642C25987FE7]) [] o.a.k.c.m.Metrics
+          Metrics reporters closed
+2022-05-13 18:52:59.889 INFO  (TEST-SolrAndKafkaIntegrationTest.test-seed#[CBF5642C25987FE7]) [] o.a.k.c.u.AppInfoParser
+          App info kafka.producer for producer-2 unregistered
+2022-05-13 18:52:59.890 INFO  (pool-11-thread-1) [] o.a.s.c.c.MirroredSolrRequestSerializer
+          Deserialized class=java.util.LinkedHashMap solrRequest={docs=[{id=id=1652485979869}, {text=text=test}], params={shouldMirror=[true], collection=[collection1]}}
+2022-05-13 18:52:59.891 INFO  (pool-11-thread-1) [] o.a.s.c.c.Consumer$KafkaCrossDcConsumer
+          Fetched record from topic=topic1 partition=0 key=null value=MirroredSolrRequest{solrRequest=org.apache.solr.client.solrj.request.UpdateRequest@699eb836, attempt=1, submitTimeNanos=0}
+2022-05-13 18:52:59.895 INFO  (pool-11-thread-1) [] o.a.s.c.c.ConnectionManager
+          Waiting for client to connect to ZooKeeper
+2022-05-13 18:52:59.896 INFO  (zkConnectionManagerCallback-70-thread-1) [] o.a.s.c.c.ConnectionManager
+          zkClient has connected
+2022-05-13 18:52:59.896 INFO  (pool-11-thread-1) [] o.a.s.c.c.ConnectionManager
+          Client is connected to ZooKeeper
+2022-05-13 18:52:59.897 INFO  (pool-11-thread-1) [] o.a.s.c.c.ZkStateReader
+          Updated live nodes from ZooKeeper... (0) -> (2)
+2022-05-13 18:52:59.897 INFO  (pool-11-thread-1) [] o.a.s.c.s.i.ZkClientClusterStateProvider
+          Cluster at 127.0.0.1:34525/solr ready
+2022-05-13 18:52:59.897 WARN  (pool-11-thread-1) [] o.a.s.c.m.SolrMessageProcessor
+          shouldMirror param equal to [true]
+2022-05-13 18:52:59.897 INFO  (pool-11-thread-1) [] o.a.s.c.m.SolrMessageProcessor
+          shouldMirror=[true]
+2022-05-13 18:52:59.897 INFO  (pool-11-thread-1) [] o.a.s.c.m.SolrMessageProcessor
+          Removing _version_ value=null
+2022-05-13 18:52:59.898 INFO  (pool-11-thread-1) [] o.a.s.c.m.SolrMessageProcessor
+          Removing _version_ value=null
+2022-05-13 18:52:59.898 INFO  (pool-11-thread-1) [] o.a.s.c.m.SolrMessageProcessor
+          Submitting update request numUpdates=2
+2022-05-13 18:52:59.898 ERROR (pool-11-thread-1) [] o.a.s.c.m.SolrMessageProcessor
+          Exception occurred with 4xx response. 400 => org.apache.solr.common.SolrException: Collection not found: [collection1]
+	at org.apache.solr.client.solrj.impl.BaseCloudSolrClient.requestWithRetryOnStaleState(BaseCloudSolrClient.java:901)
+org.apache.solr.common.SolrException: Collection not found: [collection1]
+	at org.apache.solr.client.solrj.impl.BaseCloudSolrClient.requestWithRetryOnStaleState(BaseCloudSolrClient.java:901) ~[solr-solrj-8.11.1.jar:8.11.1 0b002b11819df70783e83ef36b42ed1223c14b50 - janhoy - 2021-12-14 13:50:57]
+	at org.apache.solr.client.solrj.impl.BaseCloudSolrClient.request(BaseCloudSolrClient.java:866) ~[solr-solrj-8.11.1.jar:8.11.1 0b002b11819df70783e83ef36b42ed1223c14b50 - janhoy - 2021-12-14 13:50:57]
+	at org.apache.solr.client.solrj.SolrRequest.process(SolrRequest.java:214) ~[solr-solrj-8.11.1.jar:8.11.1 0b002b11819df70783e83ef36b42ed1223c14b50 - janhoy - 2021-12-14 13:50:57]
+	at org.apache.solr.client.solrj.SolrRequest.process(SolrRequest.java:231) ~[solr-solrj-8.11.1.jar:8.11.1 0b002b11819df70783e83ef36b42ed1223c14b50 - janhoy - 2021-12-14 13:50:57]
+	at org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor.processMirroredSolrRequest(SolrMessageProcessor.java:163) [classes/:?]
+	at org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor.handleSolrRequest(SolrMessageProcessor.java:90) [classes/:?]
+	at org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor.processMirroredRequest(SolrMessageProcessor.java:66) [classes/:?]
+	at org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor.handleItem(SolrMessageProcessor.java:62) [classes/:?]
+	at org.apache.solr.crossdc.consumer.Consumer$KafkaCrossDcConsumer.pollAndProcessRequests(Consumer.java:209) [classes/:?]
+	at org.apache.solr.crossdc.consumer.Consumer$KafkaCrossDcConsumer.run(Consumer.java:177) [classes/:?]
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:515) [?:?]
+	at java.util.concurrent.FutureTask.run(FutureTask.java:264) [?:?]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128) [?:?]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628) [?:?]
+	at java.lang.Thread.run(Thread.java:829) [?:?]
+2022-05-13 18:52:59.901 WARN  (pool-11-thread-1) [] o.a.s.c.m.SolrMessageProcessor
+          Unexpected exception, will resubmit the request to the queue => org.apache.solr.common.SolrException: Collection not found: [collection1]
+	at org.apache.solr.client.solrj.impl.BaseCloudSolrClient.requestWithRetryOnStaleState(BaseCloudSolrClient.java:901)
+org.apache.solr.common.SolrException: Collection not found: [collection1]
+	at org.apache.solr.client.solrj.impl.BaseCloudSolrClient.requestWithRetryOnStaleState(BaseCloudSolrClient.java:901) ~[solr-solrj-8.11.1.jar:8.11.1 0b002b11819df70783e83ef36b42ed1223c14b50 - janhoy - 2021-12-14 13:50:57]
+	at org.apache.solr.client.solrj.impl.BaseCloudSolrClient.request(BaseCloudSolrClient.java:866) ~[solr-solrj-8.11.1.jar:8.11.1 0b002b11819df70783e83ef36b42ed1223c14b50 - janhoy - 2021-12-14 13:50:57]
+	at org.apache.solr.client.solrj.SolrRequest.process(SolrRequest.java:214) ~[solr-solrj-8.11.1.jar:8.11.1 0b002b11819df70783e83ef36b42ed1223c14b50 - janhoy - 2021-12-14 13:50:57]
+	at org.apache.solr.client.solrj.SolrRequest.process(SolrRequest.java:231) ~[solr-solrj-8.11.1.jar:8.11.1 0b002b11819df70783e83ef36b42ed1223c14b50 - janhoy - 2021-12-14 13:50:57]
+	at org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor.processMirroredSolrRequest(SolrMessageProcessor.java:163) [classes/:?]
+	at org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor.handleSolrRequest(SolrMessageProcessor.java:90) [classes/:?]
+	at org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor.processMirroredRequest(SolrMessageProcessor.java:66) [classes/:?]
+	at org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor.handleItem(SolrMessageProcessor.java:62) [classes/:?]
+	at org.apache.solr.crossdc.consumer.Consumer$KafkaCrossDcConsumer.pollAndProcessRequests(Consumer.java:209) [classes/:?]
+	at org.apache.solr.crossdc.consumer.Consumer$KafkaCrossDcConsumer.run(Consumer.java:177) [classes/:?]
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:515) [?:?]
+	at java.util.concurrent.FutureTask.run(FutureTask.java:264) [?:?]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128) [?:?]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628) [?:?]
+	at java.lang.Thread.run(Thread.java:829) [?:?]
+2022-05-13 18:52:59.901 ERROR (pool-11-thread-1) [] o.a.s.c.m.SolrMessageProcessor
+          Exception occurred with 4xx response. 400 => org.apache.solr.common.SolrException: Collection not found: [collection1]
+	at org.apache.solr.client.solrj.impl.BaseCloudSolrClient.requestWithRetryOnStaleState(BaseCloudSolrClient.java:901)
+org.apache.solr.common.SolrException: Collection not found: [collection1]
+	at org.apache.solr.client.solrj.impl.BaseCloudSolrClient.requestWithRetryOnStaleState(BaseCloudSolrClient.java:901) ~[solr-solrj-8.11.1.jar:8.11.1 0b002b11819df70783e83ef36b42ed1223c14b50 - janhoy - 2021-12-14 13:50:57]
+	at org.apache.solr.client.solrj.impl.BaseCloudSolrClient.request(BaseCloudSolrClient.java:866) ~[solr-solrj-8.11.1.jar:8.11.1 0b002b11819df70783e83ef36b42ed1223c14b50 - janhoy - 2021-12-14 13:50:57]
+	at org.apache.solr.client.solrj.SolrRequest.process(SolrRequest.java:214) ~[solr-solrj-8.11.1.jar:8.11.1 0b002b11819df70783e83ef36b42ed1223c14b50 - janhoy - 2021-12-14 13:50:57]
+	at org.apache.solr.client.solrj.SolrRequest.process(SolrRequest.java:231) ~[solr-solrj-8.11.1.jar:8.11.1 0b002b11819df70783e83ef36b42ed1223c14b50 - janhoy - 2021-12-14 13:50:57]
+	at org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor.processMirroredSolrRequest(SolrMessageProcessor.java:163) [classes/:?]
+	at org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor.handleSolrRequest(SolrMessageProcessor.java:90) [classes/:?]
+	at org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor.processMirroredRequest(SolrMessageProcessor.java:66) [classes/:?]
+	at org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor.handleItem(SolrMessageProcessor.java:62) [classes/:?]
+	at org.apache.solr.crossdc.consumer.Consumer$KafkaCrossDcConsumer.pollAndProcessRequests(Consumer.java:209) [classes/:?]
+	at org.apache.solr.crossdc.consumer.Consumer$KafkaCrossDcConsumer.run(Consumer.java:177) [classes/:?]
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:515) [?:?]
+	at java.util.concurrent.FutureTask.run(FutureTask.java:264) [?:?]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128) [?:?]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628) [?:?]
+	at java.lang.Thread.run(Thread.java:829) [?:?]
+2022-05-13 18:52:59.901 INFO  (pool-11-thread-1) [] o.a.s.c.m.SolrMessageProcessor
+          Consumer backoff. sleepTimeMs=1000
+2022-05-13 18:53:09.891 INFO  (TEST-SolrAndKafkaIntegrationTest.test-seed#[CBF5642C25987FE7]) [] o.a.s.SolrTestCaseJ4
+          ###Ending test
+2022-05-13 18:53:09.892 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.c.Consumer$KafkaCrossDcConsumer
+          Shutdown called on KafkaCrossDcConsumer
+2022-05-13 18:53:09.892 INFO  (pool-11-thread-1) [] o.a.s.c.c.Consumer$KafkaCrossDcConsumer
+          Caught wakeup exception, shutting down KafkaSolrRequestConsumer
+2022-05-13 18:53:09.892 INFO  (pool-11-thread-1) [] o.a.s.c.c.Consumer$KafkaCrossDcConsumer
+          Closed kafka consumer. Exiting now.
+2022-05-13 18:53:09.892 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.KafkaServer
+          [KafkaServer id=0] shutting down
+2022-05-13 18:53:09.893 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.KafkaServer
+          [KafkaServer id=0] Starting controlled shutdown
+2022-05-13 18:53:09.895 INFO  (pool-11-thread-1) [] o.a.k.c.c.i.ConsumerCoordinator
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] Revoke previously assigned partitions topic1-0
+2022-05-13 18:53:09.895 INFO  (pool-11-thread-1) [] o.a.k.c.c.i.AbstractCoordinator
+          [Consumer clientId=consumer-group_1-1, groupId=group_1] Member consumer-group_1-1-f361e347-2cd6-457b-83f2-5e50bf615c51 sending LeaveGroup request to coordinator localhost:34601 (id: 2147483647 rack: null) due to the consumer is being closed
+2022-05-13 18:53:09.897 INFO  (data-plane-kafka-request-handler-2) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Member[group.instance.id None, member.id consumer-group_1-1-f361e347-2cd6-457b-83f2-5e50bf615c51] in group group_1 has left, removing it from the group
+2022-05-13 18:53:09.898 INFO  (controller-event-thread) [] k.c.KafkaController
+          [Controller id=0] Shutting down broker 0
+2022-05-13 18:53:09.898 INFO  (data-plane-kafka-request-handler-2) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Preparing to rebalance group group_1 in state PreparingRebalance with old generation 1 (__consumer_offsets-4) (reason: removing member consumer-group_1-1-f361e347-2cd6-457b-83f2-5e50bf615c51 on LeaveGroup)
+2022-05-13 18:53:09.898 INFO  (data-plane-kafka-request-handler-2) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Group group_1 with generation 2 is now empty (__consumer_offsets-4)
+2022-05-13 18:53:09.899 INFO  (controller-event-thread) [] s.c.logger
+          [Controller id=0 epoch=1] Sending UpdateMetadata request to brokers HashSet() for 0 partitions
+2022-05-13 18:53:09.900 INFO  (pool-11-thread-1) [] o.a.k.c.m.Metrics
+          Metrics scheduler closed
+2022-05-13 18:53:09.901 INFO  (pool-11-thread-1) [] o.a.k.c.m.Metrics
+          Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2022-05-13 18:53:09.901 INFO  (pool-11-thread-1) [] o.a.k.c.m.Metrics
+          Metrics reporters closed
+2022-05-13 18:53:09.901 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.KafkaServer
+          [KafkaServer id=0] Controlled shutdown succeeded
+2022-05-13 18:53:09.902 INFO  (pool-11-thread-1) [] o.a.k.c.u.AppInfoParser
+          App info kafka.consumer for consumer-group_1-1 unregistered
+2022-05-13 18:53:09.902 INFO  (pool-11-thread-1) [] o.a.k.c.p.KafkaProducer
+          [Producer clientId=producer-1] Closing the Kafka producer with timeoutMillis = 9223372036854775807 ms.
+2022-05-13 18:53:09.903 INFO  (pool-11-thread-1) [] o.a.k.c.m.Metrics
+          Metrics scheduler closed
+2022-05-13 18:53:09.903 INFO  (pool-11-thread-1) [] o.a.k.c.m.Metrics
+          Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2022-05-13 18:53:09.903 INFO  (pool-11-thread-1) [] o.a.k.c.m.Metrics
+          Metrics reporters closed
+2022-05-13 18:53:09.903 INFO  (pool-11-thread-1) [] o.a.k.c.u.AppInfoParser
+          App info kafka.producer for producer-1 unregistered
+2022-05-13 18:53:09.903 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.c.ZkNodeChangeNotificationListener$ChangeEventProcessThread
+          [/config/changes-event-process-thread]: Shutting down
+2022-05-13 18:53:09.904 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.c.ZkNodeChangeNotificationListener$ChangeEventProcessThread
+          [/config/changes-event-process-thread]: Shutdown completed
+2022-05-13 18:53:09.904 INFO  (/config/changes-event-process-thread) [] k.c.ZkNodeChangeNotificationListener$ChangeEventProcessThread
+          [/config/changes-event-process-thread]: Stopped
+2022-05-13 18:53:09.904 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.n.SocketServer
+          [SocketServer listenerType=ZK_BROKER, nodeId=0] Stopping socket server request processors
+2022-05-13 18:53:09.907 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.n.SocketServer
+          [SocketServer listenerType=ZK_BROKER, nodeId=0] Stopped socket server request processors
+2022-05-13 18:53:09.907 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.KafkaRequestHandlerPool
+          [data-plane Kafka Request Handler on Broker 0], shutting down
+2022-05-13 18:53:09.908 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.KafkaRequestHandlerPool
+          [data-plane Kafka Request Handler on Broker 0], shut down completely
+2022-05-13 18:53:09.909 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-AlterAcls]: Shutting down
+2022-05-13 18:53:09.954 INFO  (ExpirationReaper-0-AlterAcls) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-AlterAcls]: Stopped
+2022-05-13 18:53:09.954 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-AlterAcls]: Shutdown completed
+2022-05-13 18:53:09.955 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.KafkaApis
+          [KafkaApi-0] Shutdown complete.
+2022-05-13 18:53:09.955 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-topic]: Shutting down
+2022-05-13 18:53:10.104 INFO  (ExpirationReaper-0-topic) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-topic]: Stopped
+2022-05-13 18:53:10.104 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-topic]: Shutdown completed
+2022-05-13 18:53:10.107 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.c.t.TransactionCoordinator
+          [TransactionCoordinator id=0] Shutting down.
+2022-05-13 18:53:10.109 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.c.t.ProducerIdManager
+          [ProducerId Manager 0]: Shutdown complete: last producerId assigned 0
+2022-05-13 18:53:10.110 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.c.t.TransactionStateManager
+          [Transaction State Manager 0]: Shutdown complete
+2022-05-13 18:53:10.110 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.c.t.TransactionMarkerChannelManager
+          [Transaction Marker Channel Manager 0]: Shutting down
+2022-05-13 18:53:10.110 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.c.t.TransactionMarkerChannelManager
+          [Transaction Marker Channel Manager 0]: Shutdown completed
+2022-05-13 18:53:10.110 INFO  (TxnMarkerSenderThread-0) [] k.c.t.TransactionMarkerChannelManager
+          [Transaction Marker Channel Manager 0]: Stopped
+2022-05-13 18:53:10.112 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.c.t.TransactionCoordinator
+          [TransactionCoordinator id=0] Shutdown complete.
+2022-05-13 18:53:10.113 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Shutting down.
+2022-05-13 18:53:10.114 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Heartbeat]: Shutting down
+2022-05-13 18:53:10.176 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Heartbeat]: Shutdown completed
+2022-05-13 18:53:10.176 INFO  (ExpirationReaper-0-Heartbeat) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Heartbeat]: Stopped
+2022-05-13 18:53:10.176 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Rebalance]: Shutting down
+2022-05-13 18:53:10.361 INFO  (ExpirationReaper-0-Rebalance) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Rebalance]: Stopped
+2022-05-13 18:53:10.361 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Rebalance]: Shutdown completed
+2022-05-13 18:53:10.363 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.c.g.GroupCoordinator
+          [GroupCoordinator 0]: Shutdown complete.
+2022-05-13 18:53:10.365 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.ReplicaManager
+          [ReplicaManager broker=0] Shutting down
+2022-05-13 18:53:10.365 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.ReplicaManager$LogDirFailureHandler
+          [LogDirFailureHandler]: Shutting down
+2022-05-13 18:53:10.366 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.ReplicaManager$LogDirFailureHandler
+          [LogDirFailureHandler]: Shutdown completed
+2022-05-13 18:53:10.366 INFO  (LogDirFailureHandler) [] k.s.ReplicaManager$LogDirFailureHandler
+          [LogDirFailureHandler]: Stopped
+2022-05-13 18:53:10.366 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.ReplicaFetcherManager
+          [ReplicaFetcherManager on broker 0] shutting down
+2022-05-13 18:53:10.370 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.ReplicaFetcherManager
+          [ReplicaFetcherManager on broker 0] shutdown completed
+2022-05-13 18:53:10.370 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.ReplicaAlterLogDirsManager
+          [ReplicaAlterLogDirsManager on broker 0] shutting down
+2022-05-13 18:53:10.371 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.ReplicaAlterLogDirsManager
+          [ReplicaAlterLogDirsManager on broker 0] shutdown completed
+2022-05-13 18:53:10.371 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Fetch]: Shutting down
+2022-05-13 18:53:10.378 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Fetch]: Shutdown completed
+2022-05-13 18:53:10.378 INFO  (ExpirationReaper-0-Fetch) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Fetch]: Stopped
+2022-05-13 18:53:10.379 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Produce]: Shutting down
+2022-05-13 18:53:10.452 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Produce]: Shutdown completed
+2022-05-13 18:53:10.452 INFO  (ExpirationReaper-0-Produce) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-Produce]: Stopped
+2022-05-13 18:53:10.453 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-DeleteRecords]: Shutting down
+2022-05-13 18:53:10.652 INFO  (ExpirationReaper-0-DeleteRecords) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-DeleteRecords]: Stopped
+2022-05-13 18:53:10.652 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-DeleteRecords]: Shutdown completed
+2022-05-13 18:53:10.653 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-ElectLeader]: Shutting down
+2022-05-13 18:53:10.852 INFO  (ExpirationReaper-0-ElectLeader) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-ElectLeader]: Stopped
+2022-05-13 18:53:10.852 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.DelayedOperationPurgatory$ExpiredOperationReaper
+          [ExpirationReaper-0-ElectLeader]: Shutdown completed
+2022-05-13 18:53:10.855 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.ReplicaManager
+          [ReplicaManager broker=0] Shut down completely
+2022-05-13 18:53:10.856 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.BrokerToControllerRequestThread
+          [broker-0-to-controller-send-thread]: Shutting down
+2022-05-13 18:53:10.856 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.BrokerToControllerRequestThread
+          [broker-0-to-controller-send-thread]: Shutdown completed
+2022-05-13 18:53:10.856 INFO  (broker-0-to-controller-send-thread) [] k.s.BrokerToControllerRequestThread
+          [broker-0-to-controller-send-thread]: Stopped
+2022-05-13 18:53:10.859 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.BrokerToControllerChannelManagerImpl
+          Broker to controller channel manager for alterIsrChannel shutdown
+2022-05-13 18:53:10.862 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.l.LogManager
+          Shutting down.
+2022-05-13 18:53:10.865 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.l.LogCleaner
+          Shutting down the log cleaner.
+2022-05-13 18:53:10.865 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.l.LogCleaner
+          [kafka-log-cleaner-thread-0]: Shutting down
+2022-05-13 18:53:10.866 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.l.LogCleaner
+          [kafka-log-cleaner-thread-0]: Shutdown completed
+2022-05-13 18:53:10.866 INFO  (kafka-log-cleaner-thread-0) [] k.l.LogCleaner
+          [kafka-log-cleaner-thread-0]: Stopped
+2022-05-13 18:53:10.881 INFO  (pool-12-thread-1) [] k.l.ProducerStateManager
+          [ProducerStateManager partition=topic1-0] Writing producer snapshot at offset 1
+2022-05-13 18:53:10.883 INFO  (pool-12-thread-1) [] k.l.ProducerStateManager
+          [ProducerStateManager partition=__consumer_offsets-4] Writing producer snapshot at offset 7
+2022-05-13 18:53:10.885 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.l.LogManager
+          Shutdown complete.
+2022-05-13 18:53:10.885 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.c.ControllerEventManager$ControllerEventThread
+          [ControllerEventThread controllerId=0] Shutting down
+2022-05-13 18:53:10.885 INFO  (controller-event-thread) [] k.c.ControllerEventManager$ControllerEventThread
+          [ControllerEventThread controllerId=0] Stopped
+2022-05-13 18:53:10.885 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.c.ControllerEventManager$ControllerEventThread
+          [ControllerEventThread controllerId=0] Shutdown completed
+2022-05-13 18:53:10.886 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.c.ZkPartitionStateMachine
+          [PartitionStateMachine controllerId=0] Stopped partition state machine
+2022-05-13 18:53:10.887 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.c.ZkReplicaStateMachine
+          [ReplicaStateMachine controllerId=0] Stopped replica state machine
+2022-05-13 18:53:10.887 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.c.RequestSendThread
+          [RequestSendThread controllerId=0] Shutting down
+2022-05-13 18:53:10.887 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.c.RequestSendThread
+          [RequestSendThread controllerId=0] Shutdown completed
+2022-05-13 18:53:10.887 INFO  (Controller-0-to-broker-0-send-thread) [] k.c.RequestSendThread
+          [RequestSendThread controllerId=0] Stopped
+2022-05-13 18:53:10.888 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.c.KafkaController
+          [Controller id=0] Resigned
+2022-05-13 18:53:10.888 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.FinalizedFeatureChangeListener$ChangeNotificationProcessorThread
+          [feature-zk-node-event-process-thread]: Shutting down
+2022-05-13 18:53:10.888 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.FinalizedFeatureChangeListener$ChangeNotificationProcessorThread
+          [feature-zk-node-event-process-thread]: Shutdown completed
+2022-05-13 18:53:10.888 INFO  (feature-zk-node-event-process-thread) [] k.s.FinalizedFeatureChangeListener$ChangeNotificationProcessorThread
+          [feature-zk-node-event-process-thread]: Stopped
+2022-05-13 18:53:10.888 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.z.ZooKeeperClient
+          [ZooKeeperClient Kafka server] Closing.
+2022-05-13 18:53:10.991 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.z.ZooKeeperClient
+          [ZooKeeperClient Kafka server] Closed.
+2022-05-13 18:53:10.992 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-Fetch]: Shutting down
+2022-05-13 18:53:11.011 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-Fetch]: Shutdown completed
+2022-05-13 18:53:11.011 INFO  (ThrottledChannelReaper-Fetch) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-Fetch]: Stopped
+2022-05-13 18:53:11.011 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-Produce]: Shutting down
+2022-05-13 18:53:12.011 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-Produce]: Shutdown completed
+2022-05-13 18:53:12.011 INFO  (ThrottledChannelReaper-Produce) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-Produce]: Stopped
+2022-05-13 18:53:12.011 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-Request]: Shutting down
+2022-05-13 18:53:12.011 INFO  (ThrottledChannelReaper-Request) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-Request]: Stopped
+2022-05-13 18:53:12.011 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-Request]: Shutdown completed
+2022-05-13 18:53:12.011 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-ControllerMutation]: Shutting down
+2022-05-13 18:53:12.012 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-ControllerMutation]: Shutdown completed
+2022-05-13 18:53:12.012 INFO  (ThrottledChannelReaper-ControllerMutation) [] k.s.ClientQuotaManager$ThrottledChannelReaper
+          [ThrottledChannelReaper-ControllerMutation]: Stopped
+2022-05-13 18:53:12.012 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.n.SocketServer
+          [SocketServer listenerType=ZK_BROKER, nodeId=0] Shutting down socket server
+2022-05-13 18:53:12.023 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.n.SocketServer
+          [SocketServer listenerType=ZK_BROKER, nodeId=0] Shutdown completed
+2022-05-13 18:53:12.023 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.k.c.m.Metrics
+          Metrics scheduler closed
+2022-05-13 18:53:12.023 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.k.c.m.Metrics
+          Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2022-05-13 18:53:12.023 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.k.c.m.Metrics
+          Metrics reporters closed
+2022-05-13 18:53:12.024 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.BrokerTopicStats
+          Broker and topic stats closed
+2022-05-13 18:53:12.025 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.k.c.u.AppInfoParser
+          App info kafka.server for 0 unregistered
+2022-05-13 18:53:12.025 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] k.s.KafkaServer
+          [KafkaServer id=0] shut down completed
+2022-05-13 18:53:12.134 INFO  (jetty-closer-71-thread-1) [] o.a.s.c.CoreContainer
+          Shutting down CoreContainer instance=1983691509
+2022-05-13 18:53:12.134 INFO  (jetty-closer-71-thread-2) [] o.a.s.c.CoreContainer
+          Shutting down CoreContainer instance=1592985955
+2022-05-13 18:53:12.135 INFO  (jetty-closer-71-thread-1) [] o.a.s.c.ZkController
+          Remove node as live in ZooKeeper:/live_nodes/127.0.0.1:35709_solr
+2022-05-13 18:53:12.135 INFO  (jetty-closer-71-thread-2) [] o.a.s.c.ZkController
+          Remove node as live in ZooKeeper:/live_nodes/127.0.0.1:38743_solr
+2022-05-13 18:53:12.137 INFO  (jetty-closer-71-thread-1) [] o.a.s.c.ZkController
+          Publish this node as DOWN...
+2022-05-13 18:53:12.137 INFO  (jetty-closer-71-thread-2) [] o.a.s.c.ZkController
+          Publish this node as DOWN...
+2022-05-13 18:53:12.137 INFO  (jetty-closer-71-thread-1) [] o.a.s.c.ZkController
+          Publish node=127.0.0.1:35709_solr as DOWN
+2022-05-13 18:53:12.137 INFO  (jetty-closer-71-thread-2) [] o.a.s.c.ZkController
+          Publish node=127.0.0.1:38743_solr as DOWN
+2022-05-13 18:53:12.148 INFO  (zkCallback-35-thread-2) [] o.a.s.c.c.ZkStateReader
+          A cluster state change: [WatchedEvent state:SyncConnected type:NodeDataChanged path:/collections/collection1/state.json] for collection [collection1] has occurred - updating... (live nodes size: [2])
+2022-05-13 18:53:12.148 INFO  (zkCallback-35-thread-3) [] o.a.s.c.c.ZkStateReader
+          A cluster state change: [WatchedEvent state:SyncConnected type:NodeDataChanged path:/collections/collection1/state.json] for collection [collection1] has occurred - updating... (live nodes size: [2])
+2022-05-13 18:53:12.148 INFO  (zkCallback-35-thread-1) [] o.a.s.c.c.ZkStateReader
+          A cluster state change: [WatchedEvent state:SyncConnected type:NodeDataChanged path:/collections/collection1/state.json] for collection [collection1] has occurred - updating... (live nodes size: [2])
+2022-05-13 18:53:12.150 INFO  (jetty-closer-71-thread-2) [] o.a.s.m.SolrMetricManager
+          Closing metric reporters for registry=solr.node tag=null
+2022-05-13 18:53:12.150 INFO  (jetty-closer-71-thread-2) [] o.a.s.m.SolrMetricManager
+          Closing metric reporters for registry=solr.jvm tag=null
+2022-05-13 18:53:12.150 INFO  (jetty-closer-71-thread-2) [] o.a.s.m.SolrMetricManager
+          Closing metric reporters for registry=solr.jetty tag=null
+2022-05-13 18:53:12.150 INFO  (coreCloseExecutor-79-thread-1) [] o.a.s.c.SolrCore
+          [collection1_shard1_replica_n1]  CLOSING SolrCore org.apache.solr.core.SolrCore@16f1175f
+2022-05-13 18:53:12.151 INFO  (coreCloseExecutor-79-thread-1) [] o.a.s.m.SolrMetricManager
+          Closing metric reporters for registry=solr.core.collection1.shard1.replica_n1 tag=SolrCore@16f1175f
+2022-05-13 18:53:12.151 INFO  (coreCloseExecutor-79-thread-1) [] o.a.s.m.SolrMetricManager
+          Closing metric reporters for registry=solr.collection.collection1.shard1.leader tag=SolrCore@16f1175f
+2022-05-13 18:53:12.151 INFO  (jetty-closer-71-thread-2) [] o.a.s.m.SolrMetricManager
+          Closing metric reporters for registry=solr.cluster tag=null
+2022-05-13 18:53:12.156 INFO  (zkCallback-35-thread-3) [] o.a.s.c.c.ZkStateReader
+          Updated live nodes from ZooKeeper... (2) -> (1)
+2022-05-13 18:53:12.156 INFO  (zkCallback-69-thread-1) [] o.a.s.c.c.ZkStateReader
+          Updated live nodes from ZooKeeper... (2) -> (1)
+2022-05-13 18:53:12.156 INFO  (coreCloseExecutor-79-thread-1) [] o.a.s.u.DirectUpdateHandler2
+          Committing on IndexWriter.close()  ... SKIPPED (unnecessary).
+2022-05-13 18:53:12.160 INFO  (jetty-closer-71-thread-1) [] o.a.s.m.SolrMetricManager
+          Closing metric reporters for registry=solr.node tag=null
+2022-05-13 18:53:12.160 INFO  (jetty-closer-71-thread-1) [] o.a.s.m.SolrMetricManager
+          Closing metric reporters for registry=solr.jvm tag=null
+2022-05-13 18:53:12.160 INFO  (jetty-closer-71-thread-1) [] o.a.s.m.SolrMetricManager
+          Closing metric reporters for registry=solr.jetty tag=null
+2022-05-13 18:53:12.160 INFO  (jetty-closer-71-thread-1) [] o.a.s.m.SolrMetricManager
+          Closing metric reporters for registry=solr.cluster tag=null
+2022-05-13 18:53:12.160 INFO  (closeThreadPool-82-thread-1) [] o.a.s.c.Overseer
+          Overseer (id=72129608345714695-127.0.0.1:35709_solr-n_0000000000) closing
+2022-05-13 18:53:12.161 INFO  (OverseerStateUpdate-72129608345714695-127.0.0.1:35709_solr-n_0000000000) [] o.a.s.c.Overseer
+          Overseer Loop exiting : 127.0.0.1:35709_solr
+2022-05-13 18:53:12.161 INFO  (OverseerAutoScalingTriggerThread-72129608345714695-127.0.0.1:35709_solr-n_0000000000) [] o.a.s.c.a.OverseerTriggerThread
+          OverseerTriggerThread woken up but we are closed, exiting.
+2022-05-13 18:53:12.162 INFO  (closeThreadPool-82-thread-2) [] o.a.s.c.Overseer
+          Overseer (id=72129608345714695-127.0.0.1:35709_solr-n_0000000000) closing
+2022-05-13 18:53:12.162 INFO  (zkCallback-69-thread-1) [] o.a.s.c.c.ZkStateReader
+          Updated live nodes from ZooKeeper... (1) -> (0)
+2022-05-13 18:53:12.260 INFO  (jetty-closer-71-thread-2) [] o.e.j.s.AbstractConnector
+          Stopped ServerConnector@77196761{HTTP/1.1, (http/1.1, h2c)}{127.0.0.1:0}
+2022-05-13 18:53:12.262 INFO  (jetty-closer-71-thread-2) [] o.e.j.s.h.ContextHandler
+          Stopped o.e.j.s.ServletContextHandler@496dffcd{/solr,null,STOPPED}
+2022-05-13 18:53:12.262 INFO  (jetty-closer-71-thread-2) [] o.e.j.s.session
+          node0 Stopped scavenging
+2022-05-13 18:53:12.356 INFO  (jetty-closer-71-thread-1) [] o.a.s.c.Overseer
+          Overseer (id=72129608345714695-127.0.0.1:35709_solr-n_0000000000) closing
+2022-05-13 18:53:12.357 INFO  (jetty-closer-71-thread-1) [] o.e.j.s.AbstractConnector
+          Stopped ServerConnector@51ff2e5a{HTTP/1.1, (http/1.1, h2c)}{127.0.0.1:0}
+2022-05-13 18:53:12.357 INFO  (jetty-closer-71-thread-1) [] o.e.j.s.h.ContextHandler
+          Stopped o.e.j.s.ServletContextHandler@1c933135{/solr,null,STOPPED}
+2022-05-13 18:53:12.357 INFO  (jetty-closer-71-thread-1) [] o.e.j.s.session
+          node0 Stopped scavenging
+2022-05-13 18:53:12.357 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.ZkTestServer
+          Shutting down ZkTestServer.
+2022-05-13 18:53:12.561 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => EndOfStreamException: Unable to read additional data from server sessionid 0x100417f233c000a, likely server has closed socket
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doIO(ClientCnxnSocketNIO.java:77)
+org.apache.zookeeper.ClientCnxn$EndOfStreamException: Unable to read additional data from server sessionid 0x100417f233c000a, likely server has closed socket
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doIO(ClientCnxnSocketNIO.java:77) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:350) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:12.565 WARN  (ZkTestServer Run Thread) [] o.a.s.c.ZkTestServer
+          Watch limit violations: 
+Maximum concurrent create/delete watches above limit:
+
+	4	/solr/aliases.json
+	4	/solr/clusterprops.json
+	2	/solr/packages.json
+	2	/solr/security.json
+	2	/solr/collections/collection1/terms/shard1
+
+Maximum concurrent data watches above limit:
+
+	13	/solr/collections/collection1/state.json
+	4	/solr/clusterstate.json
+
+Maximum concurrent children watches above limit:
+
+	15	/solr/overseer/queue
+	10	/solr/live_nodes
+	7	/solr/collections
+	5	/solr/collections/collection1/state.json
+	4	/solr/overseer/collection-queue-work
+
+2022-05-13 18:53:12.567 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.ZkTestServer
+          waitForServerDown: 127.0.0.1:34525
+2022-05-13 18:53:12.567 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.ZkTestServer
+          parse host and port list: 127.0.0.1:34525
+2022-05-13 18:53:12.567 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.ZkTestServer
+          connecting to 127.0.0.1 34525
+2022-05-13 18:53:12.568 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.ZkTestServer
+          Shutting down ZkTestServer.
+2022-05-13 18:53:12.568 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.ZkTestServer
+          waitForServerDown: 127.0.0.1:34525
+2022-05-13 18:53:12.569 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.ZkTestServer
+          parse host and port list: 127.0.0.1:34525
+2022-05-13 18:53:12.569 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.c.ZkTestServer
+          connecting to 127.0.0.1 34525
+2022-05-13 18:53:12.572 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.u.ErrorLogMuter
+          Closing ErrorLogMuter-regex-1 after mutting 0 log messages
+2022-05-13 18:53:12.572 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.u.ErrorLogMuter
+          Creating ErrorLogMuter-regex-2 for ERROR logs matching regex: ignore_exception
+2022-05-13 18:53:12.573 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.SolrTestCaseJ4
+          Waiting for all tracked resources to be released
+2022-05-13 18:53:12.664 WARN  (zkConnectionManagerCallback-70-thread-1) [] o.a.s.c.c.ConnectionManager
+          Watcher org.apache.solr.common.cloud.ConnectionManager@4993434e name: ZooKeeperConnection Watcher:127.0.0.1:34525/solr got event WatchedEvent state:Disconnected type:None path:null path: null type: None
+2022-05-13 18:53:12.664 WARN  (zkConnectionManagerCallback-70-thread-1) [] o.a.s.c.c.ConnectionManager
+          zkClient has disconnected
+2022-05-13 18:53:13.848 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:15.476 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:17.202 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:19.050 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:20.509 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:21.996 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:22.575 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.SolrTestCaseJ4
+          Waiting for all tracked resources to be released
+2022-05-13 18:53:23.251 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:24.879 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:26.781 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:28.103 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:29.975 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:31.891 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:32.577 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.SolrTestCaseJ4
+          Waiting for all tracked resources to be released
+2022-05-13 18:53:33.120 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:34.395 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:35.935 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:37.420 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:39.168 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:40.866 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:42.582 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.SolrTestCaseJ4
+          Waiting for all tracked resources to be released
+2022-05-13 18:53:42.833 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:43.942 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:45.847 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:47.719 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:49.023 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:51.039 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:52.586 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.SolrTestCaseJ4
+          Waiting for all tracked resources to be released
+2022-05-13 18:53:52.613 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:54.444 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:56.335 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:57.745 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:53:59.043 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:54:00.357 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:54:01.772 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:54:02.589 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.SolrTestCaseJ4
+          Waiting for all tracked resources to be released
+2022-05-13 18:54:03.132 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:54:04.247 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:54:05.906 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:54:07.669 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:54:08.898 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:54:10.573 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:54:12.528 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:54:12.592 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.SolrTestCaseJ4
+          Waiting for all tracked resources to be released
+2022-05-13 18:54:13.595 INFO  (SUITE-SolrAndKafkaIntegrationTest-seed#[CBF5642C25987FE7]-worker) [] o.a.s.SolrTestCaseJ4
+          ------------------------------------------------------- Done waiting for tracked resources to be released
+2022-05-13 18:54:14.566 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:54:16.357 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:54:18.198 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:54:20.152 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:54:21.493 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:54:23.048 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:54:23.770 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.c.StaticHostProvider
+          Unexpected exception => java.lang.InterruptedException: sleep interrupted
+	at java.base/java.lang.Thread.sleep(Native Method)
+java.lang.InterruptedException: sleep interrupted
+	at java.lang.Thread.sleep(Native Method) ~[?:?]
+	at org.apache.zookeeper.client.StaticHostProvider.next(StaticHostProvider.java:362) [zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1193) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:54:23.770 ERROR (pool-11-thread-1-EventThread) [] o.a.z.ClientCnxn
+          Event thread exiting due to interruption => java.lang.InterruptedException
+	at java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.reportInterruptAfterWait(AbstractQueuedSynchronizer.java:2056)
+java.lang.InterruptedException: null
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.reportInterruptAfterWait(AbstractQueuedSynchronizer.java:2056) ~[?:?]
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(AbstractQueuedSynchronizer.java:2090) ~[?:?]
+	at java.util.concurrent.LinkedBlockingQueue.take(LinkedBlockingQueue.java:433) ~[?:?]
+	at org.apache.zookeeper.ClientCnxn$EventThread.run(ClientCnxn.java:558) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:54:24.273 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Unexpected exception => java.lang.InterruptedException: sleep interrupted
+	at java.base/java.lang.Thread.sleep(Native Method)
+java.lang.InterruptedException: sleep interrupted
+	at java.lang.Thread.sleep(Native Method) ~[?:?]
+	at org.apache.zookeeper.ClientCnxn$SendThread.startConnect(ClientCnxn.java:1132) [zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1195) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:54:24.274 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:54:24.775 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.c.StaticHostProvider
+          Unexpected exception => java.lang.InterruptedException: sleep interrupted
+	at java.base/java.lang.Thread.sleep(Native Method)
+java.lang.InterruptedException: sleep interrupted
+	at java.lang.Thread.sleep(Native Method) ~[?:?]
+	at org.apache.zookeeper.client.StaticHostProvider.next(StaticHostProvider.java:362) [zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1193) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:54:24.778 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:54:25.277 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.c.StaticHostProvider
+          Unexpected exception => java.lang.InterruptedException: sleep interrupted
+	at java.base/java.lang.Thread.sleep(Native Method)
+java.lang.InterruptedException: sleep interrupted
+	at java.lang.Thread.sleep(Native Method) ~[?:?]
+	at org.apache.zookeeper.client.StaticHostProvider.next(StaticHostProvider.java:362) [zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1193) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:54:25.426 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:54:25.780 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.c.StaticHostProvider
+          Unexpected exception => java.lang.InterruptedException: sleep interrupted
+	at java.base/java.lang.Thread.sleep(Native Method)
+java.lang.InterruptedException: sleep interrupted
+	at java.lang.Thread.sleep(Native Method) ~[?:?]
+	at org.apache.zookeeper.client.StaticHostProvider.next(StaticHostProvider.java:362) [zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1193) [zookeeper-3.6.2.jar:3.6.2]
+2022-05-13 18:54:26.099 WARN  (pool-11-thread-1-SendThread(127.0.0.1:34525)) [] o.a.z.ClientCnxn
+          Session 0x100417f233c000a for sever localhost/127.0.0.1:34525, Closing socket connection. Attempting reconnect except it is a SessionExpiredException. => java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:777) ~[?:?]
+	at org.apache.zookeeper.ClientCnxnSocketNIO.doTransport(ClientCnxnSocketNIO.java:344) ~[zookeeper-3.6.2.jar:3.6.2]
+	at org.apache.zookeeper.ClientCnxn$SendThread.run(ClientCnxn.java:1275) [zookeeper-3.6.2.jar:3.6.2]
