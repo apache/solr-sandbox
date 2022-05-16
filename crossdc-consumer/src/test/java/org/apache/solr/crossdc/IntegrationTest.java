@@ -1,8 +1,6 @@
-    }
 package org.apache.solr.crossdc;
 
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
-import org.apache.solr.client.solrj.request.CollectionAdminRequest;
 import org.apache.solr.client.solrj.request.UpdateRequest;
 import org.apache.solr.cloud.MiniSolrCloudCluster;
 import org.apache.solr.cloud.SolrCloudTestCase;
@@ -10,48 +8,40 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.crossdc.common.MirroredSolrRequest;
 import org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Test;
+import org.mockito.Mockito;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static org.mockito.Mockito.spy;
 
-public class SimpleSolrIntegrationTest extends SolrCloudTestCase {
+public class IntegrationTest extends SolrCloudTestCase {
   static final String VERSION_FIELD = "_version_";
 
-  private static final int NUM_BROKERS = 1;
-
   protected static volatile MiniSolrCloudCluster cluster1;
-
+  protected static volatile MiniSolrCloudCluster cluster2;
   private static SolrMessageProcessor processor;
 
   private static ResubmitBackoffPolicy backoffPolicy = spy(new TestMessageProcessor.NoOpResubmitBackoffPolicy());
-  private static CloudSolrClient cloudClient1;
 
   @BeforeClass
   public static void setupIntegrationTest() throws Exception {
 
     cluster1 =
         new SolrCloudTestCase.Builder(2, createTempDir())
-            .addConfig("conf", getFile("src/test/resources/configs/cloud-minimal/conf").toPath())
+            .addConfig("conf", getFile("src/resources/configs/cloud-minimal/conf").toPath())
             .configure();
 
-    String collection = "collection1";
-    cloudClient1 = cluster1.getSolrClient();
-
-    processor = new SolrMessageProcessor(cloudClient1, backoffPolicy);
-
-    CollectionAdminRequest.Create create =
-        CollectionAdminRequest.createCollection(collection, "conf", 1, 1);
-    cloudClient1.request(create);
-    cluster1.waitForActiveCollection(collection, 1, 1);
-
-    cloudClient1.setDefaultCollection(collection);
+    processor = new SolrMessageProcessor(cluster1.getSolrClient(), backoffPolicy);
   }
 
   @AfterClass
   public static void tearDownIntegrationTest() throws Exception {
-    if (cluster1 != null) {
+    if (cluster != null) {
       cluster1.shutdown();
     }
   }
@@ -77,7 +67,7 @@ public class SimpleSolrIntegrationTest extends SolrCloudTestCase {
     request.deleteById("2", 10L);
 
     request.setParam("shouldMirror", "true");
-
+    // The response is irrelevant, but it will fail because mocked server returns null when processing
     processor.handleItem(new MirroredSolrRequest(request));
 
     // After processing, check that all version fields are stripped
@@ -92,5 +82,10 @@ public class SimpleSolrIntegrationTest extends SolrCloudTestCase {
         assertNull("Delete still has version", idParams.get(UpdateRequest.VER));
       }
     }
+  }
+
+  @Test
+  public void TestMethod() {
+
   }
 }
