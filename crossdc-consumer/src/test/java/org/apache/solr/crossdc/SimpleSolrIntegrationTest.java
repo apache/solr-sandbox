@@ -1,4 +1,3 @@
-    }
 package org.apache.solr.crossdc;
 
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
@@ -19,14 +18,10 @@ import static org.mockito.Mockito.spy;
 public class SimpleSolrIntegrationTest extends SolrCloudTestCase {
   static final String VERSION_FIELD = "_version_";
 
-  private static final int NUM_BROKERS = 1;
 
   protected static volatile MiniSolrCloudCluster cluster1;
 
   private static SolrMessageProcessor processor;
-
-  private static ResubmitBackoffPolicy backoffPolicy = spy(new TestMessageProcessor.NoOpResubmitBackoffPolicy());
-  private static CloudSolrClient cloudClient1;
 
   @BeforeClass
   public static void setupIntegrationTest() throws Exception {
@@ -37,9 +32,9 @@ public class SimpleSolrIntegrationTest extends SolrCloudTestCase {
             .configure();
 
     String collection = "collection1";
-    cloudClient1 = cluster1.getSolrClient();
+    CloudSolrClient cloudClient1 = cluster1.getSolrClient();
 
-    processor = new SolrMessageProcessor(cloudClient1, backoffPolicy);
+    processor = new SolrMessageProcessor(cloudClient1, null);
 
     CollectionAdminRequest.Create create =
         CollectionAdminRequest.createCollection(collection, "conf", 1, 1);

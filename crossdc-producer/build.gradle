@@ -64,6 +64,13 @@ subprojects {
     group "org.apache.solr"
 }
 
+task copyToLib(type: Copy) {
+    into "$buildDir/libs"
+    from configurations.runtime
+}
+
+jar.dependsOn(copyToLib)
+
 test {
     jvmArgs '-Djava.security.egd=file:/dev/./urandom'
 }

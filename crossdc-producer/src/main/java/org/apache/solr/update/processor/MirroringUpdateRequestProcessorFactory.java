@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 
 import static org.apache.solr.common.SolrException.ErrorCode.SERVER_ERROR;
 import static org.apache.solr.update.processor.DistributedUpdateProcessor.*;
@@ -55,13 +56,14 @@ import static org.apache.solr.update.processor.DistributingUpdateProcessorFactor
  */
 public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcessorFactory
         implements SolrCoreAware, UpdateRequestProcessorFactory.RunAlways {
-    private static final Logger log = LoggerFactory.getLogger(MirroringUpdateRequestProcessorFactory.class);
+
+    private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     // Flag for mirroring requests
     public static String SERVER_SHOULD_MIRROR = "shouldMirror";
 
     /** This is instantiated in inform(SolrCore) and then shared by all processor instances - visible for testing */
-    volatile RequestMirroringHandler mirroringHandler;
+    volatile KafkaRequestMirroringHandler mirroringHandler;
 
     @Override
     public void init(final NamedList args) {
@@ -70,8 +72,10 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
 
     @Override
     public void inform(SolrCore core) {
+        log.info("KafkaRequestMirroringHandler inform");
         // load the request mirroring sink class and instantiate.
-        mirroringHandler = core.getResourceLoader().newInstance(RequestMirroringHandler.class.getName(), KafkaRequestMirroringHandler.class);
+       // mirroringHandler = core.getResourceLoader().newInstance(RequestMirroringHandler.class.getName(), KafkaRequestMirroringHandler.class);
+       mirroringHandler = new KafkaRequestMirroringHandler();
     }
 
     @Override
@@ -110,7 +114,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
             // prevent circular mirroring
             mirroredParams.set(SERVER_SHOULD_MIRROR, Boolean.FALSE.toString());
         }
-
+        log.info("Create MirroringUpdateProcessor");
         return new MirroringUpdateProcessor(next, doMirroring, mirroredParams,
                 DistribPhase.parseParam(req.getParams().get(DISTRIB_UPDATE_PARAM)), doMirroring ? mirroringHandler : null);
     }

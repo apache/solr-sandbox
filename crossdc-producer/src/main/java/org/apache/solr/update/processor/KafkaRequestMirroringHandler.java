@@ -17,21 +17,35 @@
 package org.apache.solr.update.processor;
 
 import org.apache.solr.client.solrj.request.UpdateRequest;
-import org.apache.solr.crossdc.KafkaMirroringSink;
-import org.apache.solr.crossdc.MirroringException;
+import org.apache.solr.crossdc.common.KafkaMirroringSink;
+import org.apache.solr.crossdc.common.MirroringException;
 import org.apache.solr.crossdc.common.KafkaCrossDcConf;
 import org.apache.solr.crossdc.common.MirroredSolrRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.TimeUnit;
 
 public class KafkaRequestMirroringHandler implements RequestMirroringHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
     final KafkaCrossDcConf conf;
     final KafkaMirroringSink sink;
 
     public KafkaRequestMirroringHandler() {
+        log.info("create KafkaRequestMirroringHandler");
+
         // TODO: Setup Kafka properly
-        final String topicName = System.getProperty("topicname");
-        final String boostrapServers = System.getProperty("bootstrapservers");
+        final String topicName = System.getProperty("topicName");
+        if (topicName == null) {
+            throw new IllegalArgumentException("topicName not specified for producer");
+        }
+        final String boostrapServers = System.getProperty("bootstrapServers");
+        if (boostrapServers == null) {
+            throw new IllegalArgumentException("boostrapServers not specified for producer");
+        }
         conf = new KafkaCrossDcConf(boostrapServers, topicName, false, null);
         sink = new KafkaMirroringSink(conf);
     }
@@ -43,6 +57,7 @@ public class KafkaRequestMirroringHandler implements RequestMirroringHandler {
      */
     @Override
     public void mirror(UpdateRequest request) throws MirroringException {
+        log.info("submit update to sink");
             // TODO: Enforce external version constraint for consistent update replication (cross-cluster)
             sink.submit(new MirroredSolrRequest(1, request, TimeUnit.MILLISECONDS.toNanos(
                     System.currentTimeMillis())));
