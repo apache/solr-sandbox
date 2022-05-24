@@ -108,13 +108,5 @@
            autowarmCount="${myPerSegmentCache.autowarmCount:0}"/>
   </query>
 
-  <updateRequestProcessorChain  name="mirrorUpdateChain" default="true">
-    <processor class="org.apache.solr.update.processor.MirroringUpdateRequestProcessorFactory">
-
-    </processor>
-    <processor class="solr.LogUpdateProcessorFactory" />
-    <processor class="solr.RunUpdateProcessorFactory" />
-  </updateRequestProcessorChain>
-
 </config>
 

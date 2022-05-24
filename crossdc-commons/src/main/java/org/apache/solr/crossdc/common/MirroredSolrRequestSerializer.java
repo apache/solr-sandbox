@@ -71,12 +71,20 @@ public class MirroredSolrRequestSerializer implements Serializer<MirroredSolrReq
         }
 
         UpdateRequest updateRequest = new UpdateRequest();
-        updateRequest.add((List)solrRequest.get("docs"));
+        List docs = (List) solrRequest.get("docs");
+        if (docs != null) {
+            updateRequest.add(docs);
+        }
 
-        updateRequest.deleteById((List)solrRequest.get("deletes"));
+        List deletes = (List) solrRequest.get("deletes");
+        if (deletes != null) {
+            updateRequest.deleteById(deletes);
+        }
 
-        updateRequest.setParams(
-            ModifiableSolrParams.of(new MapSolrParams((Map)solrRequest.get("params"))));
+        Map params = (Map) solrRequest.get("params");
+        if (params != null) {
+            updateRequest.setParams(ModifiableSolrParams.of(new MapSolrParams(params)));
+        }
 
         return new MirroredSolrRequest(updateRequest);
     }

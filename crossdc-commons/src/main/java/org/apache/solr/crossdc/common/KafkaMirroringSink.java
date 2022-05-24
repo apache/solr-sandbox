@@ -91,8 +91,9 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
 
         ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(null);
+        Producer<String, MirroredSolrRequest> producer;
         try {
-            Producer<String, MirroredSolrRequest> producer = new KafkaProducer(props);
+            producer = new KafkaProducer(props);
         } finally {
             Thread.currentThread().setContextClassLoader(originalContextClassLoader);
         }
@@ -106,6 +107,8 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
     }
 
     @Override public void close() throws IOException {
-        producer.close();
+        if (producer != null) {
+            producer.close();
+        }
     }
 }

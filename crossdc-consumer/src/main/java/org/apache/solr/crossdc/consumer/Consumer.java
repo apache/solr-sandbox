@@ -148,7 +148,7 @@ public class Consumer {
 
             kafkaConsumerProp.put("bootstrap.servers", conf.getBootStrapServers());
 
-            kafkaConsumerProp.put("group.id", "group_1");
+            kafkaConsumerProp.put("group.id", "group_1"); // TODO
 
             solrClient = new CloudSolrClient.Builder(Collections.singletonList(conf.getSolrZkConnectString()), Optional.empty()).build();
 

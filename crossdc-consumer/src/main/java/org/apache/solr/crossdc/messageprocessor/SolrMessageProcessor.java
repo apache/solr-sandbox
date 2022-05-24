@@ -33,6 +33,7 @@ import org.apache.solr.crossdc.common.SolrExceptionUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -45,7 +46,7 @@ import java.util.concurrent.TimeUnit;
  *  3. Flagging requests for resubmission by the underlying consumer implementation.
  */
 public class SolrMessageProcessor extends MessageProcessor implements IQueueHandler<MirroredSolrRequest>  {
-    private static final Logger log = LoggerFactory.getLogger(SolrMessageProcessor.class);
+    private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
     final CloudSolrClient client;
 
     private static final String VERSION_FIELD = "_version_";
@@ -161,7 +162,7 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
     private Result<MirroredSolrRequest> processMirroredSolrRequest(SolrRequest request) throws Exception {
         log.info("Sending request to Solr at {} with params {}", client.getZkHost(), request.getParams());
         Result<MirroredSolrRequest> result;
-        client.getZkStateReader().forciblyRefreshAllClusterStateSlow();
+
         SolrResponseBase response = (SolrResponseBase) request.process(client);
 
         int status = response.getStatus();
