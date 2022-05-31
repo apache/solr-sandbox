@@ -23,11 +23,15 @@ import org.apache.solr.common.params.CommonParams;
 import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
+import org.apache.solr.core.CloseHook;
 import org.apache.solr.core.CoreDescriptor;
 import org.apache.solr.core.SolrCore;
+import org.apache.solr.crossdc.common.KafkaCrossDcConf;
+import org.apache.solr.crossdc.common.KafkaMirroringSink;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.response.SolrQueryResponse;
 import org.apache.solr.update.AddUpdateCommand;
+import org.apache.solr.update.CommitUpdateCommand;
 import org.apache.solr.update.DeleteUpdateCommand;
 import org.apache.solr.update.RollbackUpdateCommand;
 import org.apache.solr.util.plugin.SolrCoreAware;
@@ -35,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 
 import static org.apache.solr.common.SolrException.ErrorCode.SERVER_ERROR;
 import static org.apache.solr.update.processor.DistributedUpdateProcessor.*;
@@ -55,23 +60,69 @@ import static org.apache.solr.update.processor.DistributingUpdateProcessorFactor
  */
 public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcessorFactory
         implements SolrCoreAware, UpdateRequestProcessorFactory.RunAlways {
-    private static final Logger log = LoggerFactory.getLogger(MirroringUpdateRequestProcessorFactory.class);
+
+    private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     // Flag for mirroring requests
     public static String SERVER_SHOULD_MIRROR = "shouldMirror";
 
     /** This is instantiated in inform(SolrCore) and then shared by all processor instances - visible for testing */
-    volatile RequestMirroringHandler mirroringHandler;
+    volatile KafkaRequestMirroringHandler mirroringHandler;
 
     @Override
     public void init(final NamedList args) {
+
         super.init(args);
+    }
+
+    private class Closer {
+        private final KafkaMirroringSink sink;
+
+        public Closer(KafkaMirroringSink sink) {
+            this.sink = sink;
+        }
+
+        public void close() {
+            try {
+                this.sink.close();
+            } catch (IOException e) {
+                log.error("Exception closing sink", sink);
+            }
+        }
+
     }
 
     @Override
     public void inform(SolrCore core) {
+        log.info("KafkaRequestMirroringHandler inform");
         // load the request mirroring sink class and instantiate.
-        mirroringHandler = core.getResourceLoader().newInstance(RequestMirroringHandler.class.getName(), KafkaRequestMirroringHandler.class);
+       // mirroringHandler = core.getResourceLoader().newInstance(RequestMirroringHandler.class.getName(), KafkaRequestMirroringHandler.class);
+
+
+        // TODO: Setup Kafka properly
+        final String topicName = System.getProperty("topicName");
+        if (topicName == null) {
+            throw new IllegalArgumentException("topicName not specified for producer");
+        }
+        final String boostrapServers = System.getProperty("bootstrapServers");
+        if (boostrapServers == null) {
+            throw new IllegalArgumentException("boostrapServers not specified for producer");
+        }
+        KafkaCrossDcConf conf = new KafkaCrossDcConf(boostrapServers, topicName, false, null);
+        KafkaMirroringSink sink = new KafkaMirroringSink(conf);
+
+        Closer closer = new Closer(sink);
+        core.addCloseHook(new CloseHook() {
+            @Override public void preClose(SolrCore core) {
+
+            }
+
+            @Override public void postClose(SolrCore core) {
+                closer.close();
+            }
+        });
+
+        mirroringHandler = new KafkaRequestMirroringHandler(sink);
     }
 
     @Override
@@ -110,7 +161,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
             // prevent circular mirroring
             mirroredParams.set(SERVER_SHOULD_MIRROR, Boolean.FALSE.toString());
         }
-
+        log.info("Create MirroringUpdateProcessor");
         return new MirroringUpdateProcessor(next, doMirroring, mirroredParams,
                 DistribPhase.parseParam(req.getParams().get(DISTRIB_UPDATE_PARAM)), doMirroring ? mirroringHandler : null);
     }
@@ -203,6 +254,11 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         public void processRollback(final RollbackUpdateCommand cmd) throws IOException {
             super.processRollback(cmd);
             // TODO: We can't/shouldn't support this ?
+        }
+
+        public void processCommit(CommitUpdateCommand cmd) throws IOException {
+            log.info("process commit cmd={}", cmd);
+            if (next != null) next.processCommit(cmd);
         }
 
         @Override

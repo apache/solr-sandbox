@@ -32,34 +32,32 @@ application {
 }
 
 dependencies {
-    compile group: 'org.apache.solr', name: 'solr-solrj', version: '8.11.1'
-    compile project(':crossdc-commons')
-    implementation 'org.slf4j:slf4j-api'
-    compile 'org.eclipse.jetty:jetty-http:9.4.41.v20210516'
-    compile 'org.eclipse.jetty:jetty-server:9.4.41.v20210516'
-    compile 'org.eclipse.jetty:jetty-servlet:9.4.41.v20210516'
-    compile 'org.apache.kafka:kafka-clients:2.8.0'
-    compile group: 'com.google.guava', name: 'guava', version: '14.0'
+    implementation group: 'org.apache.solr', name: 'solr-solrj', version: '8.11.1'
+    implementation project(':crossdc-commons')
+
+    implementation 'org.slf4j:slf4j-api:1.7.36'
+    implementation 'org.eclipse.jetty:jetty-http:9.4.41.v20210516'
+    implementation 'org.eclipse.jetty:jetty-server:9.4.41.v20210516'
+    implementation 'org.eclipse.jetty:jetty-servlet:9.4.41.v20210516'
+    implementation 'org.apache.kafka:kafka-clients:2.8.1'
+    implementation group: 'com.google.guava', name: 'guava', version: '14.0'
+    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.2'
     runtimeOnly ('com.google.protobuf:protobuf-java-util:3.19.2')
     testImplementation 'org.hamcrest:hamcrest:2.2'
     testImplementation 'junit:junit:4.13.2'
     testImplementation('org.mockito:mockito-core:4.3.1', {
         exclude group: "net.bytebuddy", module: "byte-buddy-agent"
     })
+
+    testImplementation  project(':crossdc-producer')
+
     testImplementation group: 'org.apache.solr', name: 'solr-core', version: '8.11.1'
     testImplementation group: 'org.apache.solr', name: 'solr-test-framework', version: '8.11.1'
     testImplementation 'org.apache.kafka:kafka_2.13:2.8.1'
     testImplementation 'org.apache.kafka:kafka-streams:2.8.1'
-
     testImplementation 'org.apache.kafka:kafka_2.13:2.8.1:test'
-    testImplementation ('org.apache.kafka:kafka-clients:2.8.1:test') {
-        //exclude group: 'org.apache.kafka' // or finer grained, if we like
-    }
-    testImplementation ('org.apache.kafka:kafka-streams:2.8.1:test') {
-        //exclude group: 'org.apache.kafka' // or finer grained, if we like
-    }
-    // testImplementation 'org.apache.kafka:kafka-streams-test-utils:2.8.1'
-
+    testImplementation 'org.apache.kafka:kafka-clients:2.8.1:test'
+    testImplementation 'org.apache.kafka:kafka-streams:2.8.1:test'
 }
 
 subprojects {

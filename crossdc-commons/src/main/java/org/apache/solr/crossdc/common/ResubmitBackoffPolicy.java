@@ -14,25 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.solr.crossdc;
+package org.apache.solr.crossdc.common;
 
-/**
- * Exception thrown during cross-dc mirroring
- */
-public class MirroringException extends Exception {
-    public MirroringException() {
-        super();
-    }
+import org.apache.solr.crossdc.common.MirroredSolrRequest;
 
-    public MirroringException(String message) {
-        super(message);
-    }
-
-    public MirroringException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public MirroringException(Throwable cause) {
-        super(cause);
-    }
+public interface ResubmitBackoffPolicy {
+  long getBackoffTimeMs(MirroredSolrRequest resubmitRequest);
 }

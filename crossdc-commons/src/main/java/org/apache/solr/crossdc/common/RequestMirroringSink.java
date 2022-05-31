@@ -14,10 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.solr.crossdc;
+package org.apache.solr.crossdc.common;
 
-import org.apache.solr.crossdc.common.MirroredSolrRequest;
+public interface RequestMirroringSink {
 
-public interface ResubmitBackoffPolicy {
-  long getBackoffTimeMs(MirroredSolrRequest resubmitRequest);
+    /**
+     * Submits a mirrored solr request to the appropriate end-point such that it is eventually received by solr
+     * A direct sink may simply use CloudSolrServer to process requests directly.
+     * A queueing sink will serialize the request and submit it to a queue for later consumption
+     * @param request the request that is to be mirrored
+     * @throws MirroringException Implementations may throw an exception
+     */
+    void submit(final MirroredSolrRequest request) throws MirroringException;
 }

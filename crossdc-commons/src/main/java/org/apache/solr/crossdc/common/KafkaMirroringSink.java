@@ -14,14 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.solr.crossdc;
+package org.apache.solr.crossdc.common;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.apache.solr.crossdc.common.KafkaCrossDcConf;
-import org.apache.solr.crossdc.common.MirroredSolrRequest;
-import org.apache.solr.crossdc.common.MirroredSolrRequestSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,7 +89,14 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
         props.put("key.serializer", StringSerializer.class.getName());
         props.put("value.serializer", MirroredSolrRequestSerializer.class.getName());
 
-        Producer<String, MirroredSolrRequest> producer = new KafkaProducer(props);
+        ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(null);
+        Producer<String, MirroredSolrRequest> producer;
+        try {
+            producer = new KafkaProducer(props);
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalContextClassLoader);
+        }
         return producer;
     }
 
@@ -103,6 +107,8 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
     }
 
     @Override public void close() throws IOException {
-        producer.close();
+        if (producer != null) {
+            producer.close();
+        }
     }
 }

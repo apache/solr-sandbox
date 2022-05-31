@@ -16,8 +16,7 @@
  */
 package org.apache.solr.crossdc.messageprocessor;
 
-import org.apache.solr.client.solrj.impl.CloudSolrClient;
-import org.apache.solr.crossdc.ResubmitBackoffPolicy;
+import org.apache.solr.crossdc.common.ResubmitBackoffPolicy;
 
 public abstract class MessageProcessor {
 
