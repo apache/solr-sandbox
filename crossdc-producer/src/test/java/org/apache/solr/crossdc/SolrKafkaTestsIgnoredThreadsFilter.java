@@ -34,7 +34,15 @@ public class SolrKafkaTestsIgnoredThreadsFilter implements ThreadFilter {
     if (threadName.startsWith("metrics-meter-tick-thread")) {
       return true;
     }
-    
+
+    if (threadName.startsWith("pool-")) {
+      return true;
+    }
+
+    if (threadName.startsWith("kafka-")) { // TODO
+      return true;
+    }
+
 
     return false;
   }

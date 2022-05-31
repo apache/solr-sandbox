@@ -71,12 +71,16 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
     }
 
     private Result<MirroredSolrRequest> handleSolrRequest(MirroredSolrRequest mirroredSolrRequest) {
-        log.debug("Handling Solr request");
+
         SolrRequest request = mirroredSolrRequest.getSolrRequest();
         final SolrParams requestParams = request.getParams();
 
+        if (log.isTraceEnabled()) {
+            log.trace("handleSolrRequest params={}", requestParams);
+        }
+
         final String shouldMirror = requestParams.get("shouldMirror");
-        log.info("shouldMirror={}", shouldMirror);
+
         if ("false".equalsIgnoreCase(shouldMirror)) {
             log.warn("Skipping mirrored request because shouldMirror is set to false. request={}", requestParams);
             return new Result<>(ResultStatus.FAILED_NO_RETRY);
@@ -87,7 +91,6 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
         try {
             prepareIfUpdateRequest(request);
             logRequest(request);
-            log.debug("About to submit Solr request {}", request);
             result = processMirroredSolrRequest(request);
         } catch (Exception e) {
             result = handleException(mirroredSolrRequest, e);
@@ -160,12 +163,19 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
      * Process the SolrRequest. If not, this method throws an exception.
      */
     private Result<MirroredSolrRequest> processMirroredSolrRequest(SolrRequest request) throws Exception {
-        log.info("Sending request to Solr at {} with params {}", client.getZkHost(), request.getParams());
+        if (log.isTraceEnabled()) {
+            log.trace("Sending request to Solr at ZK address={} with params {}", client.getZkStateReader().getZkClient().getZkServerAddress(), request.getParams());
+        }
         Result<MirroredSolrRequest> result;
 
         SolrResponseBase response = (SolrResponseBase) request.process(client);
 
         int status = response.getStatus();
+
+        if (log.isTraceEnabled()) {
+            log.trace("result status={}", status);
+        }
+
         if (status != 0) {
             throw new SolrException(SolrException.ErrorCode.getErrorCode(status), "response=" + response);
         }
@@ -215,11 +225,17 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
      */
     private void sanitizeDocument(SolrInputDocument doc) {
         SolrInputField field = doc.getField(VERSION_FIELD);
-        log.info("Removing {} value={}", VERSION_FIELD, field == null ? "null" : field.getValue());
+        if (log.isTraceEnabled()) {
+            log.trace("Removing {} value={}", VERSION_FIELD,
+                field == null ? "null" : field.getValue());
+        }
         doc.remove(VERSION_FIELD);
     }
 
     private void removeVersionFromDeleteByIds(UpdateRequest updateRequest) {
+        if (log.isTraceEnabled()) {
+            log.trace("remove versions from deletebyids");
+        }
         Map<String, Map<String, Object>> deleteIds = updateRequest.getDeleteByIdMap();
         if (deleteIds != null) {
             for (Map<String, Object> idParams : deleteIds.values()) {

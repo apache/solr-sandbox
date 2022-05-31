@@ -29,8 +29,8 @@
 
     <RollingRandomAccessFile
             name="MainLogFile"
-            fileName="${sys:log.dir:-logs}/${sys:log.name:-solr}.log"
-            filePattern="${sys:log.dir:-logs}/${sys:log.name:-solr}.log.%i">
+            fileName="${sys:log.dir:-logs}/${sys:log.name:-crossdc}.log"
+            filePattern="${sys:log.dir:-logs}/${sys:log.name:-crossdc}.log.%i">
       <PatternLayout>
         <Pattern>
           %maxLen{%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p (%t) [%notEmpty{c:%X{collection}}%notEmpty{ s:%X{shard}}%notEmpty{ r:%X{replica}}%notEmpty{ x:%X{core}}] %c{1.}
@@ -58,6 +58,13 @@
     <Logger name="org.apache.directory" level="WARN"/>
     <Logger name="org.apache.solr.hadoop" level="INFO"/>
     <Logger name="org.eclipse.jetty" level="INFO"/>
+
+    <Logger name="org.apache.solr.crossdc.consumer.KafkaCrossDcConsumer" level="TRACE"/>
+    <Logger name="org.apache.solr.update.processor.MirroringUpdateProcessor" level="TRACE"/>
+    <Logger name="org.apache.solr.update.processor.KafkaRequestMirroringHandler" level="TRACE"/>
+    <Logger name="org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor" level="TRACE"/>
+    <Logger name="org.apache.solr.crossdc.common.KafkaMirroringSink" level="TRACE"/>
+
 
     <Root level="INFO">
       <AppenderRef ref="MainLogFile"/>

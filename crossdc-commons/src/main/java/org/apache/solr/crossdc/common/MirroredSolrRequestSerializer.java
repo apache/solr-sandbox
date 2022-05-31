@@ -107,7 +107,7 @@ public class MirroredSolrRequestSerializer implements Serializer<MirroredSolrReq
 
         ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream();
         Map map = new HashMap();
-        map.put("params", solrRequest.getParams().getMap());
+        map.put("params", solrRequest.getParams());
         map.put("docs", solrRequest.getDocuments());
 
         // TODO
