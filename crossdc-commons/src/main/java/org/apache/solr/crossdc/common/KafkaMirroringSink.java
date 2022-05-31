@@ -18,6 +18,7 @@ package org.apache.solr.crossdc.common;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +54,12 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
 
         // Create Producer record
         try {
+
+            producer.send(new ProducerRecord(conf.getTopicName(), request), (metadata, exception) -> {
+                log.info("Producer finished sending metadata={}, exception={}", metadata, exception);
+            });
+            producer.flush();
+
             lastSuccessfulEnqueueNanos = System.nanoTime();
             // Record time since last successful enqueue as 0
             long elapsedTimeMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - enqueueStartNanos);
@@ -86,8 +93,18 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
 
         props.put("bootstrap.servers", conf.getBootStrapServers());
 
+        props.put("acks", "all");
+        props.put("retries", 99999);
+        props.put("batch.size", 15);
+        props.put("buffer.memory", 33554432);
+        props.put("linger.ms", 1);
+
         props.put("key.serializer", StringSerializer.class.getName());
         props.put("value.serializer", MirroredSolrRequestSerializer.class.getName());
+
+        if (log.isDebugEnabled()) {
+            log.debug("Kafka Producer props={}", props);
+        }
 
         ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(null);

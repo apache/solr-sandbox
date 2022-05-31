@@ -54,11 +54,12 @@ import static org.mockito.Mockito.spy;
 
   private static String COLLECTION = "collection1";
 
-  @BeforeClass public static void setupIntegrationTest() throws Exception {
+  @BeforeClass
+  public static void beforeSolrAndKafkaIntegrationTest() throws Exception {
 
     Properties config = new Properties();
-    //config.put("unclean.leader.election.enable", "true");
-    //config.put("enable.partition.eof", "false");
+    config.put("unclean.leader.election.enable", "true");
+    config.put("enable.partition.eof", "false");
 
     kafkaCluster = new EmbeddedKafkaCluster(NUM_BROKERS, config) {
       public String bootstrapServers() {
@@ -99,7 +100,8 @@ import static org.mockito.Mockito.spy;
 
   }
 
-  @AfterClass public static void tearDownIntegrationTest() throws Exception {
+  @AfterClass
+  public static void afterSolrAndKafkaIntegrationTest() throws Exception {
     ObjectReleaseTracker.clear();
 
     consumer.shutdown();
@@ -151,7 +153,6 @@ import static org.mockito.Mockito.spy;
       }
     }
 
-    //producer.close();
     System.out.println("Closed producer");
 
     assertTrue("results=" + results, foundUpdates);
@@ -160,7 +161,7 @@ import static org.mockito.Mockito.spy;
   }
 
   public void testProducerToCloud() throws Exception {
-    Thread.sleep(10000);
+    Thread.sleep(10000); // TODO: why?
     Properties properties = new Properties();
     properties.put("bootstrap.servers", kafkaCluster.bootstrapServers());
     properties.put("acks", "all");
@@ -185,19 +186,19 @@ import static org.mockito.Mockito.spy;
 
     System.out.println("Sent producer record");
 
+    solrCluster2.getSolrClient().commit(COLLECTION);
+
     QueryResponse results = null;
     boolean foundUpdates = false;
     for (int i = 0; i < 50; i++) {
-     // solrCluster1.getSolrClient().commit(COLLECTION);
+      solrCluster2.getSolrClient().commit(COLLECTION);
       results = solrCluster2.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
-      if (results.getResults().getNumFound() == 1) {
+      if (results.getResults().getNumFound() == 2) {
         foundUpdates = true;
       } else {
         Thread.sleep(500);
       }
     }
-
-    System.out.println("Closed producer");
 
     assertTrue("results=" + results, foundUpdates);
     System.out.println("Rest: " + results);
