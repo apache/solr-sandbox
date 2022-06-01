@@ -24,7 +24,6 @@ version '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
-    jcenter()
 }
 
 dependencies {
@@ -61,6 +60,7 @@ subprojects {
 
 task copyToLib(type: Copy) {
     into "$buildDir/libs"
+    include "kafka-clients-*.jar"
     from configurations.runtimeClasspath
 }
 
