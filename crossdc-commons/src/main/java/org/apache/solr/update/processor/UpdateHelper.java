@@ -16,10 +16,12 @@
  */
 package org.apache.solr.update.processor;
 
-import org.apache.solr.client.solrj.request.UpdateRequest;
+public class UpdateHelper {
+  public static boolean isLeader(DistributedUpdateProcessor distProc) {
+    return distProc.isLeader();
+  }
 
-/** Plugin classes must implement this interface to be usable as the handlers for request mirroring */
-public interface RequestMirroringHandler {
-    /** When called, should handle submitting the request to the replica clusters  */
-    void mirror(UpdateRequest request) throws Exception;
+  public static UpdateRequestProcessor next(UpdateRequestProcessor proc) {
+    return proc.next;
+  }
 }
