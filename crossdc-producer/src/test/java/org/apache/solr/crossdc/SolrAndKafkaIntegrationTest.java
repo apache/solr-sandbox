@@ -12,6 +12,7 @@ import org.apache.lucene.util.QuickPatchThreadsFilter;
 import org.apache.solr.SolrIgnoredThreadsFilter;
 import org.apache.solr.SolrTestCaseJ4;
 import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
 import org.apache.solr.client.solrj.request.UpdateRequest;
@@ -23,11 +24,13 @@ import org.apache.solr.common.util.ObjectReleaseTracker;
 import org.apache.solr.crossdc.common.MirroredSolrRequest;
 import org.apache.solr.crossdc.common.MirroredSolrRequestSerializer;
 import org.apache.solr.crossdc.consumer.Consumer;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.util.Properties;
 
@@ -120,10 +123,15 @@ import static org.mockito.Mockito.spy;
       solrCluster2.getZkServer().getZkClient().printLayoutToStdOut();
       solrCluster2.shutdown();
     }
-    //ObjectReleaseTracker.clear();
-    // if (solrCluster2 != null) {
-    //   solrCluster2.shutdown();
-    //}
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    super.tearDown();
+    solrCluster1.getSolrClient().deleteByQuery("*:*");
+    solrCluster2.getSolrClient().deleteByQuery("*:*");
+    solrCluster1.getSolrClient().commit();
+    solrCluster2.getSolrClient().commit();
   }
 
   public void testFullCloudToCloud() throws Exception {

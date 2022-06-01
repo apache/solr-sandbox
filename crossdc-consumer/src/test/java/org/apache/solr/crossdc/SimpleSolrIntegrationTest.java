@@ -24,7 +24,7 @@ public class SimpleSolrIntegrationTest extends SolrCloudTestCase {
   private static SolrMessageProcessor processor;
 
   @BeforeClass
-  public static void setupIntegrationTest() throws Exception {
+  public static void beforeSimpleSolrIntegrationTest() throws Exception {
 
     cluster1 =
         new SolrCloudTestCase.Builder(2, createTempDir())
@@ -45,7 +45,7 @@ public class SimpleSolrIntegrationTest extends SolrCloudTestCase {
   }
 
   @AfterClass
-  public static void tearDownIntegrationTest() throws Exception {
+  public static void afterSimpleSolrIntegrationTest() throws Exception {
     if (cluster1 != null) {
       cluster1.shutdown();
     }

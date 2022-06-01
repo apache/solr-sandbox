@@ -58,7 +58,7 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
             producer.send(new ProducerRecord(conf.getTopicName(), request), (metadata, exception) -> {
                 log.info("Producer finished sending metadata={}, exception={}", metadata, exception);
             });
-            producer.flush();
+            producer.flush(); // TODO: remove
 
             lastSuccessfulEnqueueNanos = System.nanoTime();
             // Record time since last successful enqueue as 0

@@ -153,6 +153,9 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
             // prevent circular mirroring
             mirroredParams.set(SERVER_SHOULD_MIRROR, Boolean.FALSE.toString());
         }
+        if (log.isTraceEnabled()) {
+            log.trace("Create MirroringUpdateProcessor with mirroredParams={}", mirroredParams);
+        }
         log.info("Create MirroringUpdateProcessor");
         return new MirroringUpdateProcessor(next, doMirroring, mirroredParams,
                 DistribPhase.parseParam(req.getParams().get(DISTRIB_UPDATE_PARAM)), doMirroring ? mirroringHandler : null);
