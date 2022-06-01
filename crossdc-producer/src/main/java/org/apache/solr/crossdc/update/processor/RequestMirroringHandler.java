@@ -14,30 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-plugins {
-    id 'java'
-}
+package org.apache.solr.crossdc.update.processor;
 
-description = 'Cross-DC Commons package'
+import org.apache.solr.client.solrj.request.UpdateRequest;
 
-version '1.0-SNAPSHOT'
-
-repositories {
-    mavenCentral()
-    jcenter()
-}
-
-dependencies {
-    implementation 'org.apache.solr:solr-solrj:8.11.1'
-    implementation 'org.apache.solr:solr-core:8.11.1'
-    implementation 'org.apache.kafka:kafka-clients:2.8.1'
-    implementation 'com.google.guava:guava:14.0'
-}
-
-subprojects {
-    group "org.apache.solr"
-}
-
-test {
-    jvmArgs '-Djava.security.egd=file:/dev/./urandom'
+/** Plugin classes must implement this interface to be usable as the handlers for request mirroring */
+public interface RequestMirroringHandler {
+    /** When called, should handle submitting the request to the replica clusters  */
+    void mirror(UpdateRequest request) throws Exception;
 }

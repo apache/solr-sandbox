@@ -109,7 +109,7 @@
   </query>
 
   <updateRequestProcessorChain  name="mirrorUpdateChain" default="true">
-    <processor class="org.apache.solr.update.processor.MirroringUpdateRequestProcessorFactory">
+    <processor class="org.apache.solr.crossdc.update.processor.MirroringUpdateRequestProcessorFactory">
 
     </processor>
     <processor class="solr.LogUpdateProcessorFactory" />

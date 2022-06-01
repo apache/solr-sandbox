@@ -1,4 +1,4 @@
-package org.apache.solr.update.processor;
+package org.apache.solr.crossdc.update.processor;
 
 import org.apache.solr.client.solrj.request.UpdateRequest;
 import org.apache.solr.common.SolrException;
@@ -10,6 +10,9 @@ import org.apache.solr.update.AddUpdateCommand;
 import org.apache.solr.update.CommitUpdateCommand;
 import org.apache.solr.update.DeleteUpdateCommand;
 import org.apache.solr.update.RollbackUpdateCommand;
+import org.apache.solr.update.processor.DistributedUpdateProcessor;
+import org.apache.solr.update.processor.UpdateHelper;
+import org.apache.solr.update.processor.UpdateRequestProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +60,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
     this.requestMirroringHandler = requestMirroringHandler;
 
     // Find the downstream distributed update processor
-    for (UpdateRequestProcessor proc = next; proc != null; proc = proc.next) {
+    for (UpdateRequestProcessor proc = next; proc != null; proc = UpdateHelper.next(proc)) {
       if (proc instanceof DistributedUpdateProcessor) {
         distProc = (DistributedUpdateProcessor) proc;
         break;
@@ -83,11 +86,11 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
 
   @Override public void processAdd(final AddUpdateCommand cmd) throws IOException {
     if (log.isDebugEnabled())
-      log.debug("processAdd isLeader={} cmd={}", distProc.isLeader(), cmd);
+      log.debug("processAdd isLeader={} cmd={}", UpdateHelper.isLeader(distProc), cmd);
     super.processAdd(cmd); // let this throw to prevent mirroring invalid reqs
 
     // submit only from the leader shards so we mirror each doc once
-    if (doMirroring && distProc.isLeader()) {
+    if (doMirroring && UpdateHelper.isLeader(distProc)) {
       SolrInputDocument doc = cmd.getSolrInputDocument().deepCopy();
       doc.removeField(CommonParams.VERSION_FIELD); // strip internal doc version
       createAndOrGetMirrorRequest().add(doc, cmd.commitWithin, cmd.overwrite);
@@ -96,13 +99,13 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
 
   @Override public void processDelete(final DeleteUpdateCommand cmd) throws IOException {
     if (log.isDebugEnabled())
-      log.debug("processDelete doMirroring={} isLeader={} cmd={}", doMirroring, distProc.isLeader(), cmd);
+      log.debug("processDelete doMirroring={} isLeader={} cmd={}", doMirroring, UpdateHelper.isLeader(distProc), cmd);
     super.processDelete(cmd); // let this throw to prevent mirroring invalid requests
 
     if (doMirroring) {
       if (cmd.isDeleteById()) {
         // deleteById requests runs once per leader, so we just submit the request from the leader shard
-        if (distProc.isLeader()) {
+        if (UpdateHelper.isLeader(distProc)) {
           createAndOrGetMirrorRequest().deleteById(cmd.getId()); // strip versions from deletes
         }
       } else {
