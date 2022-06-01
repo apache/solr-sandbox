@@ -59,7 +59,9 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
     @Override
     public Result<MirroredSolrRequest> handleItem(MirroredSolrRequest mirroredSolrRequest) {
         connectToSolrIfNeeded();
-        preventCircularMirroring(mirroredSolrRequest);
+
+        // preventCircularMirroring(mirroredSolrRequest); TODO: isn't this handled by the mirroring handler?
+
         return processMirroredRequest(mirroredSolrRequest);
     }
 
@@ -79,12 +81,13 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
             log.trace("handleSolrRequest params={}", requestParams);
         }
 
-        final String shouldMirror = requestParams.get("shouldMirror");
-
-        if ("false".equalsIgnoreCase(shouldMirror)) {
-            log.warn("Skipping mirrored request because shouldMirror is set to false. request={}", requestParams);
-            return new Result<>(ResultStatus.FAILED_NO_RETRY);
-        }
+        // TODO: isn't this handled by the mirroring handler?
+//        final String shouldMirror = requestParams.get("shouldMirror");
+//
+//        if ("false".equalsIgnoreCase(shouldMirror)) {
+//            log.warn("Skipping mirrored request because shouldMirror is set to false. request={}", requestParams);
+//            return new Result<>(ResultStatus.FAILED_NO_RETRY);
+//        }
         logFirstAttemptLatency(mirroredSolrRequest);
 
         Result<MirroredSolrRequest> result;
@@ -211,6 +214,9 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
             UpdateRequest updateRequest = (UpdateRequest) request;
 
             List<SolrInputDocument> documents = updateRequest.getDocuments();
+            if (log.isTraceEnabled()) {
+                log.trace("update request docs={} deletebyid={} deletebyquery={}", documents, updateRequest.getDeleteById(), updateRequest.getDeleteQuery());
+            }
             if (documents != null) {
                 for (SolrInputDocument doc : documents) {
                     sanitizeDocument(doc);

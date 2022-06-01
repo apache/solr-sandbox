@@ -74,12 +74,23 @@ public class MirroredSolrRequestSerializer implements Serializer<MirroredSolrReq
         List docs = (List) solrRequest.get("docs");
         if (docs != null) {
             updateRequest.add(docs);
+        } else {
+            updateRequest.add("id", "1");
+            updateRequest.getDocumentsMap().clear();
         }
 
         List deletes = (List) solrRequest.get("deletes");
         if (deletes != null) {
             updateRequest.deleteById(deletes);
         }
+
+        List deletesQuery = (List) solrRequest.get("deleteQuery");
+        if (deletesQuery != null) {
+            for (Object delQuery : deletesQuery) {
+                updateRequest.deleteByQuery((String) delQuery);
+            }
+        }
+
 
         Map params = (Map) solrRequest.get("params");
         if (params != null) {
@@ -101,7 +112,9 @@ public class MirroredSolrRequestSerializer implements Serializer<MirroredSolrReq
         // TODO: add checks
         UpdateRequest solrRequest = (UpdateRequest) request.getSolrRequest();
 
-        log.info("serialize request={} docs={}", solrRequest, solrRequest.getDocuments());
+        if (log.isTraceEnabled()) {
+            log.trace("serialize request={} docs={} deletebyid={}", solrRequest, solrRequest.getDocuments(), solrRequest.getDeleteById());
+        }
 
         JavaBinCodec codec = new JavaBinCodec(null);
 
@@ -113,6 +126,7 @@ public class MirroredSolrRequestSerializer implements Serializer<MirroredSolrReq
         // TODO
         //map.put("deletes", solrRequest.getDeleteByIdMap());
         map.put("deletes", solrRequest.getDeleteById());
+        map.put("deleteQuery", solrRequest.getDeleteQuery());
 
         try {
             codec.marshal(map, baos);
