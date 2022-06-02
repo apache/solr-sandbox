@@ -33,14 +33,12 @@ application {
 
 dependencies {
     implementation group: 'org.apache.solr', name: 'solr-solrj', version: '8.11.1'
-    implementation project(':crossdc-commons')
+    implementation project(path: ':crossdc-commons', configuration: 'shadow')
 
     implementation 'org.slf4j:slf4j-api:1.7.36'
     implementation 'org.eclipse.jetty:jetty-http:9.4.41.v20210516'
     implementation 'org.eclipse.jetty:jetty-server:9.4.41.v20210516'
     implementation 'org.eclipse.jetty:jetty-servlet:9.4.41.v20210516'
-    implementation 'org.apache.kafka:kafka-clients:2.8.1'
-    implementation group: 'com.google.guava', name: 'guava', version: '14.0'
     implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.2'
     runtimeOnly ('com.google.protobuf:protobuf-java-util:3.19.2')
     testImplementation 'org.hamcrest:hamcrest:2.2'
@@ -56,7 +54,6 @@ dependencies {
     testImplementation 'org.apache.kafka:kafka_2.13:2.8.1'
     testImplementation 'org.apache.kafka:kafka-streams:2.8.1'
     testImplementation 'org.apache.kafka:kafka_2.13:2.8.1:test'
-    testImplementation 'org.apache.kafka:kafka-clients:2.8.1:test'
     testImplementation 'org.apache.kafka:kafka-streams:2.8.1:test'
 }
 

@@ -29,8 +29,8 @@
 
     <RollingRandomAccessFile
             name="MainLogFile"
-            fileName="${sys:log.dir:-logs}/${sys:log.name:-crossdc}.log"
-            filePattern="${sys:log.dir:-logs}/${sys:log.name:-crossdc}.log.%i">
+            fileName="${sys:log.dir:-build/logs}/${sys:log.name:-crossdc}.log"
+            filePattern="${sys:log.dir:-build/logs}/${sys:log.name:-crossdc}.log.%i">
       <PatternLayout>
         <Pattern>
           %maxLen{%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p (%t) [%notEmpty{c:%X{collection}}%notEmpty{ s:%X{shard}}%notEmpty{ r:%X{replica}}%notEmpty{ x:%X{core}}] %c{1.}

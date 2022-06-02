@@ -41,6 +41,8 @@ bin/zookeeper-server-start.sh config/zookeeper.properties > ../kafka_zk.log &
 
 bin/kafka-server-start.sh config/server.properties > ../kafka_server.log &
 
+# The following commented out  section is just for helpful reference
+
 # for kafka 2.x zk port of 2181, for 3.x broker of 9093
 
 # bin/kafka-topics.sh --create --topic my-kafka-topic --bootstrap-server localhost:9093 --partitions 3 --replication-factor 2
@@ -56,9 +58,8 @@ bin/kafka-server-start.sh config/server.properties > ../kafka_server.log &
 
 # need to go to lib folder - I can't believe there is no shared lib folder by default - crazy
 mkdir "${solr}/server/solr/lib"
-cp ../crossdc-commons/build/libs/crossdc-commons-*.jar "${solr}"/server/solr/lib
+
 cp ../crossdc-producer/build/libs/crossdc-producer-*.jar "${solr}"/server/solr/lib
-cp ../crossdc-producer/build/libs/kafka-clients-*.jar "${solr}"/server/solr/lib
 
 (
   cd "${solr}" || exit
