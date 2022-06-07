@@ -20,11 +20,8 @@ plugins {
 
 description = 'Cross-DC Consumer package'
 
-version '1.0-SNAPSHOT'
-
 repositories {
     mavenCentral()
-    jcenter()
 }
 
 application {
@@ -55,10 +52,6 @@ dependencies {
     testImplementation 'org.apache.kafka:kafka-streams:2.8.1'
     testImplementation 'org.apache.kafka:kafka_2.13:2.8.1:test'
     testImplementation 'org.apache.kafka:kafka-streams:2.8.1:test'
-}
-
-subprojects {
-    group "org.apache.solr"
 }
 
 test {

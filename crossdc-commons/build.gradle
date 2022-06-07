@@ -21,11 +21,8 @@ plugins {
 
 description = 'Cross-DC Commons package'
 
-version '1.0-SNAPSHOT'
-
 repositories {
     mavenCentral()
-    jcenter()
 }
 
 configurations {
@@ -40,10 +37,6 @@ dependencies {
     provided 'org.apache.solr:solr-solrj:8.11.1'
     implementation 'org.apache.kafka:kafka-clients:2.8.1'
     implementation 'com.google.guava:guava:14.0'
-}
-
-subprojects {
-    group "org.apache.solr"
 }
 
 jar.enabled = false

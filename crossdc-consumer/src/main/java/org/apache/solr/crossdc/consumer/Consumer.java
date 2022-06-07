@@ -16,6 +16,9 @@
  */
 package org.apache.solr.crossdc.consumer;
 
+import org.apache.solr.common.SolrException;
+import org.apache.solr.common.cloud.SolrZkClient;
+import org.apache.solr.crossdc.common.CrossDcConf;
 import org.apache.solr.crossdc.common.KafkaCrossDcConf;
 import org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor;
 import org.eclipse.jetty.server.Connector;
@@ -24,12 +27,15 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
 import java.lang.invoke.MethodHandles;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 // Cross-DC Consumer main class
 public class Consumer {
+    public static final String DEFAULT_PORT = "8090";
     private static boolean enabled = true;
 
     private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -56,10 +62,11 @@ public class Consumer {
 
         this.topicName = topicName;
 
-        server = new Server();
-        ServerConnector connector = new ServerConnector(server);
-        connector.setPort(port);
-        server.setConnectors(new Connector[] {connector});
+        //server = new Server();
+        //ServerConnector connector = new ServerConnector(server);
+        //connector.setPort(port);
+        //server.setConnectors(new Connector[] {connector})
+
         crossDcConsumer = getCrossDcConsumer(bootstrapServers, zkConnectString, topicName, enableDataEncryption);
 
         // Start consumer thread
@@ -82,14 +89,59 @@ public class Consumer {
     }
 
     public static void main(String[] args) {
-        String bootstrapServers = System.getProperty("bootstrapServers");
-        boolean enableDataEncryption = Boolean.getBoolean("enableDataEncryption");
-        String topicName = System.getProperty("topicName");
+
         String zkConnectString = System.getProperty("zkConnectString");
-        String port = System.getProperty("port", "8090");
+        if (zkConnectString == null || zkConnectString.isBlank()) {
+            throw new IllegalArgumentException("zkConnectString not specified for producer");
+        }
+
+        String bootstrapServers = System.getProperty("bootstrapServers");
+        // boolean enableDataEncryption = Boolean.getBoolean("enableDataEncryption");
+        String topicName = System.getProperty("topicName");
+        String port = System.getProperty("port");
+
+
+        try (SolrZkClient client = new SolrZkClient(zkConnectString, 15000)) {
+
+            try {
+                if ((topicName == null || topicName.isBlank())
+                    || (bootstrapServers == null || bootstrapServers.isBlank()) || (port == null || port.isBlank()) && client
+                    .exists(CrossDcConf.CROSSDC_PROPERTIES, true)) {
+                    byte[] data = client.getData("/crossdc.properties", null, null, true);
+                    Properties props = new Properties();
+                    props.load(new ByteArrayInputStream(data));
+
+                    if (topicName == null || topicName.isBlank()) {
+                        topicName = props.getProperty("topicName");
+                    }
+                    if (bootstrapServers == null || bootstrapServers.isBlank()) {
+                        bootstrapServers = props.getProperty("bootstrapServers");
+                    }
+                    if (port == null || port.isBlank()) {
+                        port = props.getProperty("port");
+                    }
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new SolrException(SolrException.ErrorCode.SERVICE_UNAVAILABLE, e);
+            } catch (Exception e) {
+                throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, e);
+            }
+        }
+
+        if (port == null) {
+            port = DEFAULT_PORT;
+        }
+
+        if (bootstrapServers == null || bootstrapServers.isBlank()) {
+          throw new IllegalArgumentException("boostrapServers not specified for producer");
+        }
+        if (topicName == null || topicName.isBlank()) {
+            throw new IllegalArgumentException("topicName not specified for producer");
+        }
 
         Consumer consumer = new Consumer();
-        consumer.start(bootstrapServers, zkConnectString, topicName, enableDataEncryption, Integer.parseInt(port));
+        consumer.start(bootstrapServers, zkConnectString, topicName, false, Integer.parseInt(port));
     }
 
     public void shutdown() {
