@@ -21,8 +21,6 @@ plugins {
 
 description = 'Cross-DC Producer package'
 
-version '1.0-SNAPSHOT'
-
 repositories {
     mavenCentral()
 }
@@ -56,10 +54,6 @@ dependencies {
     testImplementation 'org.apache.kafka:kafka-streams:2.8.1:test'
 
     testImplementation 'org.apache.kafka:kafka-clients:2.8.1:test'
-}
-
-subprojects {
-    group "org.apache.solr"
 }
 
 jar.enabled = false

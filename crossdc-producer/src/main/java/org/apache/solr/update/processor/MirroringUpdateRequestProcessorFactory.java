@@ -23,16 +23,20 @@ import org.apache.solr.common.util.NamedList;
 import org.apache.solr.core.CloseHook;
 import org.apache.solr.core.CoreDescriptor;
 import org.apache.solr.core.SolrCore;
+import org.apache.solr.crossdc.common.CrossDcConf;
 import org.apache.solr.crossdc.common.KafkaCrossDcConf;
 import org.apache.solr.crossdc.common.KafkaMirroringSink;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.response.SolrQueryResponse;
 import org.apache.solr.util.plugin.SolrCoreAware;
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
+import java.util.Properties;
 
 import static org.apache.solr.update.processor.DistributedUpdateProcessor.*;
 import static org.apache.solr.update.processor.DistributingUpdateProcessorFactory.DISTRIB_UPDATE_PARAM;
@@ -60,11 +64,15 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
 
     /** This is instantiated in inform(SolrCore) and then shared by all processor instances - visible for testing */
     volatile KafkaRequestMirroringHandler mirroringHandler;
+    private String topicName;
+    private String bootstrapServers;
 
     @Override
     public void init(final NamedList args) {
-
         super.init(args);
+
+        topicName = args._getStr("topicName", null);
+        bootstrapServers = args._getStr("bootstrapServers", null);
     }
 
     private class Closer {
@@ -87,20 +95,42 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
     @Override
     public void inform(SolrCore core) {
         log.info("KafkaRequestMirroringHandler inform");
+
+        try {
+            if ((topicName == null || topicName.isBlank()) || (bootstrapServers == null || bootstrapServers.isBlank()) && core.getCoreContainer().getZkController()
+                .getZkClient().exists(CrossDcConf.CROSSDC_PROPERTIES, true)) {
+                byte[] data = core.getCoreContainer().getZkController().getZkClient().getData("/crossdc.properties", null, null, true);
+                Properties props = new Properties();
+                props.load(new ByteArrayInputStream(data));
+
+                if (topicName == null || topicName.isBlank()) {
+                    topicName = props.getProperty("topicName");
+                }
+                if (bootstrapServers == null || bootstrapServers.isBlank()) {
+                    bootstrapServers = props.getProperty("bootstrapServers");
+                }
+             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new SolrException(SolrException.ErrorCode.SERVICE_UNAVAILABLE, e);
+        } catch (Exception e) {
+            throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, e);
+        }
+
+        if (bootstrapServers == null || bootstrapServers.isBlank()) {
+           throw new IllegalArgumentException("boostrapServers not specified for producer");
+       }
+        
+        if (topicName == null || topicName.isBlank()) {
+            throw new IllegalArgumentException("topicName not specified for producer");
+        }
+
+        log.info("bootstrapServers={} topicName={}", bootstrapServers, topicName);
+
         // load the request mirroring sink class and instantiate.
        // mirroringHandler = core.getResourceLoader().newInstance(RequestMirroringHandler.class.getName(), KafkaRequestMirroringHandler.class);
 
-
-        // TODO: Setup Kafka properly
-        final String topicName = System.getProperty("topicName");
-        if (topicName == null) {
-            throw new IllegalArgumentException("topicName not specified for producer");
-        }
-        final String boostrapServers = System.getProperty("bootstrapServers");
-        if (boostrapServers == null) {
-            throw new IllegalArgumentException("boostrapServers not specified for producer");
-        }
-        KafkaCrossDcConf conf = new KafkaCrossDcConf(boostrapServers, topicName, false, null);
+        KafkaCrossDcConf conf = new KafkaCrossDcConf(bootstrapServers, topicName, false, null);
         KafkaMirroringSink sink = new KafkaMirroringSink(conf);
 
         Closer closer = new Closer(sink);

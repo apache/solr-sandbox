@@ -110,7 +110,8 @@
 
   <updateRequestProcessorChain  name="mirrorUpdateChain" default="true">
     <processor class="org.apache.solr.update.processor.MirroringUpdateRequestProcessorFactory">
-
+      <str name="bootstrapServers">${bootstrapServers:}</str>
+      <str name="topicName">${topicName:}</str>
     </processor>
     <processor class="solr.LogUpdateProcessorFactory" />
     <processor class="solr.RunUpdateProcessorFactory" />
