@@ -58,6 +58,8 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         implements SolrCoreAware, UpdateRequestProcessorFactory.RunAlways {
 
     private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+    public static final NoOpUpdateRequestProcessor NO_OP_UPDATE_REQUEST_PROCESSOR =
+        new NoOpUpdateRequestProcessor();
 
     // Flag for mirroring requests
     public static String SERVER_SHOULD_MIRROR = "shouldMirror";
@@ -67,9 +69,16 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
     private String topicName;
     private String bootstrapServers;
 
+    private boolean enabled = true;
+
     @Override
     public void init(final NamedList args) {
         super.init(args);
+        Boolean enabled = args.getBooleanArg("enabled");
+
+        if (enabled != null && !enabled) {
+            this.enabled = false;
+        }
 
         topicName = args._getStr("topicName", null);
         bootstrapServers = args._getStr("bootstrapServers", null);
@@ -94,10 +103,14 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
 
     @Override
     public void inform(SolrCore core) {
-        log.info("KafkaRequestMirroringHandler inform");
+        log.info("KafkaRequestMirroringHandler inform enabled={}", this.enabled);
+
+        if (!enabled) {
+            return;
+        }
 
         try {
-            if ((topicName == null || topicName.isBlank()) || (bootstrapServers == null || bootstrapServers.isBlank()) && core.getCoreContainer().getZkController()
+            if (((topicName == null || topicName.isBlank()) || (bootstrapServers == null || bootstrapServers.isBlank())) && core.getCoreContainer().getZkController()
                 .getZkClient().exists(CrossDcConf.CROSSDC_PROPERTIES, true)) {
                 byte[] data = core.getCoreContainer().getZkController().getZkClient().getData("/crossdc.properties", null, null, true);
                 Properties props = new Properties();
@@ -148,8 +161,13 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
     }
 
     @Override
-    public MirroringUpdateProcessor getInstance(final SolrQueryRequest req, final SolrQueryResponse rsp,
+    public UpdateRequestProcessor getInstance(final SolrQueryRequest req, final SolrQueryResponse rsp,
                                                 final UpdateRequestProcessor next) {
+
+        if (!enabled) {
+            return NO_OP_UPDATE_REQUEST_PROCESSOR;
+        }
+
         // if the class fails to initialize
         if (mirroringHandler == null) {
             throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "mirroringHandler is null");
@@ -190,5 +208,12 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         return new MirroringUpdateProcessor(next, doMirroring, mirroredParams,
                 DistribPhase.parseParam(req.getParams().get(DISTRIB_UPDATE_PARAM)), doMirroring ? mirroringHandler : null);
     }
+
+    private static class NoOpUpdateRequestProcessor extends UpdateRequestProcessor {
+        NoOpUpdateRequestProcessor() {
+            super(null);
+        }
+    }
+
 
 }
