@@ -110,6 +110,7 @@
 
   <updateRequestProcessorChain  name="mirrorUpdateChain" default="true">
     <processor class="org.apache.solr.update.processor.MirroringUpdateRequestProcessorFactory">
+      <bool name="enabled">${enabled:true}</bool>
       <str name="bootstrapServers">${bootstrapServers:}</str>
       <str name="topicName">${topicName:}</str>
     </processor>
@@ -118,4 +119,3 @@
   </updateRequestProcessorChain>
 
 </config>
-
