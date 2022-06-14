@@ -113,6 +113,12 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
             if (((topicName == null || topicName.isBlank()) || (bootstrapServers == null || bootstrapServers.isBlank())) && core.getCoreContainer().getZkController()
                 .getZkClient().exists(CrossDcConf.CROSSDC_PROPERTIES, true)) {
                 byte[] data = core.getCoreContainer().getZkController().getZkClient().getData("/crossdc.properties", null, null, true);
+
+                if (data == null) {
+                    log.error("crossdc.properties file in Zookeeper has no data");
+                    throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "crossdc.properties file in Zookeeper has no data");
+                }
+
                 Properties props = new Properties();
                 props.load(new ByteArrayInputStream(data));
 
@@ -125,17 +131,21 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
              }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            log.error("Interrupted looking for CrossDC configuration in Zookeeper", e);
             throw new SolrException(SolrException.ErrorCode.SERVICE_UNAVAILABLE, e);
         } catch (Exception e) {
-            throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, e);
+            log.error("Exception looking for CrossDC configuration in Zookeeper", e);
+            throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "Exception looking for CrossDC configuration in Zookeeper", e);
         }
 
         if (bootstrapServers == null || bootstrapServers.isBlank()) {
-           throw new IllegalArgumentException("boostrapServers not specified for producer");
+           log.error("boostrapServers not specified for producer in CrossDC configuration");
+           throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "boostrapServers not specified for producer");
        }
         
         if (topicName == null || topicName.isBlank()) {
-            throw new IllegalArgumentException("topicName not specified for producer");
+            log.error("topicName not specified for producer in CrossDC configuration");
+            throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "topicName not specified for producer");
         }
 
         log.info("bootstrapServers={} topicName={}", bootstrapServers, topicName);
