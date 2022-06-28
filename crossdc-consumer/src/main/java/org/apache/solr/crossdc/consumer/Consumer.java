@@ -53,10 +53,10 @@ public class Consumer {
         if (bootstrapServers == null) {
             throw new IllegalArgumentException("bootstrapServers config was not passed at startup");
         }
-        if (bootstrapServers == null) {
+        if (zkConnectString == null) {
             throw new IllegalArgumentException("zkConnectString config was not passed at startup");
         }
-        if (bootstrapServers == null) {
+        if (topicName == null) {
             throw new IllegalArgumentException("topicName config was not passed at startup");
         }
 
