@@ -61,4 +61,17 @@ public class KafkaCrossDcConf extends CrossDcConf {
   public String getBootStrapServers() {
         return bootstrapServers;
   }
+
+    @Override
+    public String toString() {
+        return String.format("KafkaCrossDcConf{" +
+                "topicName='%s', " +
+                "enableDataEncryption='%b', " +
+                "bootstrapServers='%s', " +
+                "slowSubmitThresholdInMillis='%d', " +
+                "numOfRetries='%d', " +
+                "solrZkConnectString='%s'}",
+                topicName, enableDataEncryption, bootstrapServers,
+                slowSubmitThresholdInMillis, numOfRetries, solrZkConnectString);
+    }
 }
