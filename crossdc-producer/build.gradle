@@ -37,7 +37,7 @@ dependencies {
     implementation project(':crossdc-consumer')
     implementation project(path: ':crossdc-commons', configuration: 'shadow')
 
-    provided  group: 'org.apache.solr', name: 'solr-core', version: '8.11.1'
+    provided  group: 'org.apache.solr', name: 'solr-core', version: '8.11.2'
 
     testImplementation 'org.slf4j:slf4j-api'
     testImplementation 'org.hamcrest:hamcrest:2.2'
@@ -45,8 +45,8 @@ dependencies {
     testImplementation('org.mockito:mockito-core:4.3.1', {
         exclude group: "net.bytebuddy", module: "byte-buddy-agent"
     })
-    testImplementation group: 'org.apache.solr', name: 'solr-core', version: '8.11.1'
-    testImplementation group: 'org.apache.solr', name: 'solr-test-framework', version: '8.11.1'
+    testImplementation group: 'org.apache.solr', name: 'solr-core', version: '8.11.2'
+    testImplementation group: 'org.apache.solr', name: 'solr-test-framework', version: '8.11.2'
 
     testImplementation 'org.apache.kafka:kafka_2.13:2.8.1'
     testImplementation 'org.apache.kafka:kafka-streams:2.8.1'
