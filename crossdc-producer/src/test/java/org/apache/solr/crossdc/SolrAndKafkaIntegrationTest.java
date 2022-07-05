@@ -135,8 +135,6 @@ import static org.mockito.Mockito.spy;
   }
 
   public void testFullCloudToCloud() throws Exception {
-    Thread.sleep(10000); // TODO why?
-
     CloudSolrClient client = solrCluster1.getSolrClient();
     SolrInputDocument doc = new SolrInputDocument();
     doc.addField("id", String.valueOf(System.currentTimeMillis()));
@@ -157,7 +155,7 @@ import static org.mockito.Mockito.spy;
       if (results.getResults().getNumFound() == 1) {
         foundUpdates = true;
       } else {
-        Thread.sleep(500);
+        Thread.sleep(100);
       }
     }
 
@@ -169,7 +167,6 @@ import static org.mockito.Mockito.spy;
   }
 
   public void testProducerToCloud() throws Exception {
-    Thread.sleep(10000); // TODO: why?
     Properties properties = new Properties();
     properties.put("bootstrap.servers", kafkaCluster.bootstrapServers());
     properties.put("acks", "all");
@@ -204,7 +201,7 @@ import static org.mockito.Mockito.spy;
       if (results.getResults().getNumFound() == 2) {
         foundUpdates = true;
       } else {
-        Thread.sleep(500);
+        Thread.sleep(100);
       }
     }
 

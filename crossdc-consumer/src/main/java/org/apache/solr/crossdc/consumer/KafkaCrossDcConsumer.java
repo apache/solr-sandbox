@@ -1,9 +1,6 @@
 package org.apache.solr.crossdc.consumer;
 
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.errors.WakeupException;
@@ -46,9 +43,11 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
     final Properties kafkaConsumerProp = new Properties();
 
-    kafkaConsumerProp.put("bootstrap.servers", conf.getBootStrapServers());
+    kafkaConsumerProp.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, conf.getBootStrapServers());
 
-    kafkaConsumerProp.put("group.id", "group_1"); // TODO
+    kafkaConsumerProp.put(ConsumerConfig.GROUP_ID_CONFIG, "group_1"); // TODO
+
+    kafkaConsumerProp.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
     solrClient =
         new CloudSolrClient.Builder(Collections.singletonList(conf.getSolrZkConnectString()),

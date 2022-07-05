@@ -144,8 +144,6 @@ import java.util.Properties;
   }
 
   public void testConfigFromZkPickedUp() throws Exception {
-    Thread.sleep(10000); // TODO why?
-
     CloudSolrClient client = solrCluster1.getSolrClient();
     SolrInputDocument doc = new SolrInputDocument();
     doc.addField("id", String.valueOf(System.currentTimeMillis()));
@@ -166,7 +164,7 @@ import java.util.Properties;
       if (results.getResults().getNumFound() == 1) {
         foundUpdates = true;
       } else {
-        Thread.sleep(500);
+        Thread.sleep(100);
       }
     }
 
