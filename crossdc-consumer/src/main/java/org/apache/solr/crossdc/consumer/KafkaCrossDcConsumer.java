@@ -1,5 +1,7 @@
 package org.apache.solr.crossdc.consumer;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.SerializationException;
@@ -25,6 +27,8 @@ import java.util.Properties;
  */
 public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+  private final MetricRegistry metrics = SharedMetricRegistries.getOrCreate("metrics");
 
   private final KafkaConsumer<String, MirroredSolrRequest> consumer;
   private final KafkaMirroringSink kafkaMirroringSink;
@@ -134,6 +138,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
                 if (log.isTraceEnabled()) {
                   log.trace("result=failed-resubmit");
                 }
+                metrics.counter("failed-resubmit").inc();
                 kafkaMirroringSink.submit(record.value());
                 break;
               case HANDLED:
@@ -141,14 +146,17 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
                 if (log.isTraceEnabled()) {
                   log.trace("result=handled");
                 }
+                metrics.counter("handled").inc();
                 break;
               case NOT_HANDLED_SHUTDOWN:
                 if (log.isTraceEnabled()) {
                   log.trace("result=nothandled_shutdown");
                 }
+                metrics.counter("nothandled_shutdown").inc();
               case FAILED_RETRY:
                 log.error("Unexpected response while processing request. We never expect {}.",
                     result.status().toString());
+                metrics.counter("failed-retry").inc();
                 break;
               default:
                 if (log.isTraceEnabled()) {

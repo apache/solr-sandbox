@@ -32,6 +32,7 @@ dependencies {
     implementation group: 'org.apache.solr', name: 'solr-solrj', version: '8.11.2'
     implementation project(path: ':crossdc-commons', configuration: 'shadow')
 
+    implementation 'io.dropwizard.metrics:metrics-core:4.2.9'
     implementation 'org.slf4j:slf4j-api:1.7.36'
     implementation 'org.eclipse.jetty:jetty-http:9.4.41.v20210516'
     implementation 'org.eclipse.jetty:jetty-server:9.4.41.v20210516'

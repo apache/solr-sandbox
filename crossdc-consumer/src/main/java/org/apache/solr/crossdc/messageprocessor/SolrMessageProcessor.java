@@ -16,6 +16,8 @@
  */
 package org.apache.solr.crossdc.messageprocessor;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.request.UpdateRequest;
@@ -47,6 +49,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class SolrMessageProcessor extends MessageProcessor implements IQueueHandler<MirroredSolrRequest>  {
     private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+    private final MetricRegistry metrics = SharedMetricRegistries.getOrCreate("metrics");
+
     final CloudSolrClient client;
 
     private static final String VERSION_FIELD = "_version_";
@@ -180,8 +185,11 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
         }
 
         if (status != 0) {
+            metrics.counter("processedErrors").inc();
             throw new SolrException(SolrException.ErrorCode.getErrorCode(status), "response=" + response);
         }
+
+        metrics.counter("processed").inc();
 
         result = new Result<>(ResultStatus.HANDLED);
         return result;
@@ -192,13 +200,19 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
             final StringBuilder rmsg = new StringBuilder(64);
             rmsg.append("Submitting update request");
             if(((UpdateRequest) request).getDeleteById() != null) {
-                rmsg.append(" numDeleteByIds=").append(((UpdateRequest) request).getDeleteById().size());
+                final int numDeleteByIds = ((UpdateRequest) request).getDeleteById().size();
+                metrics.counter("numDeleteByIds").inc(numDeleteByIds);
+                rmsg.append(" numDeleteByIds=").append(numDeleteByIds);
             }
             if(((UpdateRequest) request).getDocuments() != null) {
-                rmsg.append(" numUpdates=").append(((UpdateRequest) request).getDocuments().size());
+                final int numUpdates = ((UpdateRequest) request).getDocuments().size();
+                metrics.counter("numUpdates").inc(numUpdates);
+                rmsg.append(" numUpdates=").append(numUpdates);
             }
             if(((UpdateRequest) request).getDeleteQuery() != null) {
-                rmsg.append(" numDeleteByQuery=").append(((UpdateRequest) request).getDeleteQuery().size());
+                final int numDeleteByQuery = ((UpdateRequest) request).getDeleteQuery().size();
+                metrics.counter("numDeleteByQuery").inc(numDeleteByQuery);
+                rmsg.append(" numDeleteByQuery=").append(numDeleteByQuery);
             }
             log.info(rmsg.toString());
         }
@@ -256,8 +270,9 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
         // Only record the latency of the first attempt, essentially measuring the latency from submitting on the
         // primary side until the request is eligible to be consumed on the buddy side (or vice versa).
         if (mirroredSolrRequest.getAttempt() == 1) {
-            log.debug("First attempt latency = {}",
-                    System.currentTimeMillis() - TimeUnit.NANOSECONDS.toMillis(mirroredSolrRequest.getSubmitTimeNanos()));
+            final long latency = System.currentTimeMillis() - TimeUnit.NANOSECONDS.toMillis(mirroredSolrRequest.getSubmitTimeNanos());
+            log.debug("First attempt latency = {}", latency);
+            metrics.timer("latency").update(latency, TimeUnit.MILLISECONDS);
         }
     }
 
