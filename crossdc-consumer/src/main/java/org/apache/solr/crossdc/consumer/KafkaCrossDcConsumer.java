@@ -135,6 +135,9 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
             IQueueHandler.Result result = messageProcessor.handleItem(record.value());
             switch (result.status()) {
               case FAILED_RESUBMIT:
+                // currently, we use a strategy taken from an earlier working implementation
+                // of just resubmitting back to the queue - note that in rare cases, this could
+                // allow for incorrect update reorders
                 if (log.isTraceEnabled()) {
                   log.trace("result=failed-resubmit");
                 }
