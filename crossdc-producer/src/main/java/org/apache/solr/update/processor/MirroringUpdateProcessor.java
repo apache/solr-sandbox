@@ -1,15 +1,21 @@
 package org.apache.solr.update.processor;
 
+import org.apache.http.client.HttpClient;
+import org.apache.solr.client.solrj.SolrClient;
+import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.request.UpdateRequest;
+import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.cloud.CloudDescriptor;
+import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.cloud.*;
-import org.apache.solr.common.params.CommonParams;
-import org.apache.solr.common.params.ModifiableSolrParams;
-import org.apache.solr.common.params.ShardParams;
-import org.apache.solr.common.params.SolrParams;
+import org.apache.solr.common.params.*;
 import org.apache.solr.request.SolrQueryRequest;
+import org.apache.solr.schema.IndexSchema;
+import org.apache.solr.schema.SchemaField;
 import org.apache.solr.update.AddUpdateCommand;
 import org.apache.solr.update.CommitUpdateCommand;
 import org.apache.solr.update.DeleteUpdateCommand;
@@ -19,6 +25,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.apache.solr.common.SolrException.ErrorCode.SERVER_ERROR;
 
@@ -92,6 +100,48 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
   }
 
   @Override public void processDelete(final DeleteUpdateCommand cmd) throws IOException {
+    if (doMirroring && !cmd.isDeleteById() && !"*:*".equals(cmd.query)) {
+
+      CloudDescriptor cloudDesc =
+          cmd.getReq().getCore().getCoreDescriptor().getCloudDescriptor();
+      String collection = cloudDesc.getCollectionName();
+
+      HttpClient httpClient = cmd.getReq().getCore().getCoreContainer().getUpdateShardHandler().getDefaultHttpClient();
+
+      try (HttpSolrClient client =
+          new HttpSolrClient.Builder(cmd.getReq().getCore().getCoreContainer().getZkController().getBaseUrl()).withHttpClient(httpClient).build()) {
+
+        String uniqueField = cmd.getReq().getSchema().getUniqueKeyField().getName();
+
+        int rows = Integer.getInteger("solr.crossdc.dbq_rows", 1000);
+        SolrQuery q = new SolrQuery(cmd.query).setRows(rows).setSort(SolrQuery.SortClause.asc(uniqueField)).setFields(uniqueField);
+        String cursorMark = CursorMarkParams.CURSOR_MARK_START;
+
+        int cnt = 1;
+        boolean done = false;
+        while (!done) {
+          q.set(CursorMarkParams.CURSOR_MARK_PARAM, cursorMark);
+          QueryResponse rsp =
+              client.query(collection, q);
+          String nextCursorMark = rsp.getNextCursorMark();
+
+          if (log.isDebugEnabled()) {
+            log.debug("resp: cm={}, ncm={}, cnt={}, results={} ", cursorMark, nextCursorMark, cnt++,
+                rsp.getResults());
+          }
+
+          processDBQResults(client, collection, uniqueField, rsp);
+          if (cursorMark.equals(nextCursorMark)) {
+            done = true;
+          }
+          cursorMark = nextCursorMark;
+        }
+      } catch (SolrServerException e) {
+        throw new SolrException(SERVER_ERROR, e);
+      }
+
+      return;
+    }
     super.processDelete(cmd); // let this throw to prevent mirroring invalid requests
 
     if (doMirroring) {
@@ -111,6 +161,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
         // In general there's no way to guarantee that these run identically on the mirror since there are no
         // external doc versions.
         // TODO: Can we actually support this considering DBQs aren't versioned.
+
         if (distribPhase == DistributedUpdateProcessor.DistribPhase.NONE) {
           createAndOrGetMirrorRequest().deleteByQuery(cmd.query);
         }
@@ -118,6 +169,19 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
           log.debug("processDelete doMirroring={} cmd={}", doMirroring, cmd);
       }
 
+    }
+  }
+
+  private void processDBQResults(SolrClient client, String collection, String uniqueField, QueryResponse rsp)
+      throws SolrServerException, IOException {
+    SolrDocumentList results = rsp.getResults();
+    List<String> ids = new ArrayList<>();
+    results.forEach(entries -> {
+      String id = entries.getFirstValue(uniqueField).toString();
+      ids.add(id);
+    });
+    if (ids.size() > 0) {
+      client.deleteById(collection, ids);
     }
   }
 
