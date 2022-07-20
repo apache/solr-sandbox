@@ -94,7 +94,7 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
         props.put("bootstrap.servers", conf.getBootStrapServers());
 
         props.put("acks", "all");
-        props.put("retries", 99999);
+        props.put("retries", 3);
         props.put("batch.size", 15);
         props.put("buffer.memory", 33554432);
         props.put("linger.ms", 1);
