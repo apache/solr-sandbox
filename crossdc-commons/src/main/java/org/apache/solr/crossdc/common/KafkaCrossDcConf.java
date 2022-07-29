@@ -24,12 +24,15 @@ public class KafkaCrossDcConf extends CrossDcConf {
     private int numOfRetries = 5;
     private final String solrZkConnectString;
 
+    private final String consumerGroup;
 
-    public KafkaCrossDcConf(String bootstrapServers, String topicName, boolean enableDataEncryption, String solrZkConnectString) {
+
+    public KafkaCrossDcConf(String bootstrapServers, String topicName, boolean enableDataEncryption, String solrZkConnectString, String consumerGroup) {
         this.bootstrapServers = bootstrapServers;
         this.topicName = topicName;
         this.enableDataEncryption = enableDataEncryption;
         this.solrZkConnectString = solrZkConnectString;
+        this.consumerGroup = consumerGroup;
     }
     public String getTopicName() {
         return topicName;
@@ -62,6 +65,11 @@ public class KafkaCrossDcConf extends CrossDcConf {
         return bootstrapServers;
   }
 
+
+    public String getConsumerGroup() {
+        return consumerGroup;
+    }
+
     @Override
     public String toString() {
         return String.format("KafkaCrossDcConf{" +
@@ -70,8 +78,9 @@ public class KafkaCrossDcConf extends CrossDcConf {
                 "bootstrapServers='%s', " +
                 "slowSubmitThresholdInMillis='%d', " +
                 "numOfRetries='%d', " +
+                "consumerGroup='%s', " +
                 "solrZkConnectString='%s'}",
                 topicName, enableDataEncryption, bootstrapServers,
-                slowSubmitThresholdInMillis, numOfRetries, solrZkConnectString);
+                slowSubmitThresholdInMillis, numOfRetries, consumerGroup, solrZkConnectString);
     }
 }

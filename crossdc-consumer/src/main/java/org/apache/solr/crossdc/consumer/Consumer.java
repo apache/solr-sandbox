@@ -37,6 +37,7 @@ import java.util.concurrent.Executors;
 public class Consumer {
     public static final String DEFAULT_PORT = "8090";
     private static boolean enabled = true;
+    private static final String DEFAULT_CONSUMER_GROUP = "group_1";
 
     private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -49,7 +50,7 @@ public class Consumer {
     CrossDcConsumer crossDcConsumer;
     private String topicName;
 
-    public void start(String bootstrapServers, String zkConnectString, String topicName, boolean enableDataEncryption, int port) {
+    public void start(String bootstrapServers, String zkConnectString, String topicName, boolean enableDataEncryption, int port, String consumerGroup) {
         if (bootstrapServers == null) {
             throw new IllegalArgumentException("bootstrapServers config was not passed at startup");
         }
@@ -59,6 +60,9 @@ public class Consumer {
         if (topicName == null) {
             throw new IllegalArgumentException("topicName config was not passed at startup");
         }
+        if (consumerGroup == null) {
+            throw new IllegalArgumentException("consumerGroup config was not passed at startup");
+        }
 
         this.topicName = topicName;
 
@@ -67,11 +71,11 @@ public class Consumer {
         //connector.setPort(port);
         //server.setConnectors(new Connector[] {connector})
 
-        crossDcConsumer = getCrossDcConsumer(bootstrapServers, zkConnectString, topicName, enableDataEncryption);
+        crossDcConsumer = getCrossDcConsumer(bootstrapServers, zkConnectString, topicName, enableDataEncryption, consumerGroup);
 
         // Start consumer thread
 
-        log.info("Starting CrossDC Consumer bootstrapServers={}, zkConnectString={}, topicName={}, enableDataEncryption={}", bootstrapServers, zkConnectString, topicName, enableDataEncryption);
+        log.info("Starting CrossDC Consumer bootstrapServers={}, zkConnectString={}, topicName={}, enableDataEncryption={}, consumerGroup={}", bootstrapServers, zkConnectString, topicName, enableDataEncryption, consumerGroup);
 
         consumerThreadExecutor = Executors.newSingleThreadExecutor();
         consumerThreadExecutor.submit(crossDcConsumer);
@@ -82,9 +86,9 @@ public class Consumer {
     }
 
     private CrossDcConsumer getCrossDcConsumer(String bootstrapServers, String zkConnectString, String topicName,
-        boolean enableDataEncryption) {
+        boolean enableDataEncryption, String consumerGroup) {
 
-        KafkaCrossDcConf conf = new KafkaCrossDcConf(bootstrapServers, topicName, enableDataEncryption, zkConnectString);
+        KafkaCrossDcConf conf = new KafkaCrossDcConf(bootstrapServers, topicName, enableDataEncryption, zkConnectString, consumerGroup);
         return new KafkaCrossDcConsumer(conf);
     }
 
@@ -99,6 +103,7 @@ public class Consumer {
         // boolean enableDataEncryption = Boolean.getBoolean("enableDataEncryption");
         String topicName = System.getProperty("topicName");
         String port = System.getProperty("port");
+        String consumerGroup = System.getProperty("consumerGroup", DEFAULT_CONSUMER_GROUP);
 
 
         try (SolrZkClient client = new SolrZkClient(zkConnectString, 15000)) {
@@ -141,7 +146,7 @@ public class Consumer {
         }
 
         Consumer consumer = new Consumer();
-        consumer.start(bootstrapServers, zkConnectString, topicName, false, Integer.parseInt(port));
+        consumer.start(bootstrapServers, zkConnectString, topicName, false, Integer.parseInt(port), consumerGroup);
     }
 
     public void shutdown() {
