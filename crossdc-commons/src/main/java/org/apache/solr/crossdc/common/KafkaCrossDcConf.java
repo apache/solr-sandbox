@@ -18,6 +18,8 @@ package org.apache.solr.crossdc.common;
 
 public class KafkaCrossDcConf extends CrossDcConf {
     private final String topicName;
+
+    private final String groupId;
     private final boolean enableDataEncryption;
     private final String bootstrapServers;
     private long slowSubmitThresholdInMillis;
@@ -25,11 +27,12 @@ public class KafkaCrossDcConf extends CrossDcConf {
     private final String solrZkConnectString;
 
 
-    public KafkaCrossDcConf(String bootstrapServers, String topicName, boolean enableDataEncryption, String solrZkConnectString) {
+    public KafkaCrossDcConf(String bootstrapServers, String topicName, String groupId, boolean enableDataEncryption, String solrZkConnectString) {
         this.bootstrapServers = bootstrapServers;
         this.topicName = topicName;
         this.enableDataEncryption = enableDataEncryption;
         this.solrZkConnectString = solrZkConnectString;
+        this.groupId = groupId;
     }
     public String getTopicName() {
         return topicName;
@@ -58,20 +61,25 @@ public class KafkaCrossDcConf extends CrossDcConf {
         return null;
     }
 
-  public String getBootStrapServers() {
-        return bootstrapServers;
+    public String getGroupId() {
+        return groupId;
   }
+
+    public String getBootStrapServers() {
+        return bootstrapServers;
+    }
 
     @Override
     public String toString() {
         return String.format("KafkaCrossDcConf{" +
                 "topicName='%s', " +
+                "groupId='%s', " +
                 "enableDataEncryption='%b', " +
                 "bootstrapServers='%s', " +
                 "slowSubmitThresholdInMillis='%d', " +
                 "numOfRetries='%d', " +
                 "solrZkConnectString='%s'}",
-                topicName, enableDataEncryption, bootstrapServers,
+                topicName, groupId, enableDataEncryption, bootstrapServers,
                 slowSubmitThresholdInMillis, numOfRetries, solrZkConnectString);
     }
 }

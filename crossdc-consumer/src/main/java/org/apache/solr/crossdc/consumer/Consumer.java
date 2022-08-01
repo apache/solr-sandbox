@@ -36,6 +36,11 @@ import java.util.concurrent.Executors;
 // Cross-DC Consumer main class
 public class Consumer {
     public static final String DEFAULT_PORT = "8090";
+    public static final String TOPIC_NAME = "topicName";
+    public static final String GROUP_ID = "groupId";
+    public static final String PORT = "port";
+    public static final String BOOTSTRAP_SERVERS = "bootstrapServers";
+
     private static boolean enabled = true;
 
     private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -49,7 +54,7 @@ public class Consumer {
     CrossDcConsumer crossDcConsumer;
     private String topicName;
 
-    public void start(String bootstrapServers, String zkConnectString, String topicName, boolean enableDataEncryption, int port) {
+    public void start(String bootstrapServers, String zkConnectString, String topicName, String groupId, boolean enableDataEncryption, int port) {
         if (bootstrapServers == null) {
             throw new IllegalArgumentException("bootstrapServers config was not passed at startup");
         }
@@ -67,11 +72,11 @@ public class Consumer {
         //connector.setPort(port);
         //server.setConnectors(new Connector[] {connector})
 
-        crossDcConsumer = getCrossDcConsumer(bootstrapServers, zkConnectString, topicName, enableDataEncryption);
+        crossDcConsumer = getCrossDcConsumer(bootstrapServers, zkConnectString, topicName, groupId, enableDataEncryption);
 
         // Start consumer thread
 
-        log.info("Starting CrossDC Consumer bootstrapServers={}, zkConnectString={}, topicName={}, enableDataEncryption={}", bootstrapServers, zkConnectString, topicName, enableDataEncryption);
+        log.info("Starting CrossDC Consumer bootstrapServers={}, zkConnectString={}, topicName={}, groupId={}, enableDataEncryption={}", bootstrapServers, zkConnectString, topicName, groupId, enableDataEncryption);
 
         consumerThreadExecutor = Executors.newSingleThreadExecutor();
         consumerThreadExecutor.submit(crossDcConsumer);
@@ -81,10 +86,10 @@ public class Consumer {
         Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
 
-    private CrossDcConsumer getCrossDcConsumer(String bootstrapServers, String zkConnectString, String topicName,
+    private CrossDcConsumer getCrossDcConsumer(String bootstrapServers, String zkConnectString, String topicName, String groupId,
         boolean enableDataEncryption) {
 
-        KafkaCrossDcConf conf = new KafkaCrossDcConf(bootstrapServers, topicName, enableDataEncryption, zkConnectString);
+        KafkaCrossDcConf conf = new KafkaCrossDcConf(bootstrapServers, topicName, groupId, enableDataEncryption, zkConnectString);
         return new KafkaCrossDcConsumer(conf);
     }
 
@@ -95,10 +100,11 @@ public class Consumer {
             throw new IllegalArgumentException("zkConnectString not specified for producer");
         }
 
-        String bootstrapServers = System.getProperty("bootstrapServers");
+        String bootstrapServers = System.getProperty(BOOTSTRAP_SERVERS);
         // boolean enableDataEncryption = Boolean.getBoolean("enableDataEncryption");
-        String topicName = System.getProperty("topicName");
-        String port = System.getProperty("port");
+        String topicName = System.getProperty(TOPIC_NAME);
+        String port = System.getProperty(PORT);
+        String groupId = System.getProperty(GROUP_ID);
 
 
         try (SolrZkClient client = new SolrZkClient(zkConnectString, 15000)) {
@@ -106,20 +112,15 @@ public class Consumer {
             try {
                 if ((topicName == null || topicName.isBlank())
                     || (bootstrapServers == null || bootstrapServers.isBlank()) || (port == null || port.isBlank()) && client
-                    .exists(CrossDcConf.CROSSDC_PROPERTIES, true)) {
-                    byte[] data = client.getData("/crossdc.properties", null, null, true);
+                    .exists(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH, KafkaCrossDcConf.CROSSDC_PROPERTIES), true)) {
+                    byte[] data = client.getData(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH, KafkaCrossDcConf.CROSSDC_PROPERTIES), null, null, true);
                     Properties props = new Properties();
                     props.load(new ByteArrayInputStream(data));
 
-                    if (topicName == null || topicName.isBlank()) {
-                        topicName = props.getProperty("topicName");
-                    }
-                    if (bootstrapServers == null || bootstrapServers.isBlank()) {
-                        bootstrapServers = props.getProperty("bootstrapServers");
-                    }
-                    if (port == null || port.isBlank()) {
-                        port = props.getProperty("port");
-                    }
+                    topicName = getConfig(TOPIC_NAME, topicName, props);
+                    bootstrapServers = getConfig(BOOTSTRAP_SERVERS, bootstrapServers, props);
+                    port = getConfig(PORT, port, props);
+                    groupId = getConfig(GROUP_ID, groupId, props);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -141,7 +142,14 @@ public class Consumer {
         }
 
         Consumer consumer = new Consumer();
-        consumer.start(bootstrapServers, zkConnectString, topicName, false, Integer.parseInt(port));
+        consumer.start(bootstrapServers, zkConnectString, topicName, groupId,false, Integer.parseInt(port));
+    }
+
+    private static String getConfig(String configName, String configValue, Properties props) {
+        if (configValue == null || configValue.isBlank()) {
+            configValue = props.getProperty(configName);
+        }
+        return configValue;
     }
 
     public void shutdown() {

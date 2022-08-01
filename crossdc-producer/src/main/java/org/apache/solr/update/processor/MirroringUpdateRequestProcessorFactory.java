@@ -111,8 +111,8 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
 
         try {
             if (((topicName == null || topicName.isBlank()) || (bootstrapServers == null || bootstrapServers.isBlank())) && core.getCoreContainer().getZkController()
-                .getZkClient().exists(CrossDcConf.CROSSDC_PROPERTIES, true)) {
-                byte[] data = core.getCoreContainer().getZkController().getZkClient().getData("/crossdc.properties", null, null, true);
+                .getZkClient().exists(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH, KafkaCrossDcConf.CROSSDC_PROPERTIES), true)) {
+                byte[] data = core.getCoreContainer().getZkController().getZkClient().getData(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH, KafkaCrossDcConf.CROSSDC_PROPERTIES), null, null, true);
 
                 if (data == null) {
                     log.error("crossdc.properties file in Zookeeper has no data");
@@ -153,7 +153,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         // load the request mirroring sink class and instantiate.
        // mirroringHandler = core.getResourceLoader().newInstance(RequestMirroringHandler.class.getName(), KafkaRequestMirroringHandler.class);
 
-        KafkaCrossDcConf conf = new KafkaCrossDcConf(bootstrapServers, topicName, false, null);
+        KafkaCrossDcConf conf = new KafkaCrossDcConf(bootstrapServers, topicName, "group1", false, null);
         KafkaMirroringSink sink = new KafkaMirroringSink(conf);
 
         Closer closer = new Closer(sink);

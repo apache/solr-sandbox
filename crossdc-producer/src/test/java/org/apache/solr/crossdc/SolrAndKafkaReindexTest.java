@@ -1,12 +1,7 @@
 package org.apache.solr.crossdc;
 
-import com.carrotsearch.randomizedtesting.annotations.ThreadLeakAction;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import org.apache.lucene.util.QuickPatchThreadsFilter;
 import org.apache.solr.SolrIgnoredThreadsFilter;
@@ -15,14 +10,11 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
-import org.apache.solr.client.solrj.request.UpdateRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.cloud.MiniSolrCloudCluster;
 import org.apache.solr.cloud.SolrCloudTestCase;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.util.ObjectReleaseTracker;
-import org.apache.solr.crossdc.common.MirroredSolrRequest;
-import org.apache.solr.crossdc.common.MirroredSolrRequestSerializer;
 import org.apache.solr.crossdc.consumer.Consumer;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -32,13 +24,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
-
-import static org.mockito.Mockito.spy;
 
 @ThreadLeakFilters(defaultFilters = true, filters = { SolrIgnoredThreadsFilter.class,
     QuickPatchThreadsFilter.class, SolrKafkaTestsIgnoredThreadsFilter.class })
-@ThreadLeakLingering(linger = 5000) public class SolrAndKafkaIntegrationTest extends
+@ThreadLeakLingering(linger = 5000) public class SolrAndKafkaReindexTest extends
     SolrTestCaseJ4 {
 
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -76,30 +68,30 @@ import static org.mockito.Mockito.spy;
     System.setProperty("topicName", TOPIC);
     System.setProperty("bootstrapServers", kafkaCluster.bootstrapServers());
 
-    solrCluster1 = new SolrCloudTestCase.Builder(1, createTempDir()).addConfig("conf",
+    solrCluster1 = new SolrCloudTestCase.Builder(3, createTempDir()).addConfig("conf",
         getFile("src/test/resources/configs/cloud-minimal/conf").toPath()).configure();
 
     CollectionAdminRequest.Create create =
-        CollectionAdminRequest.createCollection(COLLECTION, "conf", 1, 1);
+        CollectionAdminRequest.createCollection(COLLECTION, "conf", 3, 2).setMaxShardsPerNode(10);;
     solrCluster1.getSolrClient().request(create);
-    solrCluster1.waitForActiveCollection(COLLECTION, 1, 1);
+    solrCluster1.waitForActiveCollection(COLLECTION, 3, 6);
 
     solrCluster1.getSolrClient().setDefaultCollection(COLLECTION);
 
-    solrCluster2 = new SolrCloudTestCase.Builder(1, createTempDir()).addConfig("conf",
+    solrCluster2 = new SolrCloudTestCase.Builder(3, createTempDir()).addConfig("conf",
         getFile("src/test/resources/configs/cloud-minimal/conf").toPath()).configure();
 
     CollectionAdminRequest.Create create2 =
-        CollectionAdminRequest.createCollection(COLLECTION, "conf", 1, 1);
+        CollectionAdminRequest.createCollection(COLLECTION, "conf", 2, 3).setMaxShardsPerNode(10);
     solrCluster2.getSolrClient().request(create2);
-    solrCluster2.waitForActiveCollection(COLLECTION, 1, 1);
+    solrCluster2.waitForActiveCollection(COLLECTION, 2, 6);
 
     solrCluster2.getSolrClient().setDefaultCollection(COLLECTION);
 
     String bootstrapServers = kafkaCluster.bootstrapServers();
     log.info("bootstrapServers={}", bootstrapServers);
 
-    consumer.start(bootstrapServers, solrCluster2.getZkServer().getZkAddress(), TOPIC, "group1",false, 0);
+    consumer.start(bootstrapServers, solrCluster2.getZkServer().getZkAddress(), TOPIC, "group1", false, 0);
 
   }
 
@@ -110,7 +102,9 @@ import static org.mockito.Mockito.spy;
     consumer.shutdown();
 
     try {
-      kafkaCluster.stop();
+      if (kafkaCluster != null) {
+        kafkaCluster.stop();
+      }
     } catch (Exception e) {
       log.error("Exception stopping Kafka cluster", e);
     }
@@ -136,15 +130,8 @@ import static org.mockito.Mockito.spy;
 
   public void testFullCloudToCloud() throws Exception {
     CloudSolrClient client = solrCluster1.getSolrClient();
-    SolrInputDocument doc = new SolrInputDocument();
-    doc.addField("id", String.valueOf(System.currentTimeMillis()));
-    doc.addField("text", "some test");
 
-    client.add(doc);
-
-    client.commit(COLLECTION);
-
-    System.out.println("Sent producer record");
+    addDocs(client, "first");
 
     QueryResponse results = null;
     boolean foundUpdates = false;
@@ -152,7 +139,29 @@ import static org.mockito.Mockito.spy;
       solrCluster2.getSolrClient().commit(COLLECTION);
       solrCluster1.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
       results = solrCluster2.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
-      if (results.getResults().getNumFound() == 1) {
+      if (results.getResults().getNumFound() == 7) {
+        foundUpdates = true;
+      } else {
+        Thread.sleep(100);
+      }
+    }
+
+    assertTrue("results=" + results, foundUpdates);
+
+    QueryResponse results1 =solrCluster1.getSolrClient().query(COLLECTION, new SolrQuery("first"));
+    QueryResponse results2 = solrCluster2.getSolrClient().query(COLLECTION, new SolrQuery("first"));
+
+    assertEquals("results=" + results1, 7, results1.getResults().getNumFound());
+    assertEquals("results=" + results2, 7, results2.getResults().getNumFound());
+
+    addDocs(client, "second");
+
+    foundUpdates = false;
+    for (int i = 0; i < 50; i++) {
+      solrCluster2.getSolrClient().commit(COLLECTION);
+      solrCluster1.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
+      results = solrCluster2.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
+      if (results.getResults().getNumFound() == 7) {
         foundUpdates = true;
       } else {
         Thread.sleep(100);
@@ -164,50 +173,93 @@ import static org.mockito.Mockito.spy;
     assertTrue("results=" + results, foundUpdates);
     System.out.println("Rest: " + results);
 
-  }
+    results1 =solrCluster1.getSolrClient().query(COLLECTION, new SolrQuery("second"));
+    results2 = solrCluster2.getSolrClient().query(COLLECTION, new SolrQuery("second"));
 
-  public void testProducerToCloud() throws Exception {
-    Properties properties = new Properties();
-    properties.put("bootstrap.servers", kafkaCluster.bootstrapServers());
-    properties.put("acks", "all");
-    properties.put("retries", 0);
-    properties.put("batch.size", 1);
-    properties.put("buffer.memory", 33554432);
-    properties.put("linger.ms", 1);
-    properties.put("key.serializer", StringSerializer.class.getName());
-    properties.put("value.serializer", MirroredSolrRequestSerializer.class.getName());
-    Producer<String, MirroredSolrRequest> producer = new KafkaProducer(properties);
-    UpdateRequest updateRequest = new UpdateRequest();
-    updateRequest.setParam("shouldMirror", "true");
-    updateRequest.add("id", String.valueOf(System.currentTimeMillis()), "text", "test");
-    updateRequest.add("id", String.valueOf(System.currentTimeMillis() + 22), "text", "test2");
-    updateRequest.setParam("collection", COLLECTION);
-    MirroredSolrRequest mirroredSolrRequest = new MirroredSolrRequest(updateRequest);
-    System.out.println("About to send producer record");
-    producer.send(new ProducerRecord(TOPIC, mirroredSolrRequest), (metadata, exception) -> {
-      log.info("Producer finished sending metadata={}, exception={}", metadata, exception);
-    });
-    producer.flush();
+    assertEquals("results=" + results1, 7, results1.getResults().getNumFound());
+    assertEquals("results=" + results2, 7, results2.getResults().getNumFound());
 
-    System.out.println("Sent producer record");
+    addDocs(client, "third");
 
-    solrCluster2.getSolrClient().commit(COLLECTION);
-
-    QueryResponse results = null;
-    boolean foundUpdates = false;
+    foundUpdates = false;
     for (int i = 0; i < 50; i++) {
       solrCluster2.getSolrClient().commit(COLLECTION);
+      solrCluster1.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
       results = solrCluster2.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
-      if (results.getResults().getNumFound() == 2) {
+      if (results.getResults().getNumFound() == 7) {
         foundUpdates = true;
       } else {
         Thread.sleep(100);
       }
     }
 
+    System.out.println("Closed producer");
+
     assertTrue("results=" + results, foundUpdates);
     System.out.println("Rest: " + results);
 
-    producer.close();
+    results1 =solrCluster1.getSolrClient().query(COLLECTION, new SolrQuery("third"));
+    results2 = solrCluster2.getSolrClient().query(COLLECTION, new SolrQuery("third"));
+
+    assertEquals("results=" + results1, 7, results1.getResults().getNumFound());
+    assertEquals("results=" + results2, 7, results2.getResults().getNumFound());
+
+
+
   }
+
+  private void addDocs(CloudSolrClient client, String tag) throws SolrServerException, IOException {
+    String id1 = "1";
+    String id2 = "2";
+    String id3 = "3";
+    String id4 = "4";
+    String id5 = "5";
+    String id6 = "6";
+    String id7 = "7";
+
+    SolrInputDocument doc1 = new SolrInputDocument();
+    doc1.addField("id", id1);
+    doc1.addField("text", "some test one " + tag);
+
+    SolrInputDocument doc2 = new SolrInputDocument();
+    doc2.addField("id", id2);
+    doc2.addField("text", "some test two " + tag);
+
+    List<SolrInputDocument> docs = new ArrayList<SolrInputDocument>(2);
+    docs.add(doc1);
+    docs.add(doc2);
+
+    client.add(docs);
+
+    client.commit(COLLECTION);
+
+    SolrInputDocument doc3 = new SolrInputDocument();
+    doc3.addField("id", id3);
+    doc3.addField("text", "some test three " + tag);
+
+    SolrInputDocument doc4 = new SolrInputDocument();
+    doc4.addField("id", id4);
+    doc4.addField("text", "some test four " + tag);
+
+    SolrInputDocument doc5 = new SolrInputDocument();
+    doc5.addField("id", id5);
+    doc5.addField("text", "some test five " + tag);
+
+    SolrInputDocument doc6 = new SolrInputDocument();
+    doc6.addField("id", id6);
+    doc6.addField("text", "some test six " + tag);
+
+    SolrInputDocument doc7 = new SolrInputDocument();
+    doc7.addField("id", id7);
+    doc7.addField("text", "some test seven " + tag);
+
+    client.add(doc3);
+    client.add(doc4);
+    client.add(doc5);
+    client.add(doc6);
+    client.add(doc7);
+
+    client.commit(COLLECTION);
+  }
+
 }

@@ -49,7 +49,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
     kafkaConsumerProp.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, conf.getBootStrapServers());
 
-    kafkaConsumerProp.put(ConsumerConfig.GROUP_ID_CONFIG, "group_1"); // TODO
+    kafkaConsumerProp.put(ConsumerConfig.GROUP_ID_CONFIG, conf.getGroupId()); // TODO
 
     kafkaConsumerProp.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
