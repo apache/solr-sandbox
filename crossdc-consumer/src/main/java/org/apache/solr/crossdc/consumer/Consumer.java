@@ -40,6 +40,7 @@ public class Consumer {
     public static final String GROUP_ID = "groupId";
     public static final String PORT = "port";
     public static final String BOOTSTRAP_SERVERS = "bootstrapServers";
+    private static final String DEFAULT_GROUP_ID = "SolrCrossDCConsumer";
 
     private static boolean enabled = true;
 
@@ -104,13 +105,13 @@ public class Consumer {
         // boolean enableDataEncryption = Boolean.getBoolean("enableDataEncryption");
         String topicName = System.getProperty(TOPIC_NAME);
         String port = System.getProperty(PORT);
-        String groupId = System.getProperty(GROUP_ID);
+        String groupId = System.getProperty(GROUP_ID, "");
 
 
         try (SolrZkClient client = new SolrZkClient(zkConnectString, 15000)) {
 
             try {
-                if ((topicName == null || topicName.isBlank())
+                if ((topicName == null || topicName.isBlank()) || (groupId == null || groupId.isBlank())
                     || (bootstrapServers == null || bootstrapServers.isBlank()) || (port == null || port.isBlank()) && client
                     .exists(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH, KafkaCrossDcConf.CROSSDC_PROPERTIES), true)) {
                     byte[] data = client.getData(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH, KafkaCrossDcConf.CROSSDC_PROPERTIES), null, null, true);
@@ -139,6 +140,10 @@ public class Consumer {
         }
         if (topicName == null || topicName.isBlank()) {
             throw new IllegalArgumentException("topicName not specified for producer");
+        }
+
+        if (groupId.isBlank()) {
+            groupId = DEFAULT_GROUP_ID;
         }
 
         Consumer consumer = new Consumer();

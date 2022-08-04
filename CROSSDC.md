@@ -103,13 +103,19 @@ The Kafka topicName used to indicate which Kafka queue the Solr updates will be 
 1. Uncompress the distribution tar or zip file for the CrossDC Consumer into an appropriate install location on a node in the receiving data center.
 2. You can start the Consumer process via the included shell start script at bin/crossdc-consumer.
 3. You can configure the CrossDC Consumer via Java system properties pass in the CROSSDC_CONSUMER_OPTS environment variable, i.e. CROSSDC_CONSUMER_OPTS="-DbootstrapServers=127.0.0.1:2181 -DzkConnectString=127.0.0.1:2181 -DtopicName=crossdc" bin/crossdc-consumer
-4. The required configuration properties are:
-5. *bootstrapServers* - the list of servers used to connect to the Kafka cluster
-6.  https://kafka.apache.org/28/documentation.html#producerconfigs_bootstrap.servers
-7. *topicName* - the Kafka topicName used to indicate which Kafka queue the Solr updates will be pushed to.
-8. *zkConnectString* - the Zookeeper connection string used by Solr to connect to its Zookeeper cluster in the backup data center
+
+The required configuration properties are:
 
 
+   *bootstrapServers* - the list of servers used to connect to the Kafka cluster https://kafka.apache.org/28/documentation.html#producerconfigs_bootstrap.servers
+
+   *topicName* - the Kafka topicName used to indicate which Kafka queue the Solr updates will be pushed to.
+
+   *zkConnectString* - the Zookeeper connection string used by Solr to connect to its Zookeeper cluster in the backup data center
+
+Additional configuration properties:
+
+   *groupId* - the group id to give Kafka for the consumer, default to the empty string if not specified.
 
 #### Central Configuration Option
 
@@ -119,7 +125,7 @@ You can optionally manage the configuration centrally in Solr's Zookeeper cluste
 
 Both *bootstrapServers* and *topicName* properties can be put in this file, in which case you would not have to specify any Kafka configuration in the solrconfig.xml for the CrossDC Producer Solr plugin. Likewise, for the CrossDC Consumer application, you would only have to set *zkConnectString* for the local Solr cluster. Note that the two components will be looking in the Zookeeper clusters in their respective data center locations.
 
-
+You can override the properties file location and znode name in Zookeeper using the system property *zkCrossDcPropsPath=/path/to/props_file_name.properties*
 
 #### Making the Cross DC UpdateProcessor Optional in a Common solrconfig.xml
 
