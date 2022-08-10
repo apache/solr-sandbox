@@ -51,6 +51,8 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
     kafkaConsumerProp.put(ConsumerConfig.GROUP_ID_CONFIG, conf.getGroupId());
 
+    kafkaConsumerProp.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, conf.getMaxPollRecords());
+
     kafkaConsumerProp.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
     solrClient =

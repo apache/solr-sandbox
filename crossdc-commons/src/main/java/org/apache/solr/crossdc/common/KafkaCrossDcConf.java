@@ -26,13 +26,15 @@ public class KafkaCrossDcConf extends CrossDcConf {
     private int numOfRetries = 5;
     private final String solrZkConnectString;
 
+    private final int maxPollRecords;
 
-    public KafkaCrossDcConf(String bootstrapServers, String topicName, String groupId, boolean enableDataEncryption, String solrZkConnectString) {
+    public KafkaCrossDcConf(String bootstrapServers, String topicName, String groupId, int maxPollRecords, boolean enableDataEncryption, String solrZkConnectString) {
         this.bootstrapServers = bootstrapServers;
         this.topicName = topicName;
         this.enableDataEncryption = enableDataEncryption;
         this.solrZkConnectString = solrZkConnectString;
         this.groupId = groupId;
+        this.maxPollRecords = maxPollRecords;
     }
     public String getTopicName() {
         return topicName;
@@ -64,6 +66,10 @@ public class KafkaCrossDcConf extends CrossDcConf {
     public String getGroupId() {
         return groupId;
   }
+
+    public int getMaxPollRecords() {
+        return maxPollRecords;
+    }
 
     public String getBootStrapServers() {
         return bootstrapServers;

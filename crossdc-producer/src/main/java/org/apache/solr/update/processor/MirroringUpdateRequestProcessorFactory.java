@@ -153,7 +153,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         // load the request mirroring sink class and instantiate.
        // mirroringHandler = core.getResourceLoader().newInstance(RequestMirroringHandler.class.getName(), KafkaRequestMirroringHandler.class);
 
-        KafkaCrossDcConf conf = new KafkaCrossDcConf(bootstrapServers, topicName, "group1", false, null);
+        KafkaCrossDcConf conf = new KafkaCrossDcConf(bootstrapServers, topicName, "",  -1, false,  null);
         KafkaMirroringSink sink = new KafkaMirroringSink(conf);
 
         Closer closer = new Closer(sink);
@@ -214,7 +214,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         if (log.isTraceEnabled()) {
             log.trace("Create MirroringUpdateProcessor with mirroredParams={}", mirroredParams);
         }
-        log.info("Create MirroringUpdateProcessor");
+
         return new MirroringUpdateProcessor(next, doMirroring, mirroredParams,
                 DistribPhase.parseParam(req.getParams().get(DISTRIB_UPDATE_PARAM)), doMirroring ? mirroringHandler : null);
     }

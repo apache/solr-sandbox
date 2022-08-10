@@ -41,6 +41,8 @@ public class Consumer {
     public static final String PORT = "port";
     public static final String BOOTSTRAP_SERVERS = "bootstrapServers";
     private static final String DEFAULT_GROUP_ID = "SolrCrossDCConsumer";
+    private static final String MAX_POLL_RECORDS = "maxPollRecords";
+    public static final String DEFAULT_MAX_POLL_RECORDS = "500";
 
     private static boolean enabled = true;
 
@@ -54,8 +56,9 @@ public class Consumer {
     private Server server;
     CrossDcConsumer crossDcConsumer;
     private String topicName;
+    private int maxPollRecords;
 
-    public void start(String bootstrapServers, String zkConnectString, String topicName, String groupId, boolean enableDataEncryption, int port) {
+    public void start(String bootstrapServers, String zkConnectString, String topicName, String groupId, int maxPollRecords, boolean enableDataEncryption, int port) {
         if (bootstrapServers == null) {
             throw new IllegalArgumentException("bootstrapServers config was not passed at startup");
         }
@@ -66,14 +69,19 @@ public class Consumer {
             throw new IllegalArgumentException("topicName config was not passed at startup");
         }
 
+        if (maxPollRecords == -1) {
+            maxPollRecords = Integer.parseInt(DEFAULT_MAX_POLL_RECORDS);
+        }
+
         this.topicName = topicName;
+        this.maxPollRecords = maxPollRecords;
 
         //server = new Server();
         //ServerConnector connector = new ServerConnector(server);
         //connector.setPort(port);
         //server.setConnectors(new Connector[] {connector})
 
-        crossDcConsumer = getCrossDcConsumer(bootstrapServers, zkConnectString, topicName, groupId, enableDataEncryption);
+        crossDcConsumer = getCrossDcConsumer(bootstrapServers, zkConnectString, topicName, groupId, maxPollRecords, enableDataEncryption);
 
         // Start consumer thread
 
@@ -87,10 +95,10 @@ public class Consumer {
         Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
 
-    private CrossDcConsumer getCrossDcConsumer(String bootstrapServers, String zkConnectString, String topicName, String groupId,
+    private CrossDcConsumer getCrossDcConsumer(String bootstrapServers, String zkConnectString, String topicName, String groupId, int maxPollRecords,
         boolean enableDataEncryption) {
 
-        KafkaCrossDcConf conf = new KafkaCrossDcConf(bootstrapServers, topicName, groupId, enableDataEncryption, zkConnectString);
+        KafkaCrossDcConf conf = new KafkaCrossDcConf(bootstrapServers, topicName, groupId, maxPollRecords, enableDataEncryption, zkConnectString);
         return new KafkaCrossDcConsumer(conf);
     }
 
@@ -106,13 +114,14 @@ public class Consumer {
         String topicName = System.getProperty(TOPIC_NAME);
         String port = System.getProperty(PORT);
         String groupId = System.getProperty(GROUP_ID, "");
+        String maxPollRecords = System.getProperty("maxPollRecords");
 
 
         try (SolrZkClient client = new SolrZkClient(zkConnectString, 15000)) {
 
             try {
                 if ((topicName == null || topicName.isBlank()) || (groupId == null || groupId.isBlank())
-                    || (bootstrapServers == null || bootstrapServers.isBlank()) || (port == null || port.isBlank()) && client
+                    || (bootstrapServers == null || bootstrapServers.isBlank()) || (port == null || port.isBlank()) || (maxPollRecords == null || maxPollRecords.isBlank()) && client
                     .exists(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH, KafkaCrossDcConf.CROSSDC_PROPERTIES), true)) {
                     byte[] data = client.getData(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH, KafkaCrossDcConf.CROSSDC_PROPERTIES), null, null, true);
                     Properties props = new Properties();
@@ -122,6 +131,7 @@ public class Consumer {
                     bootstrapServers = getConfig(BOOTSTRAP_SERVERS, bootstrapServers, props);
                     port = getConfig(PORT, port, props);
                     groupId = getConfig(GROUP_ID, groupId, props);
+                    maxPollRecords = getConfig(MAX_POLL_RECORDS, maxPollRecords, props);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -146,8 +156,12 @@ public class Consumer {
             groupId = DEFAULT_GROUP_ID;
         }
 
+        if (maxPollRecords == null || maxPollRecords.isBlank()) {
+            maxPollRecords = DEFAULT_MAX_POLL_RECORDS;
+        }
+
         Consumer consumer = new Consumer();
-        consumer.start(bootstrapServers, zkConnectString, topicName, groupId,false, Integer.parseInt(port));
+        consumer.start(bootstrapServers, zkConnectString, topicName, groupId, Integer.parseInt(maxPollRecords), false, Integer.parseInt(port));
     }
 
     private static String getConfig(String configName, String configValue, Properties props) {
