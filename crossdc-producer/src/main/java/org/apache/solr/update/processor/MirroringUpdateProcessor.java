@@ -221,7 +221,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
   }
 
   public void processCommit(CommitUpdateCommand cmd) throws IOException {
-    log.info("process commit cmd={}", cmd);
+    log.debug("process commit cmd={}", cmd);
     if (next != null) next.processCommit(cmd);
   }
 

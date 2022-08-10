@@ -18,6 +18,7 @@ package org.apache.solr.crossdc.common;
 
 public abstract class CrossDcConf {
     public static final String CROSSDC_PROPERTIES = "/crossdc.properties";
+    public static final String ZK_CROSSDC_PROPS_PATH = "zkCrossDcPropsPath";
 
     public abstract String getClusterName();
 }

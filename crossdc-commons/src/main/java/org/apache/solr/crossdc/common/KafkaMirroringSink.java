@@ -56,7 +56,10 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
         try {
 
             producer.send(new ProducerRecord(conf.getTopicName(), request), (metadata, exception) -> {
-                log.info("Producer finished sending metadata={}, exception={}", metadata, exception);
+                if (log.isDebugEnabled()) {
+                    log.debug("Producer finished sending metadata={}, exception={}", metadata,
+                        exception);
+                }
             });
             producer.flush(); // TODO: remove
 

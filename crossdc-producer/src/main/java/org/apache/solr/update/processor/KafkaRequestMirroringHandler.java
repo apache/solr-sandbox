@@ -34,7 +34,7 @@ public class KafkaRequestMirroringHandler implements RequestMirroringHandler {
     final KafkaMirroringSink sink;
 
     public KafkaRequestMirroringHandler(KafkaMirroringSink sink) {
-        log.info("create KafkaRequestMirroringHandler");
+        log.debug("create KafkaRequestMirroringHandler");
         this.sink = sink;
     }
 

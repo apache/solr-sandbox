@@ -62,7 +62,10 @@ public class MirroredSolrRequestSerializer implements Serializer<MirroredSolrReq
         try {
             solrRequest = (Map) codec.unmarshal(bais);
 
-            log.info("Deserialized class={} solrRequest={}", solrRequest.getClass().getName(), solrRequest);
+            if (log.isTraceEnabled()) {
+                log.trace("Deserialized class={} solrRequest={}", solrRequest.getClass().getName(),
+                    solrRequest);
+            }
 
 
         } catch (Exception e) {
