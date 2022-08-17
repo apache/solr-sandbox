@@ -117,6 +117,14 @@ Additional configuration properties:
 
    *groupId* - the group id to give Kafka for the consumer, default to the empty string if not specified.
 
+The following additional configuration properties should either be specified for both the producer and the consumer or in the shared Zookeeper
+central config properties file. This is because the Consumer will use a Producer for retries.
+
+   *batchSizeBytes* - the maximum batch size in bytes for the queue
+   *bufferMemoryBytes* - the amount of memory in bytes allocated by the Producer in total for buffering 
+   *lingerMs* - the amount of time that the Producer will wait to add to a batch
+   *requestTimeout* - request timeout for the Producer - when used for the Consumers retry Producer, this should be less than the timeout that will cause the Consumer to be removed from the group for taking too long.
+
 #### Central Configuration Option
 
 You can optionally manage the configuration centrally in Solr's Zookeeper cluster by placing a properties file called *crossdc.properties* in the root Solr Zookeeper znode, eg, */solr/crossdc.properties*.  This allows you to update the configuration in a central location rather than at each solrconfig.xml in each Solr node and also automatically deals with new Solr nodes or Consumers to come up without requiring additional configuration.

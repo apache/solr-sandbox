@@ -55,6 +55,11 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
     kafkaConsumerProp.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
+    kafkaConsumerProp.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+
+    kafkaConsumerProp.put(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, conf.getFetchMinBytes());
+    kafkaConsumerProp.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, conf.getFetchMaxWaitMS());
+
     solrClient =
         new CloudSolrClient.Builder(Collections.singletonList(conf.getSolrZkConnectString()),
             Optional.empty()).build();

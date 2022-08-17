@@ -18,6 +18,7 @@ package org.apache.solr.crossdc.common;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
@@ -61,7 +62,6 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
                         exception);
                 }
             });
-            producer.flush(); // TODO: remove
 
             lastSuccessfulEnqueueNanos = System.nanoTime();
             // Record time since last successful enqueue as 0
@@ -98,9 +98,10 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
 
         props.put("acks", "all");
         props.put("retries", 3);
-        props.put("batch.size", 15);
-        props.put("buffer.memory", 33554432);
-        props.put("linger.ms", 1);
+        props.put(ProducerConfig.BATCH_SIZE_CONFIG, conf.getBatchSizeBytes());
+        props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, conf.getBufferMemoryBytes());
+        props.put(ProducerConfig.LINGER_MS_CONFIG, conf.getLingerMs());
+        props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, conf.getRequestTimeout()); // should be less than time that causes consumer to be kicked out
 
         props.put("key.serializer", StringSerializer.class.getName());
         props.put("value.serializer", MirroredSolrRequestSerializer.class.getName());
