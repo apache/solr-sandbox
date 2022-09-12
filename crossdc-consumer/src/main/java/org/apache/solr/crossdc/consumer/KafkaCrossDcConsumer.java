@@ -8,6 +8,7 @@ import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
+import org.apache.solr.client.solrj.request.UpdateRequest;
 import org.apache.solr.common.util.IOUtils;
 import org.apache.solr.crossdc.common.*;
 import org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor;
@@ -33,7 +34,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
   private final KafkaConsumer<String, MirroredSolrRequest> consumer;
   private final KafkaMirroringSink kafkaMirroringSink;
 
-  private final int KAFKA_CONSUMER_POLL_TIMEOUT_MS = 5000;
+  private final static int KAFKA_CONSUMER_POLL_TIMEOUT_MS = 5000;
   private final String topicName;
   SolrMessageProcessor messageProcessor;
 
@@ -43,25 +44,30 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
    * @param conf The Kafka consumer configuration
    */
   public KafkaCrossDcConsumer(KafkaCrossDcConf conf) {
-    this.topicName = conf.getTopicName();
+    this.topicName = conf.get(KafkaCrossDcConf.TOPIC_NAME);
 
-    final Properties kafkaConsumerProp = new Properties();
+    final Properties kafkaConsumerProps = new Properties();
 
-    kafkaConsumerProp.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, conf.getBootStrapServers());
+    kafkaConsumerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, conf.get(KafkaCrossDcConf.BOOTSTRAP_SERVERS));
 
-    kafkaConsumerProp.put(ConsumerConfig.GROUP_ID_CONFIG, conf.getGroupId());
+    kafkaConsumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, conf.get(KafkaCrossDcConf.GROUP_ID));
 
-    kafkaConsumerProp.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, conf.getMaxPollRecords());
+    kafkaConsumerProps.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, conf.getInt(KafkaCrossDcConf.MAX_POLL_RECORDS));
 
-    kafkaConsumerProp.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+    kafkaConsumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
-    kafkaConsumerProp.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+    kafkaConsumerProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
 
-    kafkaConsumerProp.put(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, conf.getFetchMinBytes());
-    kafkaConsumerProp.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, conf.getFetchMaxWaitMS());
+    kafkaConsumerProps.put(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, conf.getInt(KafkaCrossDcConf.FETCH_MIN_BYTES));
+    kafkaConsumerProps.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, conf.getInt(KafkaCrossDcConf.FETCH_MAX_WAIT_MS));
+
+    kafkaConsumerProps.put(ConsumerConfig.FETCH_MAX_BYTES_CONFIG, conf.getInt(KafkaCrossDcConf.FETCH_MAX_BYTES));
+    kafkaConsumerProps.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, conf.getInt(KafkaCrossDcConf.MAX_PARTITION_FETCH_BYTES));
+
+    kafkaConsumerProps.putAll(conf.getAdditionalProperties());
 
     solrClient =
-        new CloudSolrClient.Builder(Collections.singletonList(conf.getSolrZkConnectString()),
+        new CloudSolrClient.Builder(Collections.singletonList(conf.get(KafkaCrossDcConf.ZK_CONNECT_STRING)),
             Optional.empty()).build();
 
     messageProcessor = new SolrMessageProcessor(solrClient, new ResubmitBackoffPolicy() {
@@ -70,8 +76,8 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
       }
     });
 
-    log.info("Creating Kafka consumer with configuration {}", kafkaConsumerProp);
-    consumer = createConsumer(kafkaConsumerProp);
+    log.info("Creating Kafka consumer with configuration {}", kafkaConsumerProps);
+    consumer = createConsumer(kafkaConsumerProps);
 
     // Create producer for resubmitting failed requests
     log.info("Creating Kafka resubmit producer");

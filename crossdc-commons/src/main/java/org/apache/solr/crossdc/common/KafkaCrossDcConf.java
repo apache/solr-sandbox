@@ -16,131 +16,182 @@
  */
 package org.apache.solr.crossdc.common;
 
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
+
+import java.util.*;
 
 public class KafkaCrossDcConf extends CrossDcConf {
 
-    public static final String DEFAULT_BATCH_SIZE_BYTES = "512000";
-    public static final String DEFAULT_BUFFER_MEMORY_BYTES = "268435456";
-    public static final String DEFAULT_LINGER_MS = "30";
-    public static final String DEFAULT_REQUEST_TIMEOUT = "60000";
+  public static final String DEFAULT_BATCH_SIZE_BYTES = "2097152";
+  public static final String DEFAULT_BUFFER_MEMORY_BYTES = "536870912";
+  public static final String DEFAULT_LINGER_MS = "30";
+  public static final String DEFAULT_REQUEST_TIMEOUT = "60000";
+  public static final String DEFAULT_MAX_REQUEST_SIZE = "5242880";
+  public static final String DEFAULT_ENABLE_DATA_COMPRESSION = "none";
+  public static final String DEFAULT_SLOW_SEND_THRESHOLD= "1000";
+  public static final String DEFAULT_NUM_RETRIES = null; // by default, we control retries with DELIVERY_TIMEOUT_MS_DOC
+  private static final String DEFAULT_RETRY_BACKOFF_MS = "500";
 
-    private final String topicName;
+  private static final String DEFAULT_DELIVERY_TIMEOUT_MS = "120000";
 
-    private final String groupId;
-    private final boolean enableDataEncryption;
-    private final String bootstrapServers;
-    private long slowSubmitThresholdInMillis = 1000;
-    private int numOfRetries = 5;
-    private final String solrZkConnectString;
+  public static final String DEFAULT_MAX_POLL_RECORDS = "500"; // same default as Kafka
 
-    private final int maxPollRecords;
+  private static final String DEFAULT_FETCH_MIN_BYTES = "512000";
+  private static final String DEFAULT_FETCH_MAX_WAIT_MS = "1000"; // Kafka default is 500
 
-    private final int batchSizeBytes;
-    private final int bufferMemoryBytes;
-    private final int lingerMs;
-    private final int requestTimeout;
+  public static final String DEFAULT_FETCH_MAX_BYTES = "100663296";
 
-  private final int fetchMinBytes;
+  public static final String DEFAULT_MAX_PARTITION_FETCH_BYTES = "33554432";
 
-  private final int fetchMaxWaitMS;
+  public static final String DEFAULT_PORT = "8090";
 
-  public KafkaCrossDcConf(String bootstrapServers, String topicName, String groupId, int maxPollRecords, int batchSizeBytes, int bufferMemoryBytes, int lingerMs, int requestTimeout,
-      int fetchMinBytes, int fetchMaxWaitMS, boolean enableDataEncryption, String solrZkConnectString) {
-        this.bootstrapServers = bootstrapServers;
-        this.topicName = topicName;
-        this.enableDataEncryption = enableDataEncryption;
-        this.solrZkConnectString = solrZkConnectString;
-        this.groupId = groupId;
-        this.maxPollRecords = maxPollRecords;
-        this.batchSizeBytes = batchSizeBytes;
-        this.bufferMemoryBytes = bufferMemoryBytes;
-        this.lingerMs = lingerMs;
-        this.requestTimeout = requestTimeout;
-        this.fetchMinBytes = fetchMinBytes;
-        this.fetchMaxWaitMS = fetchMaxWaitMS;
+  private static final String DEFAULT_GROUP_ID = "SolrCrossDCConsumer";
+
+
+  public static final String TOPIC_NAME = "topicName";
+
+  public static final String BOOTSTRAP_SERVERS = "bootstrapServers";
+
+  public static final String BATCH_SIZE_BYTES = "batchSizeBytes";
+
+  public static final String BUFFER_MEMORY_BYTES = "bufferMemoryBytes";
+
+  public static final String LINGER_MS = "lingerMs";
+
+  public static final String REQUEST_TIMEOUT_MS = "requestTimeoutMS";
+
+  public static final String MAX_REQUEST_SIZE_BYTES = "maxRequestSizeBytes";
+
+  public static final String ENABLE_DATA_COMPRESSION = "enableDataCompression";
+
+  public static final String SLOW_SUBMIT_THRESHOLD_MS = "slowSubmitThresholdMs";
+
+  public static final String NUM_RETRIES = "numRetries";
+
+  public static final String RETRY_BACKOFF_MS = "retryBackoffMs";
+
+  public static final String DELIVERY_TIMEOUT_MS = "retryBackoffMs";
+
+  public static final String FETCH_MIN_BYTES = "fetchMinBytes";
+
+  public static final String FETCH_MAX_WAIT_MS = "fetchMaxWaitMS";
+
+  public static final String MAX_POLL_RECORDS = "maxPollRecords";
+
+  public static final String FETCH_MAX_BYTES = "fetchMaxBytes";
+
+  public static final String MAX_PARTITION_FETCH_BYTES = "maxPartitionFetchBytes";
+
+  public static final String ZK_CONNECT_STRING = "zkConnectString";
+
+
+
+
+  public static final List<ConfigProperty> CONFIG_PROPERTIES;
+  private static final HashMap<String, ConfigProperty> CONFIG_PROPERTIES_MAP;
+
+  public static final String PORT = "port";
+
+  public static final String GROUP_ID = "groupId";
+
+
+
+  static {
+    CONFIG_PROPERTIES =
+        List.of(new ConfigProperty(TOPIC_NAME), new ConfigProperty(BOOTSTRAP_SERVERS),
+            new ConfigProperty(BATCH_SIZE_BYTES, DEFAULT_BATCH_SIZE_BYTES),
+            new ConfigProperty(BUFFER_MEMORY_BYTES, DEFAULT_BUFFER_MEMORY_BYTES),
+            new ConfigProperty(LINGER_MS, DEFAULT_LINGER_MS),
+            new ConfigProperty(REQUEST_TIMEOUT_MS, DEFAULT_REQUEST_TIMEOUT),
+            new ConfigProperty(MAX_REQUEST_SIZE_BYTES, DEFAULT_MAX_REQUEST_SIZE),
+            new ConfigProperty(ENABLE_DATA_COMPRESSION, DEFAULT_ENABLE_DATA_COMPRESSION),
+            new ConfigProperty(SLOW_SUBMIT_THRESHOLD_MS, DEFAULT_SLOW_SEND_THRESHOLD),
+            new ConfigProperty(NUM_RETRIES, DEFAULT_NUM_RETRIES),
+            new ConfigProperty(RETRY_BACKOFF_MS, DEFAULT_RETRY_BACKOFF_MS),
+            new ConfigProperty(DELIVERY_TIMEOUT_MS, DEFAULT_DELIVERY_TIMEOUT_MS),
+
+            // Consumer only zkConnectString
+            new ConfigProperty(ZK_CONNECT_STRING, null),
+            new ConfigProperty(FETCH_MIN_BYTES, DEFAULT_FETCH_MIN_BYTES),
+            new ConfigProperty(FETCH_MAX_BYTES, DEFAULT_FETCH_MAX_BYTES),
+            new ConfigProperty(FETCH_MAX_WAIT_MS, DEFAULT_FETCH_MAX_WAIT_MS),
+
+            new ConfigProperty(MAX_PARTITION_FETCH_BYTES, DEFAULT_MAX_PARTITION_FETCH_BYTES),
+            new ConfigProperty(MAX_POLL_RECORDS, DEFAULT_MAX_POLL_RECORDS),
+            new ConfigProperty(PORT, DEFAULT_PORT),
+            new ConfigProperty(GROUP_ID, DEFAULT_GROUP_ID)
+            );
+
+
+
+    CONFIG_PROPERTIES_MAP = new HashMap<String, ConfigProperty>(CONFIG_PROPERTIES.size());
+    for (ConfigProperty prop : CONFIG_PROPERTIES) {
+      CONFIG_PROPERTIES_MAP.put(prop.getKey(), prop);
     }
-    public String getTopicName() {
-        return topicName;
-    }
-
-    public boolean getEnableDataEncryption() { return enableDataEncryption; }
-
-    public long getSlowSubmitThresholdInMillis() {
-        return slowSubmitThresholdInMillis;
-    }
-
-    public void setSlowSubmitThresholdInMillis(long slowSubmitThresholdInMillis) {
-        this.slowSubmitThresholdInMillis = slowSubmitThresholdInMillis;
-    }
-
-    public int getNumOfRetries() {
-        return numOfRetries;
-    }
-
-    public String getSolrZkConnectString() {
-        return solrZkConnectString;
-    }
-
-    @Override
-    public String getClusterName() {
-        return null;
-    }
-
-    public String getGroupId() {
-        return groupId;
   }
 
-    public int getMaxPollRecords() {
-        return maxPollRecords;
-    }
+  private final Map<String, String> properties;
 
-    public String getBootStrapServers() {
-        return bootstrapServers;
-    }
+  public KafkaCrossDcConf(Map<String, String> properties) {
+    List<String> nullValueKeys = new ArrayList<String>();
+    properties.forEach((k, v) -> {
+      if (v == null) {
+        nullValueKeys.add(k);
+      }
+    });
+    nullValueKeys.forEach(properties::remove);
+    this.properties = properties;
+  }
 
-    public int getBatchSizeBytes() {
-        return batchSizeBytes;
-    }
+  public String get(String property) {
+    return CONFIG_PROPERTIES_MAP.get(property).getValue(properties);
+  }
 
-    public int getBufferMemoryBytes() {
-        return bufferMemoryBytes;
+  public Integer getInt(String property) {
+    ConfigProperty prop = CONFIG_PROPERTIES_MAP.get(property);
+    if (prop == null) {
+      throw new IllegalArgumentException("Property not found key=" + property);
     }
+    return prop.getValueAsInt(properties);
+  }
 
-    public int getLingerMs() {
-        return lingerMs;
+  public Boolean getBool(String property) {
+    ConfigProperty prop = CONFIG_PROPERTIES_MAP.get(property);
+    if (prop == null) {
+      throw new IllegalArgumentException("Property not found key=" + property);
     }
+    return prop.getValueAsBoolean(properties);
+  }
+  
+  public Properties getAdditionalProperties() {
+    Properties additional = new Properties();
+    additional.putAll(properties);
+    for (ConfigProperty configProperty : CONFIG_PROPERTIES) {
+      additional.remove(configProperty.getKey());
+    }
+    Map<String, Object> integerProperties = new HashMap<>();
+    additional.forEach((k, v) -> {
+      try {
+        int intVal = Integer.parseInt((String) v);
+        integerProperties.put(k.toString(), intVal);
+      } catch (NumberFormatException ignored) {
 
-    public int getRequestTimeout() {
-        return requestTimeout;
-    }
+      }
+    });
+    additional.putAll(integerProperties);
+    return additional;
+  }
 
-    public int getFetchMinBytes() {
-      return fetchMinBytes;
+  @Override public String toString() {
+    StringBuilder sb = new StringBuilder(128);
+    for (ConfigProperty configProperty : CONFIG_PROPERTIES) {
+      sb.append(configProperty.getKey()).append("=")
+          .append(properties.get(configProperty.getKey())).append(",");
     }
+    sb.setLength(sb.length() - 1);
 
-    public int getFetchMaxWaitMS() {
-      return fetchMaxWaitMS;
-    }
+    return "KafkaCrossDcConf{" + sb.toString() + "}";
+  }
 
-    @Override
-    public String toString() {
-        return String.format("KafkaCrossDcConf{" +
-                "topicName='%s', " +
-                "groupId='%s', " +
-                "enableDataEncryption='%b', " +
-                "bootstrapServers='%s', " +
-                "slowSubmitThresholdInMillis='%d', " +
-                "numOfRetries='%d', " +
-                "batchSizeBytes='%d', " +
-                "bufferMemoryBytes='%d', " +
-                "lingerMs='%d', " +
-                "requestTimeout='%d', " +
-                "fetchMinBytes='%d', " +
-                "fetchMaxWaitMS='%d', " +
-                "solrZkConnectString='%s'}",
-                topicName, groupId, enableDataEncryption, bootstrapServers,
-                slowSubmitThresholdInMillis, numOfRetries, batchSizeBytes,
-                bufferMemoryBytes, lingerMs, requestTimeout, fetchMinBytes, fetchMaxWaitMS, solrZkConnectString);
-    }
 }
