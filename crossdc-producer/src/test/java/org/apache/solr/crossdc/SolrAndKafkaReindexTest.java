@@ -140,7 +140,7 @@ import java.util.*;
 
     QueryResponse results = null;
     boolean foundUpdates = false;
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 1000; i++) {
       solrCluster2.getSolrClient().commit(COLLECTION);
       solrCluster1.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
       results = solrCluster2.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
@@ -162,7 +162,7 @@ import java.util.*;
     addDocs(client, "second");
 
     foundUpdates = false;
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 1000; i++) {
       solrCluster2.getSolrClient().commit(COLLECTION);
       solrCluster1.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
       results = solrCluster2.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
