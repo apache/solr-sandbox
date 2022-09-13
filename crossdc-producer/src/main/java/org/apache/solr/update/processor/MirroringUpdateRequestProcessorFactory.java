@@ -23,6 +23,7 @@ import org.apache.solr.common.util.NamedList;
 import org.apache.solr.core.CloseHook;
 import org.apache.solr.core.CoreDescriptor;
 import org.apache.solr.core.SolrCore;
+import org.apache.solr.crossdc.common.ConfigProperty;
 import org.apache.solr.crossdc.common.CrossDcConf;
 import org.apache.solr.crossdc.common.KafkaCrossDcConf;
 import org.apache.solr.crossdc.common.KafkaMirroringSink;
@@ -30,13 +31,14 @@ import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.response.SolrQueryResponse;
 import org.apache.solr.util.plugin.SolrCoreAware;
 import org.apache.zookeeper.KeeperException;
+import org.checkerframework.checker.units.qual.C;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
-import java.util.Properties;
+import java.util.*;
 
 import static org.apache.solr.update.processor.DistributedUpdateProcessor.*;
 import static org.apache.solr.update.processor.DistributingUpdateProcessorFactory.DISTRIB_UPDATE_PARAM;
@@ -68,15 +70,21 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
 
     /** This is instantiated in inform(SolrCore) and then shared by all processor instances - visible for testing */
     volatile KafkaRequestMirroringHandler mirroringHandler;
-    private String topicName;
-    private String bootstrapServers;
-
-    private Integer batchSizeBytes;
-    private Integer bufferMemoryBytes;
-    private Integer lingerMs;
-    private Integer requestTimeout;
+//    private String topicName;
+//    private String bootstrapServers;
+//
+//    private Integer batchSizeBytes;
+//    private Integer bufferMemoryBytes;
+//    private Integer lingerMs;
+//    private Integer requestTimeout;
+//
+//    private Integer maxRequestSize;
+//
+//    private String enableDataCompression;
 
     private boolean enabled = true;
+
+    private final Map<String,String> properties = new HashMap<>();
 
     @Override
     public void init(final NamedList args) {
@@ -87,13 +95,9 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
             this.enabled = false;
         }
 
-        topicName = args._getStr("topicName", null);
-        bootstrapServers = args._getStr("bootstrapServers", null);
-
-        batchSizeBytes = (Integer) args.get("batchSizeBytes");
-        bufferMemoryBytes= (Integer) args.get("bufferMemoryBytes");;
-        lingerMs = (Integer) args.get("lingerMs");;
-        requestTimeout = (Integer) args.get("requestTimeout");;
+        for (ConfigProperty configKey : KafkaCrossDcConf.CONFIG_PROPERTIES) {
+            properties.put(configKey.getKey(), args._getStr(configKey.getKey(), null));
+        }
     }
 
     private class Closer {
@@ -107,7 +111,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
             try {
                 this.sink.close();
             } catch (IOException e) {
-                log.error("Exception closing sink", sink);
+                log.error("Exception closing sink", e);
             }
         }
 
@@ -120,40 +124,30 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         if (!enabled) {
             return;
         }
-
+        Properties zkProps = null;
         try {
-            if (((topicName == null || topicName.isBlank()) || (bootstrapServers == null || bootstrapServers.isBlank()
-                || batchSizeBytes == null || bufferMemoryBytes == null
-                || lingerMs == null || requestTimeout == null)) && core.getCoreContainer().getZkController()
+            if (core.getCoreContainer().getZkController()
                 .getZkClient().exists(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH, KafkaCrossDcConf.CROSSDC_PROPERTIES), true)) {
                 byte[] data = core.getCoreContainer().getZkController().getZkClient().getData(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH, KafkaCrossDcConf.CROSSDC_PROPERTIES), null, null, true);
 
                 if (data == null) {
-                    log.error("crossdc.properties file in Zookeeper has no data");
-                    throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "crossdc.properties file in Zookeeper has no data");
+                    log.error(KafkaCrossDcConf.CROSSDC_PROPERTIES + " file in Zookeeper has no data");
+                    throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, KafkaCrossDcConf.CROSSDC_PROPERTIES + " file in Zookeeper has no data");
                 }
 
-                Properties props = new Properties();
-                props.load(new ByteArrayInputStream(data));
+                zkProps = new Properties();
+                zkProps.load(new ByteArrayInputStream(data));
+                Properties zkPropsUnproccessed = new Properties(zkProps);
 
-                if (topicName == null || topicName.isBlank()) {
-                    topicName = props.getProperty("topicName");
+                for (ConfigProperty configKey : KafkaCrossDcConf.CONFIG_PROPERTIES) {
+                    if (properties.get(configKey.getKey()) == null || properties.get(configKey.getKey()).isBlank()) {
+                        properties.put(configKey.getKey(), (String) zkProps.get(configKey.getKey()));
+                        zkPropsUnproccessed.remove(configKey.getKey());
+                    }
                 }
-                if (bootstrapServers == null || bootstrapServers.isBlank()) {
-                    bootstrapServers = props.getProperty("bootstrapServers");
-                }
-                if (batchSizeBytes == null) {
-                    batchSizeBytes = getIntegerPropValue("batchSizeBytes", props);
-                }
-                if (bufferMemoryBytes == null) {
-                    bufferMemoryBytes = getIntegerPropValue("bufferMemoryBytes", props);
-                }
-                if (lingerMs == null) {
-                    lingerMs = getIntegerPropValue("lingerMs", props);
-                }
-                if (requestTimeout == null) {
-                    requestTimeout = getIntegerPropValue("requestTimeout", props);
-                }
+                zkPropsUnproccessed.forEach((k, v) -> {
+                    properties.put((String) k, (String) v);
+                });
              }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -164,35 +158,22 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
             throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "Exception looking for CrossDC configuration in Zookeeper", e);
         }
 
-        if (bootstrapServers == null || bootstrapServers.isBlank()) {
-           log.error("boostrapServers not specified for producer in CrossDC configuration");
+        if (properties.get(BOOTSTRAP_SERVERS) == null || properties.get(BOOTSTRAP_SERVERS).isBlank()) {
+           log.error("boostrapServers not specified for producer in CrossDC configuration props=" + properties + " zkProps=" + zkProps);
            throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "boostrapServers not specified for producer");
        }
         
-        if (topicName == null || topicName.isBlank()) {
-            log.error("topicName not specified for producer in CrossDC configuration");
+        if (properties.get(TOPIC_NAME) == null || properties.get(TOPIC_NAME).isBlank()) {
+            log.error("topicName not specified for producer in CrossDC configuration props=" + properties + " zkProps=" + zkProps);
             throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "topicName not specified for producer");
         }
 
-        if (batchSizeBytes == null) {
-            batchSizeBytes = Integer.valueOf(DEFAULT_BATCH_SIZE_BYTES);
-        }
-        if (bufferMemoryBytes == null) {
-            bufferMemoryBytes = Integer.valueOf(DEFAULT_BUFFER_MEMORY_BYTES);
-        }
-        if (lingerMs == null) {
-            lingerMs = Integer.valueOf(DEFAULT_LINGER_MS);
-        }
-        if (requestTimeout == null) {
-            requestTimeout = Integer.valueOf(DEFAULT_REQUEST_TIMEOUT);
-        }
-
-        log.info("bootstrapServers={} topicName={}", bootstrapServers, topicName);
+        log.info("bootstrapServers={} topicName={}", properties.get(BOOTSTRAP_SERVERS) , properties.get(TOPIC_NAME));
 
         // load the request mirroring sink class and instantiate.
        // mirroringHandler = core.getResourceLoader().newInstance(RequestMirroringHandler.class.getName(), KafkaRequestMirroringHandler.class);
 
-        KafkaCrossDcConf conf = new KafkaCrossDcConf(bootstrapServers, topicName, "",  -1, batchSizeBytes, bufferMemoryBytes, lingerMs, requestTimeout,-1, -1,false,  null);
+        KafkaCrossDcConf conf = new KafkaCrossDcConf(properties);
         KafkaMirroringSink sink = new KafkaMirroringSink(conf);
 
         Closer closer = new Closer(sink);
