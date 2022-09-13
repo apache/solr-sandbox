@@ -16,8 +16,12 @@
  */
 package org.apache.solr.crossdc.common;
 
+import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.config.ConfigDef;
+import org.apache.kafka.common.config.SslConfigs;
+import org.apache.kafka.common.config.internals.BrokerSecurityConfigs;
 
 import java.util.*;
 
@@ -120,7 +124,34 @@ public class KafkaCrossDcConf extends CrossDcConf {
             new ConfigProperty(MAX_PARTITION_FETCH_BYTES, DEFAULT_MAX_PARTITION_FETCH_BYTES),
             new ConfigProperty(MAX_POLL_RECORDS, DEFAULT_MAX_POLL_RECORDS),
             new ConfigProperty(PORT, DEFAULT_PORT),
-            new ConfigProperty(GROUP_ID, DEFAULT_GROUP_ID)
+            new ConfigProperty(GROUP_ID, DEFAULT_GROUP_ID),
+            
+            // SSL
+            new ConfigProperty(SslConfigs.SSL_PROTOCOL_CONFIG),
+            new ConfigProperty(SslConfigs.SSL_PROVIDER_CONFIG),
+            new ConfigProperty(SslConfigs.SSL_CIPHER_SUITES_CONFIG),
+            new ConfigProperty(SslConfigs.SSL_ENABLED_PROTOCOLS_CONFIG),
+            new ConfigProperty(SslConfigs.SSL_KEYSTORE_TYPE_CONFIG),
+            new ConfigProperty(SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG),
+            new ConfigProperty(SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG),
+            new ConfigProperty(SslConfigs.SSL_KEY_PASSWORD_CONFIG),
+            new ConfigProperty(SslConfigs.SSL_KEYSTORE_KEY_CONFIG),
+            new ConfigProperty(SslConfigs.SSL_KEYSTORE_CERTIFICATE_CHAIN_CONFIG),
+            new ConfigProperty(SslConfigs.SSL_TRUSTSTORE_CERTIFICATES_CONFIG),
+            new ConfigProperty(SslConfigs.SSL_TRUSTSTORE_TYPE_CONFIG),
+            new ConfigProperty(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG),
+            new ConfigProperty(SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG),
+            new ConfigProperty(SslConfigs.SSL_KEYMANAGER_ALGORITHM_CONFIG),
+            new ConfigProperty(SslConfigs.SSL_TRUSTMANAGER_ALGORITHM_CONFIG),
+            new ConfigProperty(SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG),
+            new ConfigProperty(SslConfigs.SSL_SECURE_RANDOM_IMPLEMENTATION_CONFIG),
+
+            new ConfigProperty(BrokerSecurityConfigs.SSL_CLIENT_AUTH_CONFIG),
+
+
+            // Admin Client Security
+            new ConfigProperty(AdminClientConfig.SECURITY_PROTOCOL_CONFIG),
+            new ConfigProperty(AdminClientConfig.SECURITY_PROVIDERS_CONFIG)
             );
 
 
