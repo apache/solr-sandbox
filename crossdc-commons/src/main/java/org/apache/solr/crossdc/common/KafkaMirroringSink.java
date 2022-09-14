@@ -138,6 +138,7 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
 
     @Override public void close() throws IOException {
         if (producer != null) {
+            producer.flush();
             producer.close();
         }
     }
