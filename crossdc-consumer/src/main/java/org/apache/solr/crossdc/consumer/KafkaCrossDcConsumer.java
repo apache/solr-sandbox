@@ -8,7 +8,6 @@ import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
-import org.apache.solr.client.solrj.request.UpdateRequest;
 import org.apache.solr.common.util.IOUtils;
 import org.apache.solr.crossdc.common.*;
 import org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor;
@@ -36,9 +35,9 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
   private final static int KAFKA_CONSUMER_POLL_TIMEOUT_MS = 5000;
   private final String topicName;
-  SolrMessageProcessor messageProcessor;
+  private final SolrMessageProcessor messageProcessor;
 
-  CloudSolrClient solrClient;
+  private final CloudSolrClient solrClient;
 
   /**
    * @param conf The Kafka consumer configuration
@@ -64,17 +63,15 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
     kafkaConsumerProps.put(ConsumerConfig.FETCH_MAX_BYTES_CONFIG, conf.getInt(KafkaCrossDcConf.FETCH_MAX_BYTES));
     kafkaConsumerProps.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, conf.getInt(KafkaCrossDcConf.MAX_PARTITION_FETCH_BYTES));
 
+    KafkaCrossDcConf.addSecurityProps(conf, kafkaConsumerProps);
+
     kafkaConsumerProps.putAll(conf.getAdditionalProperties());
 
     solrClient =
         new CloudSolrClient.Builder(Collections.singletonList(conf.get(KafkaCrossDcConf.ZK_CONNECT_STRING)),
             Optional.empty()).build();
 
-    messageProcessor = new SolrMessageProcessor(solrClient, new ResubmitBackoffPolicy() {
-      @Override public long getBackoffTimeMs(MirroredSolrRequest resubmitRequest) {
-        return 0;
-      }
-    });
+    messageProcessor = new SolrMessageProcessor(solrClient, resubmitRequest -> 0L);
 
     log.info("Creating Kafka consumer with configuration {}", kafkaConsumerProps);
     consumer = createConsumer(kafkaConsumerProps);
@@ -86,10 +83,9 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
   }
 
-  private KafkaConsumer<String, MirroredSolrRequest> createConsumer(Properties properties) {
-    KafkaConsumer kafkaConsumer = new KafkaConsumer(properties, new StringDeserializer(),
+  public static KafkaConsumer<String, MirroredSolrRequest> createConsumer(Properties properties) {
+    return new KafkaConsumer<>(properties, new StringDeserializer(),
         new MirroredSolrRequestSerializer());
-    return kafkaConsumer;
   }
 
   /**
@@ -145,7 +141,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
               log.trace("Fetched record from topic={} partition={} key={} value={}", record.topic(),
                   record.partition(), record.key(), record.value());
             }
-            IQueueHandler.Result result = messageProcessor.handleItem(record.value());
+            IQueueHandler.Result<MirroredSolrRequest> result = messageProcessor.handleItem(record.value());
             switch (result.status()) {
               case FAILED_RESUBMIT:
                 // currently, we use a strategy taken from an earlier working implementation
@@ -200,8 +196,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
         } catch (Exception e) {
           // If there is any exception returned by handleItem, then reset the offset.
 
-          if (e instanceof ClassCastException || e instanceof ClassNotFoundException
-              || e instanceof SerializationException) { // TODO: optional
+          if (e instanceof ClassCastException || e instanceof SerializationException) { // TODO: optional
             log.error("Non retryable error", e);
             break;
           }
@@ -215,8 +210,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
       return false;
     } catch (Exception e) {
 
-      if (e instanceof ClassCastException || e instanceof ClassNotFoundException
-          || e instanceof SerializationException) { // TODO: optional
+      if (e instanceof ClassCastException || e instanceof SerializationException) { // TODO: optional
         log.error("Non retryable error", e);
         return false;
       }
@@ -262,7 +256,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
   /**
    * Shutdown the Kafka consumer by calling wakeup.
    */
-  public void shutdown() {
+  public final void shutdown() {
     log.info("Shutdown called on KafkaCrossDcConsumer");
     try {
       solrClient.close();

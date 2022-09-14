@@ -16,10 +16,8 @@
  */
 package org.apache.solr.crossdc.common;
 
+import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.admin.AdminClientConfig;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.SslConfigs;
 import org.apache.kafka.common.config.internals.BrokerSecurityConfigs;
 
@@ -90,10 +88,10 @@ public class KafkaCrossDcConf extends CrossDcConf {
   public static final String ZK_CONNECT_STRING = "zkConnectString";
 
 
-
-
   public static final List<ConfigProperty> CONFIG_PROPERTIES;
-  private static final HashMap<String, ConfigProperty> CONFIG_PROPERTIES_MAP;
+  private static final Map<String, ConfigProperty> CONFIG_PROPERTIES_MAP;
+
+  public static final List<ConfigProperty> SECURITY_CONFIG_PROPERTIES;
 
   public static final String PORT = "port";
 
@@ -102,7 +100,7 @@ public class KafkaCrossDcConf extends CrossDcConf {
 
 
   static {
-    CONFIG_PROPERTIES =
+    List<ConfigProperty> configProperties = new ArrayList<>(
         List.of(new ConfigProperty(TOPIC_NAME), new ConfigProperty(BOOTSTRAP_SERVERS),
             new ConfigProperty(BATCH_SIZE_BYTES, DEFAULT_BATCH_SIZE_BYTES),
             new ConfigProperty(BUFFER_MEMORY_BYTES, DEFAULT_BUFFER_MEMORY_BYTES),
@@ -124,9 +122,11 @@ public class KafkaCrossDcConf extends CrossDcConf {
             new ConfigProperty(MAX_PARTITION_FETCH_BYTES, DEFAULT_MAX_PARTITION_FETCH_BYTES),
             new ConfigProperty(MAX_POLL_RECORDS, DEFAULT_MAX_POLL_RECORDS),
             new ConfigProperty(PORT, DEFAULT_PORT),
-            new ConfigProperty(GROUP_ID, DEFAULT_GROUP_ID),
-            
-            // SSL
+            new ConfigProperty(GROUP_ID, DEFAULT_GROUP_ID)));
+
+
+    SECURITY_CONFIG_PROPERTIES =
+        List.of(
             new ConfigProperty(SslConfigs.SSL_PROTOCOL_CONFIG),
             new ConfigProperty(SslConfigs.SSL_PROVIDER_CONFIG),
             new ConfigProperty(SslConfigs.SSL_CIPHER_SUITES_CONFIG),
@@ -149,22 +149,25 @@ public class KafkaCrossDcConf extends CrossDcConf {
             new ConfigProperty(BrokerSecurityConfigs.SSL_CLIENT_AUTH_CONFIG),
 
 
-            // Admin Client Security
-            new ConfigProperty(AdminClientConfig.SECURITY_PROTOCOL_CONFIG),
+            // From Common and Admin Client Security
+            new ConfigProperty(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG),
             new ConfigProperty(AdminClientConfig.SECURITY_PROVIDERS_CONFIG)
-            );
+        );
 
+    configProperties.addAll(SECURITY_CONFIG_PROPERTIES);
+    CONFIG_PROPERTIES = Collections.unmodifiableList(configProperties);
 
-
-    CONFIG_PROPERTIES_MAP = new HashMap<String, ConfigProperty>(CONFIG_PROPERTIES.size());
+    Map<String, ConfigProperty> configPropertiesMap =
+        new HashMap<String, ConfigProperty>(CONFIG_PROPERTIES.size());
     for (ConfigProperty prop : CONFIG_PROPERTIES) {
-      CONFIG_PROPERTIES_MAP.put(prop.getKey(), prop);
+      configPropertiesMap.put(prop.getKey(), prop);
     }
+    CONFIG_PROPERTIES_MAP = configPropertiesMap;
   }
 
-  private final Map<String, String> properties;
+  private final Map<String, Object> properties;
 
-  public KafkaCrossDcConf(Map<String, String> properties) {
+  public KafkaCrossDcConf(Map<String, Object> properties) {
     List<String> nullValueKeys = new ArrayList<String>();
     properties.forEach((k, v) -> {
       if (v == null) {
@@ -173,6 +176,15 @@ public class KafkaCrossDcConf extends CrossDcConf {
     });
     nullValueKeys.forEach(properties::remove);
     this.properties = properties;
+  }
+
+  public static void addSecurityProps(KafkaCrossDcConf conf, Properties kafkaConsumerProps) {
+    for (ConfigProperty property : SECURITY_CONFIG_PROPERTIES) {
+      String val = conf.get(property.getKey());
+      if (val != null) {
+        kafkaConsumerProps.put(property.getKey(), val);
+      }
+    }
   }
 
   public String get(String property) {
@@ -202,15 +214,17 @@ public class KafkaCrossDcConf extends CrossDcConf {
       additional.remove(configProperty.getKey());
     }
     Map<String, Object> integerProperties = new HashMap<>();
-    additional.forEach((k, v) -> {
+    additional.forEach((key, v) -> {
       try {
         int intVal = Integer.parseInt((String) v);
-        integerProperties.put(k.toString(), intVal);
+        integerProperties.put(key.toString(), intVal);
       } catch (NumberFormatException ignored) {
 
       }
     });
-    additional.putAll(integerProperties);
+    integerProperties.forEach((key, v) -> {
+      additional.setProperty(key, (String) v);
+    });
     return additional;
   }
 
@@ -222,7 +236,7 @@ public class KafkaCrossDcConf extends CrossDcConf {
     }
     sb.setLength(sb.length() - 1);
 
-    return "KafkaCrossDcConf{" + sb.toString() + "}";
+    return "KafkaCrossDcConf{" + sb + "}";
   }
 
 }

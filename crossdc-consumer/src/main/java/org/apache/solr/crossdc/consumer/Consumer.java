@@ -22,9 +22,7 @@ import org.apache.solr.crossdc.common.ConfigProperty;
 import org.apache.solr.crossdc.common.CrossDcConf;
 import org.apache.solr.crossdc.common.KafkaCrossDcConf;
 import org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor;
-import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,22 +39,14 @@ import static org.apache.solr.crossdc.common.KafkaCrossDcConf.*;
 // Cross-DC Consumer main class
 public class Consumer {
 
-
-
-
-    private static boolean enabled = true;
+    private static final boolean enabled = true;
 
     private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-    /**
-     * ExecutorService to manage the cross-dc consumer threads.
-     */
-    private ExecutorService consumerThreadExecutor;
-
     private Server server;
-    CrossDcConsumer crossDcConsumer;
+    private CrossDcConsumer crossDcConsumer;
 
-    public void start(Map<String, String> properties) {
+    public void start(Map<String, Object> properties) {
 
 
         //server = new Server();
@@ -70,7 +60,10 @@ public class Consumer {
 
         log.info("Starting CrossDC Consumer {}", conf);
 
-        consumerThreadExecutor = Executors.newSingleThreadExecutor();
+        /**
+         * ExecutorService to manage the cross-dc consumer threads.
+         */
+        ExecutorService consumerThreadExecutor = Executors.newSingleThreadExecutor();
         consumerThreadExecutor.submit(crossDcConsumer);
 
         // Register shutdown hook
@@ -84,13 +77,13 @@ public class Consumer {
 
     public static void main(String[] args) {
 
-        Map<String,String> properties = new HashMap<>();
+        Map<String,Object> properties = new HashMap<>();
 
         for (ConfigProperty configKey : KafkaCrossDcConf.CONFIG_PROPERTIES) {
             properties.put(configKey.getKey(), System.getProperty(configKey.getKey()));
         }
 
-        String zkConnectString = properties.get(KafkaCrossDcConf.ZK_CONNECT_STRING);
+        String zkConnectString = (String) properties.get(KafkaCrossDcConf.ZK_CONNECT_STRING);
         if (zkConnectString == null || zkConnectString.isBlank()) {
             throw new IllegalArgumentException("zkConnectString not specified for Consumer");
         }
@@ -98,20 +91,24 @@ public class Consumer {
         try (SolrZkClient client = new SolrZkClient(zkConnectString, 15000)) {
 
             try {
-                if (client.exists(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH, KafkaCrossDcConf.CROSSDC_PROPERTIES), true)) {
-                    byte[] data = client.getData(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH, KafkaCrossDcConf.CROSSDC_PROPERTIES), null, null, true);
+                if (client.exists(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH,
+                    CrossDcConf.CROSSDC_PROPERTIES), true)) {
+                    byte[] data = client.getData(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH,
+                        CrossDcConf.CROSSDC_PROPERTIES), null, null, true);
                     Properties zkProps = new Properties();
                     zkProps.load(new ByteArrayInputStream(data));
-                    Properties zkPropsUnproccessed = new Properties(zkProps);
+
+                    Map<Object, Object> zkPropsUnproccessed = new HashMap<>(zkProps);
 
                     for (ConfigProperty configKey : KafkaCrossDcConf.CONFIG_PROPERTIES) {
-                        if (properties.get(configKey.getKey()) == null || properties.get(configKey.getKey()).isBlank()) {
-                            properties.put(configKey.getKey(), (String) zkProps.get(configKey.getKey()));
+                        if (properties.get(configKey.getKey()) == null || ((String)properties.get(configKey.getKey())).isBlank()) {
+                            properties.put(configKey.getKey(), (String) zkProps.getProperty(
+                                configKey.getKey()));
                             zkPropsUnproccessed.remove(configKey.getKey());
                         }
                     }
-                    zkPropsUnproccessed.forEach((k, v) -> {
-                        properties.put((String) k, (String) v);
+                    zkPropsUnproccessed.forEach((key, val) -> {
+                        properties.put((String) key, (String) val);
                     });
                 }
             } catch (InterruptedException e) {
@@ -122,12 +119,12 @@ public class Consumer {
             }
         }
 
-        String bootstrapServers = properties.get(KafkaCrossDcConf.BOOTSTRAP_SERVERS);
+        String bootstrapServers = (String) properties.get(KafkaCrossDcConf.BOOTSTRAP_SERVERS);
         if (bootstrapServers == null || bootstrapServers.isBlank()) {
             throw new IllegalArgumentException("bootstrapServers not specified for Consumer");
         }
 
-        String topicName = properties.get(TOPIC_NAME);
+        String topicName = (String) properties.get(TOPIC_NAME);
         if (topicName == null || topicName.isBlank()) {
             throw new IllegalArgumentException("topicName not specified for Consumer");
         }
@@ -136,7 +133,7 @@ public class Consumer {
         consumer.start(properties);
     }
 
-    public void shutdown() {
+    public final void shutdown() {
         if (crossDcConsumer != null) {
             crossDcConsumer.shutdown();
         }
