@@ -228,6 +228,22 @@ public class KafkaCrossDcConf extends CrossDcConf {
     return additional;
   }
 
+  public static void readZkProps(Map<String,Object> properties, Properties zkProps) {
+    Properties zkPropsUnproccessed = new Properties(zkProps);
+    for (ConfigProperty configKey : KafkaCrossDcConf.CONFIG_PROPERTIES) {
+      if (properties.get(configKey.getKey()) == null || ((String)properties.get(configKey.getKey())).isBlank()) {
+        properties.put(configKey.getKey(), (String) zkProps.getProperty(
+            configKey.getKey()));
+        zkPropsUnproccessed.remove(configKey.getKey());
+      }
+    }
+    zkPropsUnproccessed.forEach((key, val) -> {
+      if (properties.get(key) == null) {
+        properties.put((String) key, (String) val);
+      }
+    });
+  }
+
   @Override public String toString() {
     StringBuilder sb = new StringBuilder(128);
     for (ConfigProperty configProperty : CONFIG_PROPERTIES) {
