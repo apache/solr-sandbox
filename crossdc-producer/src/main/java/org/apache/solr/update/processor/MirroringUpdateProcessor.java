@@ -14,8 +14,6 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.cloud.*;
 import org.apache.solr.common.params.*;
 import org.apache.solr.request.SolrQueryRequest;
-import org.apache.solr.schema.IndexSchema;
-import org.apache.solr.schema.SchemaField;
 import org.apache.solr.update.AddUpdateCommand;
 import org.apache.solr.update.CommitUpdateCommand;
 import org.apache.solr.update.DeleteUpdateCommand;
@@ -126,8 +124,9 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
           String nextCursorMark = rsp.getNextCursorMark();
 
           if (log.isDebugEnabled()) {
-            log.debug("resp: cm={}, ncm={}, cnt={}, results={} ", cursorMark, nextCursorMark, cnt++,
+            log.debug("resp: cm={}, ncm={}, cnt={}, results={} ", cursorMark, nextCursorMark, cnt,
                 rsp.getResults());
+            cnt++;
           }
 
           processDBQResults(client, collection, uniqueField, rsp);
@@ -147,15 +146,14 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
     if (doMirroring) {
       boolean isLeader = false;
       if (cmd.isDeleteById()) {
-        DeleteUpdateCommand dcmd = (DeleteUpdateCommand)cmd;
         // deleteById requests runs once per leader, so we just submit the request from the leader shard
-        isLeader = isLeader(cmd.getReq(),  dcmd.getId(), null != cmd.getRoute() ? cmd.getRoute() : cmd.getReq().getParams().get(
+        isLeader = isLeader(cmd.getReq(),  ((DeleteUpdateCommand)cmd).getId(), null != cmd.getRoute() ? cmd.getRoute() : cmd.getReq().getParams().get(
             ShardParams._ROUTE_), null);
         if (isLeader) {
           createAndOrGetMirrorRequest().deleteById(cmd.getId()); // strip versions from deletes
         }
         if (log.isDebugEnabled())
-          log.debug("processDelete doMirroring={} isLeader={} cmd={}", doMirroring, isLeader, cmd);
+          log.debug("processDelete doMirroring={} isLeader={} cmd={}", true, isLeader, cmd);
       } else {
         // DBQs are sent to each shard leader, so we mirror from the original node to only mirror once
         // In general there's no way to guarantee that these run identically on the mirror since there are no
@@ -166,16 +164,17 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
           createAndOrGetMirrorRequest().deleteByQuery(cmd.query);
         }
         if (log.isDebugEnabled())
-          log.debug("processDelete doMirroring={} cmd={}", doMirroring, cmd);
+          log.debug("processDelete doMirroring={} cmd={}", true, cmd);
       }
 
     }
   }
 
-  private void processDBQResults(SolrClient client, String collection, String uniqueField, QueryResponse rsp)
+  private static void processDBQResults(SolrClient client, String collection, String uniqueField,
+      QueryResponse rsp)
       throws SolrServerException, IOException {
     SolrDocumentList results = rsp.getResults();
-    List<String> ids = new ArrayList<>();
+    List<String> ids = new ArrayList<>(results.size());
     results.forEach(entries -> {
       String id = entries.getFirstValue(uniqueField).toString();
       ids.add(id);
@@ -225,7 +224,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
     if (next != null) next.processCommit(cmd);
   }
 
-  @Override public void finish() throws IOException {
+  @Override public final void finish() throws IOException {
     super.finish();
 
     if (doMirroring && mirrorRequest != null) {

@@ -107,7 +107,7 @@ import java.util.Properties;
     String bootstrapServers = kafkaCluster.bootstrapServers();
     log.info("bootstrapServers={}", bootstrapServers);
 
-    Map<String, String> properties = new HashMap<>();
+    Map<String, Object> properties = new HashMap<>();
     properties.put(KafkaCrossDcConf.BOOTSTRAP_SERVERS, bootstrapServers);
     properties.put(KafkaCrossDcConf.ZK_CONNECT_STRING, solrCluster2.getZkServer().getZkAddress());
     properties.put(KafkaCrossDcConf.TOPIC_NAME, TOPIC);

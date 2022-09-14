@@ -30,8 +30,6 @@ import org.apache.solr.crossdc.common.KafkaMirroringSink;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.response.SolrQueryResponse;
 import org.apache.solr.util.plugin.SolrCoreAware;
-import org.apache.zookeeper.KeeperException;
-import org.checkerframework.checker.units.qual.C;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,25 +64,15 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         new NoOpUpdateRequestProcessor();
 
     // Flag for mirroring requests
-    public static String SERVER_SHOULD_MIRROR = "shouldMirror";
+    public static final String SERVER_SHOULD_MIRROR = "shouldMirror";
 
     /** This is instantiated in inform(SolrCore) and then shared by all processor instances - visible for testing */
-    volatile KafkaRequestMirroringHandler mirroringHandler;
-//    private String topicName;
-//    private String bootstrapServers;
-//
-//    private Integer batchSizeBytes;
-//    private Integer bufferMemoryBytes;
-//    private Integer lingerMs;
-//    private Integer requestTimeout;
-//
-//    private Integer maxRequestSize;
-//
-//    private String enableDataCompression;
+    private volatile KafkaRequestMirroringHandler mirroringHandler;
+
 
     private boolean enabled = true;
 
-    private final Map<String,String> properties = new HashMap<>();
+    private final Map<String,Object> properties = new HashMap<>();
 
     @Override
     public void init(final NamedList args) {
@@ -100,14 +88,30 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         }
     }
 
-    private class Closer {
+    private static class MyCloseHook extends CloseHook {
+        private final Closer closer;
+
+        public MyCloseHook(Closer closer) {
+            this.closer = closer;
+        }
+
+        @Override public void preClose(SolrCore core) {
+
+        }
+
+        @Override public void postClose(SolrCore core) {
+            closer.close();
+        }
+    }
+
+    private static class Closer {
         private final KafkaMirroringSink sink;
 
         public Closer(KafkaMirroringSink sink) {
             this.sink = sink;
         }
 
-        public void close() {
+        public final void close() {
             try {
                 this.sink.close();
             } catch (IOException e) {
@@ -127,12 +131,15 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         Properties zkProps = null;
         try {
             if (core.getCoreContainer().getZkController()
-                .getZkClient().exists(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH, KafkaCrossDcConf.CROSSDC_PROPERTIES), true)) {
-                byte[] data = core.getCoreContainer().getZkController().getZkClient().getData(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH, KafkaCrossDcConf.CROSSDC_PROPERTIES), null, null, true);
+                .getZkClient().exists(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH,
+                    CrossDcConf.CROSSDC_PROPERTIES), true)) {
+                byte[] data = core.getCoreContainer().getZkController().getZkClient().getData(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH,
+                    CrossDcConf.CROSSDC_PROPERTIES), null, null, true);
 
                 if (data == null) {
-                    log.error(KafkaCrossDcConf.CROSSDC_PROPERTIES + " file in Zookeeper has no data");
-                    throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, KafkaCrossDcConf.CROSSDC_PROPERTIES + " file in Zookeeper has no data");
+                    log.error(CrossDcConf.CROSSDC_PROPERTIES + " file in Zookeeper has no data");
+                    throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, CrossDcConf.CROSSDC_PROPERTIES
+                        + " file in Zookeeper has no data");
                 }
 
                 zkProps = new Properties();
@@ -140,13 +147,14 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
                 Properties zkPropsUnproccessed = new Properties(zkProps);
 
                 for (ConfigProperty configKey : KafkaCrossDcConf.CONFIG_PROPERTIES) {
-                    if (properties.get(configKey.getKey()) == null || properties.get(configKey.getKey()).isBlank()) {
-                        properties.put(configKey.getKey(), (String) zkProps.get(configKey.getKey()));
+                    if (properties.get(configKey.getKey()) == null || ((String)properties.get(configKey.getKey())).isBlank()) {
+                        properties.put(configKey.getKey(), (String) zkProps.getProperty(
+                            configKey.getKey()));
                         zkPropsUnproccessed.remove(configKey.getKey());
                     }
                 }
-                zkPropsUnproccessed.forEach((k, v) -> {
-                    properties.put((String) k, (String) v);
+                zkPropsUnproccessed.forEach((key, val) -> {
+                    properties.put((String) key, (String) val);
                 });
              }
         } catch (InterruptedException e) {
@@ -158,17 +166,21 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
             throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "Exception looking for CrossDC configuration in Zookeeper", e);
         }
 
-        if (properties.get(BOOTSTRAP_SERVERS) == null || properties.get(BOOTSTRAP_SERVERS).isBlank()) {
-           log.error("boostrapServers not specified for producer in CrossDC configuration props=" + properties + " zkProps=" + zkProps);
+        if (properties.get(BOOTSTRAP_SERVERS) == null || ((String)properties.get(BOOTSTRAP_SERVERS)).isBlank()) {
+            log.error(
+                "boostrapServers not specified for producer in CrossDC configuration props={} zkProps={}",
+                properties, zkProps);
            throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "boostrapServers not specified for producer");
        }
         
-        if (properties.get(TOPIC_NAME) == null || properties.get(TOPIC_NAME).isBlank()) {
-            log.error("topicName not specified for producer in CrossDC configuration props=" + properties + " zkProps=" + zkProps);
+        if (properties.get(TOPIC_NAME) == null || ((String)properties.get(TOPIC_NAME)).isBlank()) {
+            log.error(
+                "topicName not specified for producer in CrossDC configuration props={} zkProps={}",
+                properties, zkProps);
             throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "topicName not specified for producer");
         }
 
-        log.info("bootstrapServers={} topicName={}", properties.get(BOOTSTRAP_SERVERS) , properties.get(TOPIC_NAME));
+        log.info("bootstrapServers={} topicName={}", properties.get(BOOTSTRAP_SERVERS), properties.get(TOPIC_NAME));
 
         // load the request mirroring sink class and instantiate.
        // mirroringHandler = core.getResourceLoader().newInstance(RequestMirroringHandler.class.getName(), KafkaRequestMirroringHandler.class);
@@ -177,20 +189,12 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         KafkaMirroringSink sink = new KafkaMirroringSink(conf);
 
         Closer closer = new Closer(sink);
-        core.addCloseHook(new CloseHook() {
-            @Override public void preClose(SolrCore core) {
-
-            }
-
-            @Override public void postClose(SolrCore core) {
-                closer.close();
-            }
-        });
+        core.addCloseHook(new MyCloseHook(closer));
 
         mirroringHandler = new KafkaRequestMirroringHandler(sink);
     }
 
-    private Integer getIntegerPropValue(String name, Properties props) {
+    private static Integer getIntegerPropValue(String name, Properties props) {
         String value = props.getProperty(name);
         if (value == null) {
             return null;

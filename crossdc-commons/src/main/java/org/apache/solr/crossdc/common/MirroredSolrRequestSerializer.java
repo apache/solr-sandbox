@@ -18,12 +18,9 @@ package org.apache.solr.crossdc.common;
 
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serializer;
-import org.apache.solr.client.solrj.SolrRequest;
-import org.apache.solr.client.solrj.request.JavaBinUpdateRequestCodec;
 import org.apache.solr.client.solrj.request.UpdateRequest;
 import org.apache.solr.common.params.MapSolrParams;
 import org.apache.solr.common.params.ModifiableSolrParams;
-import org.apache.solr.common.params.MultiMapSolrParams;
 import org.apache.solr.common.util.JavaBinCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -116,27 +113,30 @@ public class MirroredSolrRequestSerializer implements Serializer<MirroredSolrReq
         UpdateRequest solrRequest = (UpdateRequest) request.getSolrRequest();
 
         if (log.isTraceEnabled()) {
-            log.trace("serialize request={} docs={} deletebyid={}", solrRequest, solrRequest.getDocuments(), solrRequest.getDeleteById());
+            log.trace("serialize request={} docs={} deletebyid={}", solrRequest,
+                solrRequest.getDocuments(), solrRequest.getDeleteById());
         }
 
-        JavaBinCodec codec = new JavaBinCodec(null);
+        try (JavaBinCodec codec = new JavaBinCodec(null)) {
 
-        ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream();
-        Map map = new HashMap();
-        map.put("params", solrRequest.getParams());
-        map.put("docs", solrRequest.getDocuments());
+            ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream();
+            Map map = new HashMap(4);
+            map.put("params", solrRequest.getParams());
+            map.put("docs", solrRequest.getDocuments());
 
-        // TODO
-        //map.put("deletes", solrRequest.getDeleteByIdMap());
-        map.put("deletes", solrRequest.getDeleteById());
-        map.put("deleteQuery", solrRequest.getDeleteQuery());
+            // TODO
+            //map.put("deletes", solrRequest.getDeleteByIdMap());
+            map.put("deletes", solrRequest.getDeleteById());
+            map.put("deleteQuery", solrRequest.getDeleteQuery());
 
-        try {
             codec.marshal(map, baos);
+
+            return baos.byteArray();
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return baos.byteArray();
+
     }
 
     /**
@@ -145,7 +145,7 @@ public class MirroredSolrRequestSerializer implements Serializer<MirroredSolrReq
      * This method must be idempotent as it may be called multiple times.
      */
     @Override
-    public void close() {
+    public final void close() {
         Serializer.super.close();
     }
 

@@ -17,10 +17,8 @@
 package org.apache.solr.crossdc.common;
 
 import org.apache.solr.client.solrj.SolrRequest;
-import org.apache.solr.common.params.SolrParams;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Class to encapsulate a mirrored Solr request.
@@ -53,29 +51,6 @@ public class MirroredSolrRequest {
         this.attempt = attempt;
         this.submitTimeNanos = submitTimeNanos;
         solrRequest = null;
-    }
-
-    public static MirroredSolrRequest mirroredAdminCollectionRequest(SolrParams params) {
-        Map<String, List<String>> createParams = new HashMap();
-        // don't mirror back
-        createParams.put(CrossDcConstants.SHOULD_MIRROR, Collections.singletonList("false"));
-
-        final Iterator<String> paramNamesIterator = params.getParameterNamesIterator();
-        while (paramNamesIterator.hasNext()) {
-            final String key = paramNamesIterator.next();
-            if (key.equals("createNodeSet") || key.equals("node")) {
-                // don't forward as nodeset most likely makes no sense here.
-                // should we log when we skip this parameter that was part of the original request ?
-                continue;
-            }
-            final String[] values = params.getParams(key);
-            if (values != null) {
-                createParams.put(key, Arrays.asList(values));
-            }
-        }
-
-        return new MirroredSolrRequest(1,
-                TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis()));
     }
 
     public int getAttempt() {

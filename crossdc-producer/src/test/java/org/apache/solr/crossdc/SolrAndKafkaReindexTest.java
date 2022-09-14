@@ -91,11 +91,12 @@ import java.util.*;
     log.info("bootstrapServers={}", bootstrapServers);
 
 
-    Map<String, String> properties = new HashMap<>();
+    Map<String, Object> properties = new HashMap<>();
     properties.put(KafkaCrossDcConf.BOOTSTRAP_SERVERS, bootstrapServers);
     properties.put(KafkaCrossDcConf.ZK_CONNECT_STRING, solrCluster2.getZkServer().getZkAddress());
     properties.put(KafkaCrossDcConf.TOPIC_NAME, TOPIC);
     properties.put(KafkaCrossDcConf.GROUP_ID, "group1");
+    properties.put(KafkaCrossDcConf.MAX_POLL_RECORDS, 3);
     consumer.start(properties);
 
   }

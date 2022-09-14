@@ -93,7 +93,7 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
 
         log.info("Creating Kafka producer! Configurations {} ", conf.toString());
 
-        kafkaProducerProps.put("bootstrap.servers", conf.get(KafkaCrossDcConf.BOOTSTRAP_SERVERS));
+        kafkaProducerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, conf.get(KafkaCrossDcConf.BOOTSTRAP_SERVERS));
 
         kafkaProducerProps.put(ProducerConfig.ACKS_CONFIG, "all");
         String retries = conf.get(KafkaCrossDcConf.NUM_RETRIES);
@@ -110,6 +110,8 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
 
         kafkaProducerProps.put("key.serializer", StringSerializer.class.getName());
         kafkaProducerProps.put("value.serializer", MirroredSolrRequestSerializer.class.getName());
+
+        KafkaCrossDcConf.addSecurityProps(conf, kafkaProducerProps);
 
         kafkaProducerProps.putAll(conf.getAdditionalProperties());
 

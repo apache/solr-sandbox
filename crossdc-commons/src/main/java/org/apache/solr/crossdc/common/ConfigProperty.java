@@ -1,6 +1,7 @@
 package org.apache.solr.crossdc.common;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 
 public class ConfigProperty {
@@ -47,9 +48,12 @@ public class ConfigProperty {
   }
 
   public Integer getValueAsInt(Map properties) {
-    String value = (String) properties.get(key);
+    Object value = (Object) properties.get(key);
     if (value != null) {
-      return Integer.parseInt(value);
+      if (value instanceof Integer) {
+        return (Integer) value;
+      }
+      return Integer.parseInt(value.toString());
     }
     if (defaultValue == null) {
       return null;
@@ -58,9 +62,12 @@ public class ConfigProperty {
   }
 
   public Boolean getValueAsBoolean(Map properties) {
-    String value = (String) properties.get(key);
+    Object value = (Object) properties.get(key);
     if (value != null) {
-      return Boolean.parseBoolean(value);
+      if (value instanceof Boolean) {
+        return (Boolean) value;
+      }
+      return Boolean.parseBoolean(value.toString());
     }
     return Boolean.parseBoolean(defaultValue);
   }
