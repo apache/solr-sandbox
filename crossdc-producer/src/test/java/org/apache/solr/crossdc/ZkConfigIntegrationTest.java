@@ -81,8 +81,11 @@ import java.util.Properties;
     solrCluster1 = new SolrCloudTestCase.Builder(1, createTempDir()).addConfig("conf",
         getFile("src/test/resources/configs/cloud-minimal/conf").toPath()).configure();
 
-    props.setProperty(KafkaCrossDcConf.TOPIC_NAME, TOPIC);
+    props.setProperty(KafkaCrossDcConf.TOPIC_NAME, "bad_topic");
     props.setProperty(KafkaCrossDcConf.BOOTSTRAP_SERVERS, kafkaCluster.bootstrapServers());
+
+    System.setProperty(KafkaCrossDcConf.TOPIC_NAME, TOPIC);
+
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     props.store(baos, "");
@@ -112,10 +115,8 @@ import java.util.Properties;
     log.info("bootstrapServers={}", bootstrapServers);
 
     Map<String, Object> properties = new HashMap<>();
-    properties.put(KafkaCrossDcConf.BOOTSTRAP_SERVERS, bootstrapServers);
     properties.put(KafkaCrossDcConf.ZK_CONNECT_STRING, solrCluster2.getZkServer().getZkAddress());
     properties.put(KafkaCrossDcConf.TOPIC_NAME, TOPIC);
-    properties.put(KafkaCrossDcConf.GROUP_ID, "group1");
     consumer.start(properties);
 
   }
@@ -165,7 +166,7 @@ import java.util.Properties;
 
     QueryResponse results = null;
     boolean foundUpdates = false;
-    for (int i = 0; i < 50; i++) {
+    for (int i = 0; i < 100; i++) {
       solrCluster2.getSolrClient().commit(COLLECTION);
       solrCluster1.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
       results = solrCluster2.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));

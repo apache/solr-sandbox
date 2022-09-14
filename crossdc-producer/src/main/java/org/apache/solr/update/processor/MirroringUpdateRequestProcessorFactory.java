@@ -84,7 +84,10 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         }
 
         for (ConfigProperty configKey : KafkaCrossDcConf.CONFIG_PROPERTIES) {
-            properties.put(configKey.getKey(), args._getStr(configKey.getKey(), null));
+            String val = args._getStr(configKey.getKey(), null);
+            if (val != null) {
+                properties.put(configKey.getKey(), val);
+            }
         }
     }
 
@@ -144,19 +147,9 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
 
                 zkProps = new Properties();
                 zkProps.load(new ByteArrayInputStream(data));
-                Properties zkPropsUnproccessed = new Properties(zkProps);
 
-                for (ConfigProperty configKey : KafkaCrossDcConf.CONFIG_PROPERTIES) {
-                    if (properties.get(configKey.getKey()) == null || ((String)properties.get(configKey.getKey())).isBlank()) {
-                        properties.put(configKey.getKey(), (String) zkProps.getProperty(
-                            configKey.getKey()));
-                        zkPropsUnproccessed.remove(configKey.getKey());
-                    }
-                }
-                zkPropsUnproccessed.forEach((key, val) -> {
-                    properties.put((String) key, (String) val);
-                });
-             }
+                KafkaCrossDcConf.readZkProps(properties, zkProps);
+            }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.error("Interrupted looking for CrossDC configuration in Zookeeper", e);
