@@ -207,9 +207,8 @@ public class KafkaCrossDcConf extends CrossDcConf {
     return prop.getValueAsBoolean(properties);
   }
   
-  public Properties getAdditionalProperties() {
-    Properties additional = new Properties();
-    additional.putAll(properties);
+  public Map<String,Object> getAdditionalProperties() {
+    Map<String, Object> additional = new HashMap<>(properties);
     for (ConfigProperty configProperty : CONFIG_PROPERTIES) {
       additional.remove(configProperty.getKey());
     }
@@ -222,22 +221,20 @@ public class KafkaCrossDcConf extends CrossDcConf {
 
       }
     });
-    integerProperties.forEach((key, v) -> {
-      additional.setProperty(key, (String) v);
-    });
+    additional.putAll(integerProperties);
     return additional;
   }
 
   public static void readZkProps(Map<String,Object> properties, Properties zkProps) {
-    Properties zkPropsUnproccessed = new Properties(zkProps);
+    Map<Object, Object> zkPropsUnprocessed = new HashMap<>(zkProps);
     for (ConfigProperty configKey : KafkaCrossDcConf.CONFIG_PROPERTIES) {
       if (properties.get(configKey.getKey()) == null || ((String)properties.get(configKey.getKey())).isBlank()) {
         properties.put(configKey.getKey(), (String) zkProps.getProperty(
             configKey.getKey()));
-        zkPropsUnproccessed.remove(configKey.getKey());
+        zkPropsUnprocessed.remove(configKey.getKey());
       }
     }
-    zkPropsUnproccessed.forEach((key, val) -> {
+    zkPropsUnprocessed.forEach((key, val) -> {
       if (properties.get(key) == null) {
         properties.put((String) key, (String) val);
       }
@@ -247,10 +244,13 @@ public class KafkaCrossDcConf extends CrossDcConf {
   @Override public String toString() {
     StringBuilder sb = new StringBuilder(128);
     for (ConfigProperty configProperty : CONFIG_PROPERTIES) {
-      sb.append(configProperty.getKey()).append("=")
-          .append(properties.get(configProperty.getKey())).append(",");
+      if (properties.get(configProperty.getKey()) != null) {
+        sb.append(configProperty.getKey()).append("=").append(properties.get(configProperty.getKey())).append(",");
+      }
     }
-    sb.setLength(sb.length() - 1);
+    if (sb.length() > 0) {
+      sb.setLength(sb.length() - 1);
+    }
 
     return "KafkaCrossDcConf{" + sb + "}";
   }
