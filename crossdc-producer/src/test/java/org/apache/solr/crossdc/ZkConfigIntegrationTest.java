@@ -116,7 +116,7 @@ import java.util.Properties;
 
     Map<String, Object> properties = new HashMap<>();
     properties.put(KafkaCrossDcConf.ZK_CONNECT_STRING, solrCluster2.getZkServer().getZkAddress());
-    properties.put(KafkaCrossDcConf.TOPIC_NAME, TOPIC);
+
     consumer.start(properties);
 
   }
