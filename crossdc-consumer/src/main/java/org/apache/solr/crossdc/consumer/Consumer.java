@@ -60,6 +60,8 @@ public class Consumer {
             }
         }
 
+        log.info("Consumer startup config properties before adding additional properties from Zookeeper={}", properties);
+
         String zkConnectString = (String) properties.get(KafkaCrossDcConf.ZK_CONNECT_STRING);
         if (zkConnectString == null || zkConnectString.isBlank()) {
             throw new IllegalArgumentException("zkConnectString not specified for Consumer");

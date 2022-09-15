@@ -43,7 +43,6 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
         // Create Kafka Mirroring Sink
         this.conf = conf;
         this.producer = initProducer();
-        log.info("KafkaMirroringSink has been created. Producer & Topic have been created successfully! Configurations {}", conf);
     }
 
     @Override
@@ -91,7 +90,7 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
         // Initialize and return Kafka producer
         Properties kafkaProducerProps = new Properties();
 
-        log.info("Creating Kafka producer! Configurations {} ", conf.toString());
+        log.info("Starting CrossDC Producer {}", conf);
 
         kafkaProducerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, conf.get(KafkaCrossDcConf.BOOTSTRAP_SERVERS));
 
