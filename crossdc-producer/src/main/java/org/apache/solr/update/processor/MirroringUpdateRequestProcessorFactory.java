@@ -131,6 +131,9 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         if (!enabled) {
             return;
         }
+
+        log.info("Producer startup config properties before adding additional properties from Zookeeper={}", properties);
+
         Properties zkProps = null;
         try {
             if (core.getCoreContainer().getZkController()
@@ -173,12 +176,12 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
             throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "topicName not specified for producer");
         }
 
-        log.info("bootstrapServers={} topicName={}", properties.get(BOOTSTRAP_SERVERS), properties.get(TOPIC_NAME));
-
         // load the request mirroring sink class and instantiate.
        // mirroringHandler = core.getResourceLoader().newInstance(RequestMirroringHandler.class.getName(), KafkaRequestMirroringHandler.class);
 
         KafkaCrossDcConf conf = new KafkaCrossDcConf(properties);
+
+
         KafkaMirroringSink sink = new KafkaMirroringSink(conf);
 
         Closer closer = new Closer(sink);
