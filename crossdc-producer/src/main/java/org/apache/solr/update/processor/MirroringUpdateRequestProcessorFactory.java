@@ -82,6 +82,13 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
 
         topicName = args._getStr("topicName", null);
         bootstrapServers = args._getStr("bootstrapServers", null);
+
+        if (topicName != null && topicName.isBlank()) {
+            topicName = null;
+        }
+        if (bootstrapServers != null && bootstrapServers.isBlank()) {
+            bootstrapServers = null;
+        }
     }
 
     private class Closer {
@@ -110,7 +117,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         }
 
         try {
-            if (((topicName == null || topicName.isBlank()) || (bootstrapServers == null || bootstrapServers.isBlank())) && core.getCoreContainer().getZkController()
+            if ((topicName == null || bootstrapServers == null) && core.getCoreContainer().getZkController()
                 .getZkClient().exists(CrossDcConf.CROSSDC_PROPERTIES, true)) {
                 byte[] data = core.getCoreContainer().getZkController().getZkClient().getData("/crossdc.properties", null, null, true);
 
@@ -122,10 +129,10 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
                 Properties props = new Properties();
                 props.load(new ByteArrayInputStream(data));
 
-                if (topicName == null || topicName.isBlank()) {
+                if (topicName == null) {
                     topicName = props.getProperty("topicName");
                 }
-                if (bootstrapServers == null || bootstrapServers.isBlank()) {
+                if (bootstrapServers == null) {
                     bootstrapServers = props.getProperty("bootstrapServers");
                 }
              }
@@ -138,12 +145,12 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
             throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "Exception looking for CrossDC configuration in Zookeeper", e);
         }
 
-        if (bootstrapServers == null || bootstrapServers.isBlank()) {
+        if (bootstrapServers == null) {
            log.error("boostrapServers not specified for producer in CrossDC configuration");
            throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "boostrapServers not specified for producer");
        }
         
-        if (topicName == null || topicName.isBlank()) {
+        if (topicName == null) {
             log.error("topicName not specified for producer in CrossDC configuration");
             throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "topicName not specified for producer");
         }

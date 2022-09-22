@@ -91,7 +91,7 @@ public class Consumer {
     public static void main(String[] args) {
 
         String zkConnectString = System.getProperty("zkConnectString");
-        if (zkConnectString == null || zkConnectString.isBlank()) {
+        if (zkConnectString == null) {
             throw new IllegalArgumentException("zkConnectString not specified for producer");
         }
 
@@ -104,20 +104,20 @@ public class Consumer {
         try (SolrZkClient client = new SolrZkClient(zkConnectString, 15000)) {
 
             try {
-                if ((topicName == null || topicName.isBlank())
-                    || (bootstrapServers == null || bootstrapServers.isBlank()) || (port == null || port.isBlank()) && client
+                if ((topicName == null)
+                    || (bootstrapServers == null) || (port == null) && client
                     .exists(CrossDcConf.CROSSDC_PROPERTIES, true)) {
                     byte[] data = client.getData("/crossdc.properties", null, null, true);
                     Properties props = new Properties();
                     props.load(new ByteArrayInputStream(data));
 
-                    if (topicName == null || topicName.isBlank()) {
+                    if (topicName == null) {
                         topicName = props.getProperty("topicName");
                     }
-                    if (bootstrapServers == null || bootstrapServers.isBlank()) {
+                    if (bootstrapServers == null) {
                         bootstrapServers = props.getProperty("bootstrapServers");
                     }
-                    if (port == null || port.isBlank()) {
+                    if (port == null) {
                         port = props.getProperty("port");
                     }
                 }
@@ -133,10 +133,10 @@ public class Consumer {
             port = DEFAULT_PORT;
         }
 
-        if (bootstrapServers == null || bootstrapServers.isBlank()) {
+        if (bootstrapServers == null) {
           throw new IllegalArgumentException("boostrapServers not specified for producer");
         }
-        if (topicName == null || topicName.isBlank()) {
+        if (topicName == null) {
             throw new IllegalArgumentException("topicName not specified for producer");
         }
 
