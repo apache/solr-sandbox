@@ -21,6 +21,7 @@ import org.apache.solr.cloud.MiniSolrCloudCluster;
 import org.apache.solr.cloud.SolrCloudTestCase;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.util.ObjectReleaseTracker;
+import org.apache.solr.crossdc.common.KafkaCrossDcConf;
 import org.apache.solr.crossdc.common.MirroredSolrRequest;
 import org.apache.solr.crossdc.common.MirroredSolrRequestSerializer;
 import org.apache.solr.crossdc.consumer.Consumer;
@@ -29,9 +30,12 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.sys.Prop;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import static org.mockito.Mockito.spy;
@@ -99,7 +103,12 @@ import static org.mockito.Mockito.spy;
     String bootstrapServers = kafkaCluster.bootstrapServers();
     log.info("bootstrapServers={}", bootstrapServers);
 
-    consumer.start(bootstrapServers, solrCluster2.getZkServer().getZkAddress(), TOPIC, false, 0);
+    Map<String, Object> properties = new HashMap<>();
+    properties.put(KafkaCrossDcConf.BOOTSTRAP_SERVERS, bootstrapServers);
+    properties.put(KafkaCrossDcConf.ZK_CONNECT_STRING, solrCluster2.getZkServer().getZkAddress());
+    properties.put(KafkaCrossDcConf.TOPIC_NAME, TOPIC);
+    properties.put(KafkaCrossDcConf.GROUP_ID, "group1");
+    consumer.start(properties);
 
   }
 
@@ -135,8 +144,6 @@ import static org.mockito.Mockito.spy;
   }
 
   public void testFullCloudToCloud() throws Exception {
-    Thread.sleep(10000); // TODO why?
-
     CloudSolrClient client = solrCluster1.getSolrClient();
     SolrInputDocument doc = new SolrInputDocument();
     doc.addField("id", String.valueOf(System.currentTimeMillis()));
@@ -150,14 +157,14 @@ import static org.mockito.Mockito.spy;
 
     QueryResponse results = null;
     boolean foundUpdates = false;
-    for (int i = 0; i < 50; i++) {
+    for (int i = 0; i < 100; i++) {
       solrCluster2.getSolrClient().commit(COLLECTION);
       solrCluster1.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
       results = solrCluster2.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
       if (results.getResults().getNumFound() == 1) {
         foundUpdates = true;
       } else {
-        Thread.sleep(500);
+        Thread.sleep(100);
       }
     }
 
@@ -169,7 +176,6 @@ import static org.mockito.Mockito.spy;
   }
 
   public void testProducerToCloud() throws Exception {
-    Thread.sleep(10000); // TODO: why?
     Properties properties = new Properties();
     properties.put("bootstrap.servers", kafkaCluster.bootstrapServers());
     properties.put("acks", "all");
@@ -204,7 +210,7 @@ import static org.mockito.Mockito.spy;
       if (results.getResults().getNumFound() == 2) {
         foundUpdates = true;
       } else {
-        Thread.sleep(500);
+        Thread.sleep(100);
       }
     }
 

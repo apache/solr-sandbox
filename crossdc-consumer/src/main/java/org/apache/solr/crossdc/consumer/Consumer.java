@@ -18,108 +18,66 @@ package org.apache.solr.crossdc.consumer;
 
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.cloud.SolrZkClient;
+import org.apache.solr.crossdc.common.ConfigProperty;
 import org.apache.solr.crossdc.common.CrossDcConf;
 import org.apache.solr.crossdc.common.KafkaCrossDcConf;
 import org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor;
-import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.lang.invoke.MethodHandles;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static org.apache.solr.crossdc.common.KafkaCrossDcConf.*;
+
 // Cross-DC Consumer main class
 public class Consumer {
-    public static final String DEFAULT_PORT = "8090";
-    private static boolean enabled = true;
+
+    private static final boolean enabled = true;
 
     private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-    /**
-     * ExecutorService to manage the cross-dc consumer threads.
-     */
-    private ExecutorService consumerThreadExecutor;
-
     private Server server;
-    CrossDcConsumer crossDcConsumer;
-    private String topicName;
+    private CrossDcConsumer crossDcConsumer;
 
-    public void start(String bootstrapServers, String zkConnectString, String topicName, boolean enableDataEncryption, int port) {
-        if (bootstrapServers == null) {
-            throw new IllegalArgumentException("bootstrapServers config was not passed at startup");
-        }
-        if (bootstrapServers == null) {
-            throw new IllegalArgumentException("zkConnectString config was not passed at startup");
-        }
-        if (bootstrapServers == null) {
-            throw new IllegalArgumentException("topicName config was not passed at startup");
-        }
 
-        this.topicName = topicName;
-
-        //server = new Server();
-        //ServerConnector connector = new ServerConnector(server);
-        //connector.setPort(port);
-        //server.setConnectors(new Connector[] {connector})
-
-        crossDcConsumer = getCrossDcConsumer(bootstrapServers, zkConnectString, topicName, enableDataEncryption);
-
-        // Start consumer thread
-
-        log.info("Starting CrossDC Consumer bootstrapServers={}, zkConnectString={}, topicName={}, enableDataEncryption={}", bootstrapServers, zkConnectString, topicName, enableDataEncryption);
-
-        consumerThreadExecutor = Executors.newSingleThreadExecutor();
-        consumerThreadExecutor.submit(crossDcConsumer);
-
-        // Register shutdown hook
-        Thread shutdownHook = new Thread(() -> System.out.println("Shutting down consumers!"));
-        Runtime.getRuntime().addShutdownHook(shutdownHook);
+    public void start() {
+        start(new HashMap<>());
     }
 
-    private CrossDcConsumer getCrossDcConsumer(String bootstrapServers, String zkConnectString, String topicName,
-        boolean enableDataEncryption) {
+    public void start(Map<String,Object> properties ) {
 
-        KafkaCrossDcConf conf = new KafkaCrossDcConf(bootstrapServers, topicName, enableDataEncryption, zkConnectString);
-        return new KafkaCrossDcConsumer(conf);
-    }
+        for (ConfigProperty configKey : KafkaCrossDcConf.CONFIG_PROPERTIES) {
+            String val = System.getProperty(configKey.getKey());
+            if (val != null) {
+                properties.put(configKey.getKey(), val);
+            }
+        }
 
-    public static void main(String[] args) {
+        log.info("Consumer startup config properties before adding additional properties from Zookeeper={}", properties);
 
-        String zkConnectString = System.getProperty("zkConnectString");
+        String zkConnectString = (String) properties.get("zkConnectString");
         if (zkConnectString == null) {
             throw new IllegalArgumentException("zkConnectString not specified for producer");
         }
 
-        String bootstrapServers = System.getProperty("bootstrapServers");
-        // boolean enableDataEncryption = Boolean.getBoolean("enableDataEncryption");
-        String topicName = System.getProperty("topicName");
-        String port = System.getProperty("port");
-
-
         try (SolrZkClient client = new SolrZkClient(zkConnectString, 15000)) {
 
             try {
-                if ((topicName == null)
-                    || (bootstrapServers == null) || (port == null) && client
-                    .exists(CrossDcConf.CROSSDC_PROPERTIES, true)) {
-                    byte[] data = client.getData("/crossdc.properties", null, null, true);
-                    Properties props = new Properties();
-                    props.load(new ByteArrayInputStream(data));
+                if (client.exists(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH,
+                    CrossDcConf.CROSSDC_PROPERTIES), true)) {
+                    byte[] data = client.getData(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH,
+                        CrossDcConf.CROSSDC_PROPERTIES), null, null, true);
+                    Properties zkProps = new Properties();
+                    zkProps.load(new ByteArrayInputStream(data));
 
-                    if (topicName == null) {
-                        topicName = props.getProperty("topicName");
-                    }
-                    if (bootstrapServers == null) {
-                        bootstrapServers = props.getProperty("bootstrapServers");
-                    }
-                    if (port == null) {
-                        port = props.getProperty("port");
-                    }
+                    KafkaCrossDcConf.readZkProps(properties, zkProps);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -129,22 +87,49 @@ public class Consumer {
             }
         }
 
-        if (port == null) {
-            port = DEFAULT_PORT;
-        }
-
+        String bootstrapServers = (String) properties.get(KafkaCrossDcConf.BOOTSTRAP_SERVERS);
         if (bootstrapServers == null) {
-          throw new IllegalArgumentException("boostrapServers not specified for producer");
-        }
-        if (topicName == null) {
-            throw new IllegalArgumentException("topicName not specified for producer");
+            throw new IllegalArgumentException("bootstrapServers not specified for Consumer");
         }
 
-        Consumer consumer = new Consumer();
-        consumer.start(bootstrapServers, zkConnectString, topicName, false, Integer.parseInt(port));
+        String topicName = (String) properties.get(TOPIC_NAME);
+        if (topicName == null) {
+            throw new IllegalArgumentException("topicName not specified for Consumer");
+        }
+
+        //server = new Server();
+        //ServerConnector connector = new ServerConnector(server);
+        //connector.setPort(port);
+        //server.setConnectors(new Connector[] {connector})
+        KafkaCrossDcConf conf = new KafkaCrossDcConf(properties);
+        crossDcConsumer = getCrossDcConsumer(conf);
+
+        // Start consumer thread
+
+        log.info("Starting CrossDC Consumer {}", conf);
+
+        /**
+         * ExecutorService to manage the cross-dc consumer threads.
+         */
+        ExecutorService consumerThreadExecutor = Executors.newSingleThreadExecutor();
+        consumerThreadExecutor.submit(crossDcConsumer);
+
+        // Register shutdown hook
+        Thread shutdownHook = new Thread(() -> System.out.println("Shutting down consumers!"));
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
 
-    public void shutdown() {
+    private CrossDcConsumer getCrossDcConsumer(KafkaCrossDcConf conf) {
+        return new KafkaCrossDcConsumer(conf);
+    }
+
+    public static void main(String[] args) {
+
+        Consumer consumer = new Consumer();
+        consumer.start();
+    }
+
+    public final void shutdown() {
         if (crossDcConsumer != null) {
             crossDcConsumer.shutdown();
         }

@@ -1,9 +1,8 @@
 package org.apache.solr.crossdc.consumer;
 
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
+import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.errors.WakeupException;
@@ -29,39 +28,53 @@ import java.util.Properties;
 public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
+  private final MetricRegistry metrics = SharedMetricRegistries.getOrCreate("metrics");
+
   private final KafkaConsumer<String, MirroredSolrRequest> consumer;
   private final KafkaMirroringSink kafkaMirroringSink;
 
-  private final int KAFKA_CONSUMER_POLL_TIMEOUT_MS = 5000;
+  private final static int KAFKA_CONSUMER_POLL_TIMEOUT_MS = 5000;
   private final String topicName;
-  SolrMessageProcessor messageProcessor;
+  private final SolrMessageProcessor messageProcessor;
 
-  CloudSolrClient solrClient;
+  private final CloudSolrClient solrClient;
 
   /**
    * @param conf The Kafka consumer configuration
    */
   public KafkaCrossDcConsumer(KafkaCrossDcConf conf) {
-    this.topicName = conf.getTopicName();
+    this.topicName = conf.get(KafkaCrossDcConf.TOPIC_NAME);
 
-    final Properties kafkaConsumerProp = new Properties();
+    final Properties kafkaConsumerProps = new Properties();
 
-    kafkaConsumerProp.put("bootstrap.servers", conf.getBootStrapServers());
+    kafkaConsumerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, conf.get(KafkaCrossDcConf.BOOTSTRAP_SERVERS));
 
-    kafkaConsumerProp.put("group.id", "group_1"); // TODO
+    kafkaConsumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, conf.get(KafkaCrossDcConf.GROUP_ID));
+
+    kafkaConsumerProps.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, conf.getInt(KafkaCrossDcConf.MAX_POLL_RECORDS));
+
+    kafkaConsumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+
+    kafkaConsumerProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+
+    kafkaConsumerProps.put(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, conf.getInt(KafkaCrossDcConf.FETCH_MIN_BYTES));
+    kafkaConsumerProps.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, conf.getInt(KafkaCrossDcConf.FETCH_MAX_WAIT_MS));
+
+    kafkaConsumerProps.put(ConsumerConfig.FETCH_MAX_BYTES_CONFIG, conf.getInt(KafkaCrossDcConf.FETCH_MAX_BYTES));
+    kafkaConsumerProps.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, conf.getInt(KafkaCrossDcConf.MAX_PARTITION_FETCH_BYTES));
+
+    KafkaCrossDcConf.addSecurityProps(conf, kafkaConsumerProps);
+
+    kafkaConsumerProps.putAll(conf.getAdditionalProperties());
 
     solrClient =
-        new CloudSolrClient.Builder(Collections.singletonList(conf.getSolrZkConnectString()),
+        new CloudSolrClient.Builder(Collections.singletonList(conf.get(KafkaCrossDcConf.ZK_CONNECT_STRING)),
             Optional.empty()).build();
 
-    messageProcessor = new SolrMessageProcessor(solrClient, new ResubmitBackoffPolicy() {
-      @Override public long getBackoffTimeMs(MirroredSolrRequest resubmitRequest) {
-        return 0;
-      }
-    });
+    messageProcessor = new SolrMessageProcessor(solrClient, resubmitRequest -> 0L);
 
-    log.info("Creating Kafka consumer with configuration {}", kafkaConsumerProp);
-    consumer = createConsumer(kafkaConsumerProp);
+    log.info("Creating Kafka consumer with configuration {}", kafkaConsumerProps);
+    consumer = createConsumer(kafkaConsumerProps);
 
     // Create producer for resubmitting failed requests
     log.info("Creating Kafka resubmit producer");
@@ -70,10 +83,9 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
   }
 
-  private KafkaConsumer<String, MirroredSolrRequest> createConsumer(Properties properties) {
-    KafkaConsumer kafkaConsumer = new KafkaConsumer(properties, new StringDeserializer(),
+  public static KafkaConsumer<String, MirroredSolrRequest> createConsumer(Properties properties) {
+    return new KafkaConsumer<>(properties, new StringDeserializer(),
         new MirroredSolrRequestSerializer());
-    return kafkaConsumer;
   }
 
   /**
@@ -129,12 +141,16 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
               log.trace("Fetched record from topic={} partition={} key={} value={}", record.topic(),
                   record.partition(), record.key(), record.value());
             }
-            IQueueHandler.Result result = messageProcessor.handleItem(record.value());
+            IQueueHandler.Result<MirroredSolrRequest> result = messageProcessor.handleItem(record.value());
             switch (result.status()) {
               case FAILED_RESUBMIT:
+                // currently, we use a strategy taken from an earlier working implementation
+                // of just resubmitting back to the queue - note that in rare cases, this could
+                // allow for incorrect update reorders
                 if (log.isTraceEnabled()) {
                   log.trace("result=failed-resubmit");
                 }
+                metrics.counter("failed-resubmit").inc();
                 kafkaMirroringSink.submit(record.value());
                 break;
               case HANDLED:
@@ -142,14 +158,17 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
                 if (log.isTraceEnabled()) {
                   log.trace("result=handled");
                 }
+                metrics.counter("handled").inc();
                 break;
               case NOT_HANDLED_SHUTDOWN:
                 if (log.isTraceEnabled()) {
                   log.trace("result=nothandled_shutdown");
                 }
+                metrics.counter("nothandled_shutdown").inc();
               case FAILED_RETRY:
                 log.error("Unexpected response while processing request. We never expect {}.",
                     result.status().toString());
+                metrics.counter("failed-retry").inc();
                 break;
               default:
                 if (log.isTraceEnabled()) {
@@ -177,8 +196,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
         } catch (Exception e) {
           // If there is any exception returned by handleItem, then reset the offset.
 
-          if (e instanceof ClassCastException || e instanceof ClassNotFoundException
-              || e instanceof SerializationException) { // TODO: optional
+          if (e instanceof ClassCastException || e instanceof SerializationException) { // TODO: optional
             log.error("Non retryable error", e);
             break;
           }
@@ -192,8 +210,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
       return false;
     } catch (Exception e) {
 
-      if (e instanceof ClassCastException || e instanceof ClassNotFoundException
-          || e instanceof SerializationException) { // TODO: optional
+      if (e instanceof ClassCastException || e instanceof SerializationException) { // TODO: optional
         log.error("Non retryable error", e);
         return false;
       }
@@ -239,7 +256,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
   /**
    * Shutdown the Kafka consumer by calling wakeup.
    */
-  public void shutdown() {
+  public final void shutdown() {
     log.info("Shutdown called on KafkaCrossDcConsumer");
     try {
       solrClient.close();
