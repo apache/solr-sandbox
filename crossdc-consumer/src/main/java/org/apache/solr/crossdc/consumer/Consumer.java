@@ -62,9 +62,9 @@ public class Consumer {
 
         log.info("Consumer startup config properties before adding additional properties from Zookeeper={}", properties);
 
-        String zkConnectString = (String) properties.get(KafkaCrossDcConf.ZK_CONNECT_STRING);
-        if (zkConnectString == null || zkConnectString.isBlank()) {
-            throw new IllegalArgumentException("zkConnectString not specified for Consumer");
+        String zkConnectString = (String) properties.get("zkConnectString");
+        if (zkConnectString == null) {
+            throw new IllegalArgumentException("zkConnectString not specified for producer");
         }
 
         try (SolrZkClient client = new SolrZkClient(zkConnectString, 15000)) {
@@ -88,12 +88,12 @@ public class Consumer {
         }
 
         String bootstrapServers = (String) properties.get(KafkaCrossDcConf.BOOTSTRAP_SERVERS);
-        if (bootstrapServers == null || bootstrapServers.isBlank()) {
+        if (bootstrapServers == null) {
             throw new IllegalArgumentException("bootstrapServers not specified for Consumer");
         }
 
         String topicName = (String) properties.get(TOPIC_NAME);
-        if (topicName == null || topicName.isBlank()) {
+        if (topicName == null) {
             throw new IllegalArgumentException("topicName not specified for Consumer");
         }
 

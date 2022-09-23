@@ -85,7 +85,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
 
         for (ConfigProperty configKey : KafkaCrossDcConf.CONFIG_PROPERTIES) {
             String val = args._getStr(configKey.getKey(), null);
-            if (val != null) {
+            if (val != null && !val.isBlank()) {
                 properties.put(configKey.getKey(), val);
             }
         }
@@ -162,14 +162,14 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
             throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "Exception looking for CrossDC configuration in Zookeeper", e);
         }
 
-        if (properties.get(BOOTSTRAP_SERVERS) == null || ((String)properties.get(BOOTSTRAP_SERVERS)).isBlank()) {
+        if (properties.get(BOOTSTRAP_SERVERS) == null) {
             log.error(
                 "boostrapServers not specified for producer in CrossDC configuration props={} zkProps={}",
                 properties, zkProps);
            throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "boostrapServers not specified for producer");
        }
         
-        if (properties.get(TOPIC_NAME) == null || ((String)properties.get(TOPIC_NAME)).isBlank()) {
+        if (properties.get(TOPIC_NAME) == null) {
             log.error(
                 "topicName not specified for producer in CrossDC configuration props={} zkProps={}",
                 properties, zkProps);
