@@ -78,7 +78,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
     // Create producer for resubmitting failed requests
     log.info("Creating Kafka resubmit producer");
-    this.kafkaMirroringSink = new KafkaMirroringSink(conf);
+    this.kafkaMirroringSink = new KafkaMirroringSink(conf, false);
     log.info("Created Kafka resubmit producer");
 
   }

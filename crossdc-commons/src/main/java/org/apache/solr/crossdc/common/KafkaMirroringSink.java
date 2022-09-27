@@ -38,9 +38,11 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
 
     private final KafkaCrossDcConf conf;
     private final Producer<String, MirroredSolrRequest> producer;
+    private final boolean ignoreProducerSendError;
 
-    public KafkaMirroringSink(final KafkaCrossDcConf conf) {
+    public KafkaMirroringSink(final KafkaCrossDcConf conf, boolean ignoreProducerSendError) {
         // Create Kafka Mirroring Sink
+        this.ignoreProducerSendError = ignoreProducerSendError;
         this.conf = conf;
         this.producer = initProducer();
     }
@@ -75,7 +77,9 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
             String message = "Unable to enqueue request " + request + ", configured retries is" + conf.getInt(KafkaCrossDcConf.NUM_RETRIES) +
                 " and configured max delivery timeout in ms is " + conf.getInt(KafkaCrossDcConf.DELIVERY_TIMEOUT_MS);
             log.error(message, e);
-            throw new MirroringException(message, e);
+            if (!ignoreProducerSendError) {
+                throw new MirroringException(message, e);
+            }
         }
     }
 

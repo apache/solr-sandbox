@@ -182,7 +182,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         KafkaCrossDcConf conf = new KafkaCrossDcConf(properties);
 
 
-        KafkaMirroringSink sink = new KafkaMirroringSink(conf);
+        KafkaMirroringSink sink = new KafkaMirroringSink(conf, conf.getBool(IGNORE_PRODUCER_SEND_ERROR));
 
         Closer closer = new Closer(sink);
         core.addCloseHook(new MyCloseHook(closer));

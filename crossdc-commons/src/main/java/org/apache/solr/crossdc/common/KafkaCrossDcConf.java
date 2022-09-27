@@ -50,6 +50,8 @@ public class KafkaCrossDcConf extends CrossDcConf {
 
   private static final String DEFAULT_GROUP_ID = "SolrCrossDCConsumer";
 
+  private static final String DEFAULT_IGNORE_PRODUCER_SEND_ERROR = "false";
+
 
   public static final String TOPIC_NAME = "topicName";
 
@@ -87,6 +89,8 @@ public class KafkaCrossDcConf extends CrossDcConf {
 
   public static final String ZK_CONNECT_STRING = "zkConnectString";
 
+  public static final String  IGNORE_PRODUCER_SEND_ERROR = "ignoreProducerSendError";
+
 
   public static final List<ConfigProperty> CONFIG_PROPERTIES;
   private static final Map<String, ConfigProperty> CONFIG_PROPERTIES_MAP;
@@ -96,8 +100,6 @@ public class KafkaCrossDcConf extends CrossDcConf {
   public static final String PORT = "port";
 
   public static final String GROUP_ID = "groupId";
-
-
 
   static {
     List<ConfigProperty> configProperties = new ArrayList<>(
@@ -122,6 +124,7 @@ public class KafkaCrossDcConf extends CrossDcConf {
             new ConfigProperty(MAX_PARTITION_FETCH_BYTES, DEFAULT_MAX_PARTITION_FETCH_BYTES),
             new ConfigProperty(MAX_POLL_RECORDS, DEFAULT_MAX_POLL_RECORDS),
             new ConfigProperty(PORT, DEFAULT_PORT),
+            new ConfigProperty(IGNORE_PRODUCER_SEND_ERROR, DEFAULT_IGNORE_PRODUCER_SEND_ERROR),
             new ConfigProperty(GROUP_ID, DEFAULT_GROUP_ID)));
 
 
