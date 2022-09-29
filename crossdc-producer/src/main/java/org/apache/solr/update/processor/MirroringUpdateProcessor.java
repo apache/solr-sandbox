@@ -112,7 +112,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
     boolean isLeader = isLeader(cmd.getReq(),  cmd.getIndexedIdStr(), null, cmd.getSolrInputDocument());
     if (doMirroring && isLeader) {
       if (tooLargeForKafka) {
-        log.warn("Skipping mirroring of doc {} because estimated size exceeds batch size limit {} bytes", maxDocSizeBytes);
+        log.warn("Skipping mirroring of doc {} because estimated size exceeds batch size limit {} bytes", cmd.getPrintableId(), maxDocSizeBytes);
       } else {
         createAndOrGetMirrorRequest().add(doc, cmd.commitWithin, cmd.overwrite);
       }
