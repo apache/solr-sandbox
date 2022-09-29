@@ -111,6 +111,7 @@
   <updateRequestProcessorChain  name="mirrorUpdateChain" default="true">
     <processor class="org.apache.solr.update.processor.MirroringUpdateRequestProcessorFactory">
       <bool name="enabled">${enabled:true}</bool>
+      <bool name="indexUnmirrorableDocs">${indexUnmirrorableDocs:false}</bool>
       <str name="bootstrapServers">${bootstrapServers:}</str>
       <str name="topicName">${topicName:}</str>
     </processor>

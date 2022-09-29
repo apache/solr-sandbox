@@ -71,16 +71,23 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
 
 
     private boolean enabled = true;
+    private boolean indexUnmirrorableDocs = false;
+    private KafkaCrossDcConf conf;
 
     private final Map<String,Object> properties = new HashMap<>();
 
     @Override
     public void init(final NamedList args) {
         super.init(args);
-        Boolean enabled = args.getBooleanArg("enabled");
 
+        Boolean enabled = args.getBooleanArg("enabled");
         if (enabled != null && !enabled) {
             this.enabled = false;
+        }
+
+        final Boolean indexUnmirrorableDocsArg = args.getBooleanArg("indexUnmirrorableDocs");
+        if (indexUnmirrorableDocsArg != null && indexUnmirrorableDocsArg) {
+            this.indexUnmirrorableDocs = true;
         }
 
         for (ConfigProperty configKey : KafkaCrossDcConf.CONFIG_PROPERTIES) {
@@ -179,7 +186,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         // load the request mirroring sink class and instantiate.
        // mirroringHandler = core.getResourceLoader().newInstance(RequestMirroringHandler.class.getName(), KafkaRequestMirroringHandler.class);
 
-        KafkaCrossDcConf conf = new KafkaCrossDcConf(properties);
+        conf = new KafkaCrossDcConf(properties);
 
 
         KafkaMirroringSink sink = new KafkaMirroringSink(conf);
@@ -213,6 +220,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
 
         // Check if mirroring is disabled in request params, defaults to true
         boolean doMirroring = req.getParams().getBool(SERVER_SHOULD_MIRROR, true);
+        final long maxDocSizeBytes = conf.getInt(MAX_REQUEST_SIZE_BYTES);
 
         ModifiableSolrParams mirroredParams = null;
         if (doMirroring) {
@@ -243,7 +251,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
             log.trace("Create MirroringUpdateProcessor with mirroredParams={}", mirroredParams);
         }
 
-        return new MirroringUpdateProcessor(next, doMirroring, mirroredParams,
+        return new MirroringUpdateProcessor(next, doMirroring, indexUnmirrorableDocs, maxDocSizeBytes, mirroredParams,
                 DistribPhase.parseParam(req.getParams().get(DISTRIB_UPDATE_PARAM)), doMirroring ? mirroringHandler : null);
     }
 
