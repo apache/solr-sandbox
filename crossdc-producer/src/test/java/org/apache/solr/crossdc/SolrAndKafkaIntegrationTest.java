@@ -11,8 +11,10 @@ import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import org.apache.lucene.util.QuickPatchThreadsFilter;
 import org.apache.solr.SolrIgnoredThreadsFilter;
 import org.apache.solr.SolrTestCaseJ4;
+import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.BaseHttpSolrClient;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
 import org.apache.solr.client.solrj.request.UpdateRequest;
@@ -28,16 +30,20 @@ import org.apache.solr.crossdc.consumer.Consumer;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.sys.Prop;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import static org.apache.solr.crossdc.common.KafkaCrossDcConf.DEFAULT_MAX_REQUEST_SIZE;
 import static org.mockito.Mockito.spy;
 
 @ThreadLeakFilters(defaultFilters = true, filters = { SolrIgnoredThreadsFilter.class,
@@ -46,6 +52,8 @@ import static org.mockito.Mockito.spy;
     SolrTestCaseJ4 {
 
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+  private static final int MAX_DOC_SIZE_BYTES = Integer.valueOf(DEFAULT_MAX_REQUEST_SIZE);
 
   static final String VERSION_FIELD = "_version_";
 
@@ -60,6 +68,7 @@ import static org.mockito.Mockito.spy;
   private static String TOPIC = "topic1";
 
   private static String COLLECTION = "collection1";
+  private static String ALT_COLLECTION = "collection2";
 
   @BeforeClass
   public static void beforeSolrAndKafkaIntegrationTest() throws Exception {
@@ -108,6 +117,7 @@ import static org.mockito.Mockito.spy;
     properties.put(KafkaCrossDcConf.ZK_CONNECT_STRING, solrCluster2.getZkServer().getZkAddress());
     properties.put(KafkaCrossDcConf.TOPIC_NAME, TOPIC);
     properties.put(KafkaCrossDcConf.GROUP_ID, "group1");
+    properties.put(KafkaCrossDcConf.MAX_REQUEST_SIZE_BYTES, MAX_DOC_SIZE_BYTES);
     consumer.start(properties);
 
   }
@@ -141,6 +151,12 @@ import static org.mockito.Mockito.spy;
     solrCluster2.getSolrClient().deleteByQuery("*:*");
     solrCluster1.getSolrClient().commit();
     solrCluster2.getSolrClient().commit();
+
+    // Delete alternate collection in case it was created by any tests.
+    if (CollectionAdminRequest.listCollections(solrCluster1.getSolrClient()).contains(ALT_COLLECTION)) {
+      solrCluster1.getSolrClient().request(CollectionAdminRequest.deleteCollection(ALT_COLLECTION));
+      solrCluster2.getSolrClient().request(CollectionAdminRequest.deleteCollection(ALT_COLLECTION));
+    }
   }
 
   public void testFullCloudToCloud() throws Exception {
@@ -155,24 +171,7 @@ import static org.mockito.Mockito.spy;
 
     System.out.println("Sent producer record");
 
-    QueryResponse results = null;
-    boolean foundUpdates = false;
-    for (int i = 0; i < 100; i++) {
-      solrCluster2.getSolrClient().commit(COLLECTION);
-      solrCluster1.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
-      results = solrCluster2.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
-      if (results.getResults().getNumFound() == 1) {
-        foundUpdates = true;
-      } else {
-        Thread.sleep(100);
-      }
-    }
-
-    System.out.println("Closed producer");
-
-    assertTrue("results=" + results, foundUpdates);
-    System.out.println("Rest: " + results);
-
+    assertCluster2EventuallyHasDocs(COLLECTION, "*:*", 1);
   }
 
   public void testProducerToCloud() throws Exception {
@@ -202,12 +201,73 @@ import static org.mockito.Mockito.spy;
 
     solrCluster2.getSolrClient().commit(COLLECTION);
 
+    assertCluster2EventuallyHasDocs(COLLECTION, "*:*", 2);
+
+    producer.close();
+  }
+
+  @Test
+  public void testMirroringUpdateProcessor() throws Exception {
+    final SolrInputDocument tooLargeDoc = new SolrInputDocument();
+    tooLargeDoc.addField("id", "tooLarge-" + String.valueOf(System.currentTimeMillis()));
+    tooLargeDoc.addField("text", new String(new byte[2 * MAX_DOC_SIZE_BYTES]));
+    final SolrInputDocument normalDoc = new SolrInputDocument();
+    normalDoc.addField("id", "normalDoc-" + String.valueOf(System.currentTimeMillis()));
+    normalDoc.addField("text", "Hello world");
+    final List<SolrInputDocument> docsToIndex = new ArrayList<>();
+    docsToIndex.add(tooLargeDoc);
+    docsToIndex.add(normalDoc);
+
+    final CloudSolrClient cluster1Client = solrCluster1.getSolrClient();
+    cluster1Client.add(docsToIndex);
+    cluster1Client.commit(COLLECTION);
+
+    // Primary and secondary should each only index 'normalDoc'
+    final String normalDocQuery = "id:" + normalDoc.get("id").getFirstValue();
+    assertCluster2EventuallyHasDocs(COLLECTION, normalDocQuery, 1);
+    assertCluster2EventuallyHasDocs(COLLECTION, "*:*", 1);
+    assertClusterEventuallyHasDocs(cluster1Client, COLLECTION, normalDocQuery, 1);
+    assertClusterEventuallyHasDocs(cluster1Client, COLLECTION, "*:*", 1);
+
+    // Create new primary+secondary collection where 'tooLarge' docs ARE indexed on the primary
+    CollectionAdminRequest.Create create =
+            CollectionAdminRequest.createCollection(ALT_COLLECTION, "conf", 1, 1)
+                    .withProperty("indexUnmirrorableDocs", "true");
+    solrCluster1.getSolrClient().request(create);
+    solrCluster2.getSolrClient().request(create);
+    solrCluster1.waitForActiveCollection(ALT_COLLECTION, 1, 1);
+    solrCluster2.waitForActiveCollection(ALT_COLLECTION, 1, 1);
+
+    cluster1Client.add(ALT_COLLECTION, docsToIndex);
+    cluster1Client.commit(ALT_COLLECTION);
+
+    // Primary should have both 'normal' and 'large' docs; secondary should only have 'normal' doc.
+    assertClusterEventuallyHasDocs(cluster1Client, ALT_COLLECTION, "*:*", 2);
+    assertCluster2EventuallyHasDocs(ALT_COLLECTION, normalDocQuery, 1);
+    assertCluster2EventuallyHasDocs(ALT_COLLECTION, "*:*", 1);
+  }
+
+  private void assertCluster2EventuallyHasDocs(String collection, String query, int expectedNumDocs) throws Exception {
+    assertClusterEventuallyHasDocs(solrCluster2.getSolrClient(), collection, query, expectedNumDocs);
+  }
+
+  private void createCollection(CloudSolrClient client, CollectionAdminRequest.Create createCmd) throws Exception {
+    final String stashedDefault = client.getDefaultCollection();
+    try {
+      //client.setDefaultCollection(null);
+      client.request(createCmd);
+    } finally {
+      //client.setDefaultCollection(stashedDefault);
+    }
+  }
+
+  private void assertClusterEventuallyHasDocs(SolrClient client, String collection, String query, int expectedNumDocs) throws Exception {
     QueryResponse results = null;
     boolean foundUpdates = false;
-    for (int i = 0; i < 50; i++) {
-      solrCluster2.getSolrClient().commit(COLLECTION);
-      results = solrCluster2.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
-      if (results.getResults().getNumFound() == 2) {
+    for (int i = 0; i < 100; i++) {
+      client.commit(collection);
+      results = client.query(collection, new SolrQuery(query));
+      if (results.getResults().getNumFound() == expectedNumDocs) {
         foundUpdates = true;
       } else {
         Thread.sleep(100);
@@ -215,8 +275,5 @@ import static org.mockito.Mockito.spy;
     }
 
     assertTrue("results=" + results, foundUpdates);
-    System.out.println("Rest: " + results);
-
-    producer.close();
   }
 }
