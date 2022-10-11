@@ -21,6 +21,7 @@ import org.apache.solr.common.cloud.SolrZkClient;
 import org.apache.solr.crossdc.common.ConfigProperty;
 import org.apache.solr.crossdc.common.CrossDcConf;
 import org.apache.solr.crossdc.common.KafkaCrossDcConf;
+import org.apache.solr.crossdc.common.SensitivePropRedactionUtils;
 import org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor;
 import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
@@ -60,7 +61,8 @@ public class Consumer {
             }
         }
 
-        log.info("Consumer startup config properties before adding additional properties from Zookeeper={}", properties);
+        log.info("Consumer startup config properties before adding additional properties from Zookeeper={}",
+                SensitivePropRedactionUtils.flattenAndRedactForLogging(properties));
 
         String zkConnectString = (String) properties.get("zkConnectString");
         if (zkConnectString == null) {

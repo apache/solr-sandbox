@@ -23,6 +23,9 @@ import org.apache.kafka.common.config.internals.BrokerSecurityConfigs;
 
 import java.util.*;
 
+import static org.apache.solr.crossdc.common.SensitivePropRedactionUtils.propertyRequiresRedaction;
+import static org.apache.solr.crossdc.common.SensitivePropRedactionUtils.redactPropertyIfNecessary;
+
 public class KafkaCrossDcConf extends CrossDcConf {
 
   public static final String DEFAULT_BATCH_SIZE_BYTES = "2097152";
@@ -245,7 +248,9 @@ public class KafkaCrossDcConf extends CrossDcConf {
     StringBuilder sb = new StringBuilder(128);
     for (ConfigProperty configProperty : CONFIG_PROPERTIES) {
       if (properties.get(configProperty.getKey()) != null) {
-        sb.append(configProperty.getKey()).append("=").append(properties.get(configProperty.getKey())).append(",");
+        final String printablePropertyValue = redactPropertyIfNecessary(configProperty.getKey(),
+                String.valueOf(properties.get(configProperty.getKey())));
+        sb.append(configProperty.getKey()).append("=").append(printablePropertyValue).append(",");
       }
     }
     if (sb.length() > 0) {
@@ -254,5 +259,4 @@ public class KafkaCrossDcConf extends CrossDcConf {
 
     return "KafkaCrossDcConf{" + sb + "}";
   }
-
 }
