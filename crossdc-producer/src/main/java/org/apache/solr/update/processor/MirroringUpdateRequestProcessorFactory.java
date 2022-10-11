@@ -220,7 +220,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
 
         // Check if mirroring is disabled in request params, defaults to true
         boolean doMirroring = req.getParams().getBool(SERVER_SHOULD_MIRROR, true);
-        final long maxDocSizeBytes = conf.getInt(MAX_REQUEST_SIZE_BYTES);
+        final long maxMirroringBatchSizeBytes = conf.getInt(MAX_REQUEST_SIZE_BYTES);
 
         ModifiableSolrParams mirroredParams = null;
         if (doMirroring) {
@@ -251,7 +251,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
             log.trace("Create MirroringUpdateProcessor with mirroredParams={}", mirroredParams);
         }
 
-        return new MirroringUpdateProcessor(next, doMirroring, indexUnmirrorableDocs, maxDocSizeBytes, mirroredParams,
+        return new MirroringUpdateProcessor(next, doMirroring, indexUnmirrorableDocs, maxMirroringBatchSizeBytes, mirroredParams,
                 DistribPhase.parseParam(req.getParams().get(DISTRIB_UPDATE_PARAM)), doMirroring ? mirroringHandler : null);
     }
 

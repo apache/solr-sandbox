@@ -53,7 +53,8 @@ import static org.mockito.Mockito.spy;
 
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  private static final int MAX_DOC_SIZE_BYTES = Integer.valueOf(DEFAULT_MAX_REQUEST_SIZE);
+  private static final int MAX_MIRROR_BATCH_SIZE_BYTES = Integer.valueOf(DEFAULT_MAX_REQUEST_SIZE);
+  private static final int MAX_DOC_SIZE_BYTES = MAX_MIRROR_BATCH_SIZE_BYTES;
 
   static final String VERSION_FIELD = "_version_";
 
@@ -147,10 +148,10 @@ import static org.mockito.Mockito.spy;
   @After
   public void tearDown() throws Exception {
     super.tearDown();
-    solrCluster1.getSolrClient().deleteByQuery("*:*");
-    solrCluster2.getSolrClient().deleteByQuery("*:*");
-    solrCluster1.getSolrClient().commit();
-    solrCluster2.getSolrClient().commit();
+    solrCluster1.getSolrClient().deleteByQuery(COLLECTION, "*:*");
+    solrCluster2.getSolrClient().deleteByQuery(COLLECTION, "*:*");
+    solrCluster1.getSolrClient().commit(COLLECTION);
+    solrCluster2.getSolrClient().commit(COLLECTION);
 
     // Delete alternate collection in case it was created by any tests.
     if (CollectionAdminRequest.listCollections(solrCluster1.getSolrClient()).contains(ALT_COLLECTION)) {
@@ -245,6 +246,24 @@ import static org.mockito.Mockito.spy;
     assertClusterEventuallyHasDocs(cluster1Client, ALT_COLLECTION, "*:*", 2);
     assertCluster2EventuallyHasDocs(ALT_COLLECTION, normalDocQuery, 1);
     assertCluster2EventuallyHasDocs(ALT_COLLECTION, "*:*", 1);
+
+    // Index batch of docs that will exceed the max mirroring batch size cumulatively (but not individually)
+    // Batch consists of 100 docs each roughly 1/100th of the max-batch-size
+    docsToIndex.clear();
+    for (int i = 0; i < 100; i++) {
+      final SolrInputDocument doc = new SolrInputDocument();
+      doc.addField("id", "cumulativelyTooLarge-" + System.currentTimeMillis() + "-" + i);
+      doc.addField("cumulativelyTooLarge_b", "true");
+      doc.addField("text", new String(new byte[MAX_MIRROR_BATCH_SIZE_BYTES / 100]));
+      docsToIndex.add(doc);
+    }
+    cluster1Client.add(ALT_COLLECTION, docsToIndex);
+    cluster1Client.commit(ALT_COLLECTION);
+
+    final String cumulativelyTooLargeQuery = "cumulativelyTooLarge_b:true";
+    // Primary (but not secondary) should have 100 additional docs
+    assertClusterEventuallyHasDocs(cluster1Client, ALT_COLLECTION, cumulativelyTooLargeQuery, 100);
+    assertCluster2EventuallyHasDocs(ALT_COLLECTION, cumulativelyTooLargeQuery, 0);
   }
 
   private void assertCluster2EventuallyHasDocs(String collection, String query, int expectedNumDocs) throws Exception {
