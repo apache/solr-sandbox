@@ -261,9 +261,8 @@ import static org.mockito.Mockito.spy;
     cluster1Client.commit(ALT_COLLECTION);
 
     final String cumulativelyTooLargeQuery = "cumulativelyTooLarge_b:true";
-    // Primary (but not secondary) should have 5 additional docs
+    // Primary (but not secondary) should have 100 additional docs
     assertClusterEventuallyHasDocs(cluster1Client, ALT_COLLECTION, cumulativelyTooLargeQuery, 100);
-    assertCluster2EventuallyHasDocs(ALT_COLLECTION, cumulativelyTooLargeQuery, 0);
     assertCluster2EventuallyHasDocs(ALT_COLLECTION, cumulativelyTooLargeQuery, 0);
   }
 
