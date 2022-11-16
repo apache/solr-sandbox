@@ -14,11 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.apache.solr.crossdc.messageprocessor;
 
-rootProject.name = 'crossdc-consumer'
+import org.apache.solr.crossdc.common.ResubmitBackoffPolicy;
 
-description = 'Module for Apache Solr Cross DC Consumer'
+public abstract class MessageProcessor {
 
-subprojects {
-    group "org.apache.solr.crossdc"
+  private final ResubmitBackoffPolicy resubmitBackoffPolicy;
+
+  public MessageProcessor(ResubmitBackoffPolicy resubmitBackoffPolicy) {
+    this.resubmitBackoffPolicy = resubmitBackoffPolicy;
+  }
+
+  public ResubmitBackoffPolicy getResubmitBackoffPolicy() {
+    return resubmitBackoffPolicy;
+  }
 }
