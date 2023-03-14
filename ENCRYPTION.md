@@ -112,3 +112,16 @@ different key id is ongoing on the same Solr core. It cannot start a new encrypt
 
 If the handler returns a response with `status`=`failure`, it means the request did not succeed and should be
 retried by the caller (there should be error logs).
+
+## Encryption Algorithm
+
+This encryption module implements AES-CTR.
+
+AES-CTR compared to AES-XTS:
+Lucene produces read-only files per index segment. Since we have a new random IV per file, we don't repeat
+the same AES encrypted blocks. So we are in a safe write-once case where AES-XTS and AES-CTR have the same
+strength [1][2]. CTR was chosen because it is simpler.
+
+[1] https://crypto.stackexchange.com/questions/64556/aes-xts-vs-aes-ctr-for-write-once-storage
+
+[2] https://crypto.stackexchange.com/questions/14628/why-do-we-use-xts-over-ctr-for-disk-encryption
