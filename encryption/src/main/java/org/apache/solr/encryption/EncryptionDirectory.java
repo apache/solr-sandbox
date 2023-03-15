@@ -58,7 +58,7 @@ import static org.apache.solr.encryption.EncryptionUtil.*;
  * commit user data, then the output is wrapped with a {@link EncryptingIndexOutput} to be encrypted
  * on the fly. In this case an {@link #ENCRYPTION_MAGIC} header is written at the beginning of the output,
  * followed by the key reference number.
- * Otherwise, the {{@link IndexOutput} created by the delegate is directly provided without encryption.
+ * Otherwise, the {@link IndexOutput} created by the delegate is directly provided without encryption.
  * <p>
  * When opening an {@link IndexInput} for reading:
  * <br>If the input header is the {@link #ENCRYPTION_MAGIC}, then the key reference number that follows

@@ -92,7 +92,7 @@ encryption key id in the commit metadata. It supports all the configuration para
 Once Solr is set up, it is ready to encrypt. To set the encryption key id to use, the Solr client
 calls the `EncryptionRequestHandler` at `/admin/encrypt`.
 
-`EncryptionRequestHandler` handles an encryption request for a specific {@link SolrCore}.
+`EncryptionRequestHandler` handles an encryption request for a specific Solr core.
 
 The caller provides the mandatory `encryptionKeyId` request parameter to define the encryption
 key id to use to encrypt the index files. To decrypt the index to cleartext, the special parameter
@@ -100,7 +100,7 @@ value `no_key_id` must be provided.
 
 The encryption processing is asynchronous. The request returns immediately with two response parameters.
 - `encryptionState` parameter with value either `pending`, `complete`, or `busy`.
-- `status` parameter with values `success` or `failure`.
+- `status` parameter with values either `success` or `failure`.
 
 The expected usage of this handler is to first send an encryption request with a key id, and to receive
 a response with `status`=`success` and `encryptionState`=`pending`. If the caller needs to know when the
@@ -130,7 +130,7 @@ strength [1][2]. CTR was chosen because it is simpler.
 
 The performance benchmark was run in LUCENE-9379. Here is the summary:
 
-- An OS-level encryption is best and fastest.
+- An OS-level encryption is better and faster.
 - If really it’s not possible, expect an average of -20% perf impact on most queries, -60% on multi-term queries.
 - You can use the `LightAesCtrEncrypter$Factory` to get +10% perf. This is a simple config change. See the
 solrconfig.xml configuration section above.
