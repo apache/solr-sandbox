@@ -125,3 +125,15 @@ strength [1][2]. CTR was chosen because it is simpler.
 [1] https://crypto.stackexchange.com/questions/64556/aes-xts-vs-aes-ctr-for-write-once-storage
 
 [2] https://crypto.stackexchange.com/questions/14628/why-do-we-use-xts-over-ctr-for-disk-encryption
+
+## Performance Notes
+
+The performance benchmark was run in LUCENE-9379. Here is the summary:
+
+- An OS-level encryption is best and fastest.
+- If really it’s not possible, expect an average of -20% perf impact on most queries, -60% on multi-term queries.
+- You can use the `LightAesCtrEncrypter$Factory` to get +10% perf. This is a simple config change. See the
+solrconfig.xml configuration section above.
+- You can make the Lucene Codec store its FST on heap and expect +15% perf, at the price of more Java heap usage.
+This requires a code change. See `org.apache.lucene.util.fst.FSTStore` implementations and usage in
+`org.apache.lucene.codecs.lucene90.blocktree.FieldReader`.
