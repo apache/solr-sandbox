@@ -168,13 +168,13 @@ public class LightAesCtrEncrypter implements AesCtrEncrypter {
       hack.counterModeCryptMethod.setAccessible(true);
     } catch (SecurityException se) {
       hack.hackFailure = new UnsupportedOperationException(LightAesCtrEncrypter.class.getName() + " is not supported"
-        + " because not all required permissions are given to the Lucene JAR file: " + se +
+        + " because not all required permissions are given to the Encryption JAR file: " + se +
         " [To support it, grant at least the following permissions:" +
         " RuntimePermission(\"accessClassInPackage.com.sun.crypto.provider\") " +
         " and ReflectPermission(\"suppressAccessChecks\")]", se);
     } catch (ReflectiveOperationException | RuntimeException e) {
       hack.hackFailure = new UnsupportedOperationException(LightAesCtrEncrypter.class.getName() + " is not supported"
-        + " on this platform because internal Java APIs are not compatible with this Lucene version: " + e, e);
+        + " on this platform because internal Java APIs are not compatible with this Solr version: " + e, e);
     }
     if (hack.hackFailure != null) {
       hack.aesCryptConstructor = null;

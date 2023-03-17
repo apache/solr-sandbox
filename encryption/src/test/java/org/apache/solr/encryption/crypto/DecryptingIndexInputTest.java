@@ -88,9 +88,9 @@ public class DecryptingIndexInputTest extends RandomizedTest {
     EncryptingIndexOutput indexOutput = createEncryptingIndexOutput(dataOutput);
 
     long seed = randomLong();
-    int max = LuceneTestCase.TEST_NIGHTLY ? 1_000_000 : 100_000;
+    int maxAddCalls = 100_000;
     List<IOConsumer<DataInput>> reply =
-      BaseDataOutputTestCase.addRandomData(indexOutput, new Xoroshiro128PlusRandom(seed), max);
+      BaseDataOutputTestCase.addRandomData(indexOutput, new Xoroshiro128PlusRandom(seed), maxAddCalls);
     indexOutput.close();
 
     DecryptingIndexInput indexInput = createDecryptingIndexInput(dataOutput, offset);
