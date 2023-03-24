@@ -60,8 +60,6 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         implements SolrCoreAware, UpdateRequestProcessorFactory.RunAlways {
 
     private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-    public static final NoOpUpdateRequestProcessor NO_OP_UPDATE_REQUEST_PROCESSOR =
-        new NoOpUpdateRequestProcessor();
 
     // Flag for mirroring requests
     public static final String SERVER_SHOULD_MIRROR = "shouldMirror";
@@ -210,7 +208,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
                                                 final UpdateRequestProcessor next) {
 
         if (!enabled) {
-            return NO_OP_UPDATE_REQUEST_PROCESSOR;
+            return new NoOpUpdateRequestProcessor(next);
         }
 
         // if the class fails to initialize
@@ -256,8 +254,8 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
     }
 
     private static class NoOpUpdateRequestProcessor extends UpdateRequestProcessor {
-        NoOpUpdateRequestProcessor() {
-            super(null);
+        NoOpUpdateRequestProcessor(UpdateRequestProcessor next) {
+            super(next);
         }
     }
 
