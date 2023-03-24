@@ -22,7 +22,6 @@ import org.apache.solr.crossdc.common.ConfigProperty;
 import org.apache.solr.crossdc.common.CrossDcConf;
 import org.apache.solr.crossdc.common.KafkaCrossDcConf;
 import org.apache.solr.crossdc.common.SensitivePropRedactionUtils;
-import org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor;
 import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,8 +31,10 @@ import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static org.apache.solr.crossdc.common.KafkaCrossDcConf.*;
 
@@ -46,6 +47,8 @@ public class Consumer {
 
     private Server server;
     private CrossDcConsumer crossDcConsumer;
+
+    private CountDownLatch startLatch = new CountDownLatch(1);
 
 
     public void start() {
@@ -104,25 +107,29 @@ public class Consumer {
         //connector.setPort(port);
         //server.setConnectors(new Connector[] {connector})
         KafkaCrossDcConf conf = new KafkaCrossDcConf(properties);
-        crossDcConsumer = getCrossDcConsumer(conf);
+        crossDcConsumer = getCrossDcConsumer(conf, startLatch);
 
         // Start consumer thread
 
         log.info("Starting CrossDC Consumer {}", conf);
 
-        /**
-         * ExecutorService to manage the cross-dc consumer threads.
-         */
         ExecutorService consumerThreadExecutor = Executors.newSingleThreadExecutor();
         consumerThreadExecutor.submit(crossDcConsumer);
 
         // Register shutdown hook
         Thread shutdownHook = new Thread(() -> System.out.println("Shutting down consumers!"));
         Runtime.getRuntime().addShutdownHook(shutdownHook);
+
+        try {
+            startLatch.await(30, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new SolrException(SolrException.ErrorCode.SERVICE_UNAVAILABLE, e);
+        }
     }
 
-    private CrossDcConsumer getCrossDcConsumer(KafkaCrossDcConf conf) {
-        return new KafkaCrossDcConsumer(conf);
+    private CrossDcConsumer getCrossDcConsumer(KafkaCrossDcConf conf, CountDownLatch startLatch) {
+        return new KafkaCrossDcConsumer(conf, startLatch);
     }
 
     public static void main(String[] args) {
@@ -141,7 +148,6 @@ public class Consumer {
      * Abstract class for defining cross-dc consumer
      */
     public abstract static class CrossDcConsumer implements Runnable {
-        SolrMessageProcessor messageProcessor;
         abstract void shutdown();
 
     }

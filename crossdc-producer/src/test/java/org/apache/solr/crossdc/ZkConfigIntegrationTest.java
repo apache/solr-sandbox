@@ -135,6 +135,15 @@ import java.util.Properties;
   public static void afterSolrAndKafkaIntegrationTest() throws Exception {
     ObjectReleaseTracker.clear();
 
+    if (solrCluster1 != null) {
+      solrCluster1.getZkServer().getZkClient().printLayoutToStdOut();
+      solrCluster1.shutdown();
+    }
+    if (solrCluster2 != null) {
+      solrCluster2.getZkServer().getZkClient().printLayoutToStdOut();
+      solrCluster2.shutdown();
+    }
+
     consumer1.shutdown();
     consumer2.shutdown();
 
@@ -144,14 +153,6 @@ import java.util.Properties;
       log.error("Exception stopping Kafka cluster", e);
     }
 
-    if (solrCluster1 != null) {
-      solrCluster1.getZkServer().getZkClient().printLayoutToStdOut();
-      solrCluster1.shutdown();
-    }
-    if (solrCluster2 != null) {
-      solrCluster2.getZkServer().getZkClient().printLayoutToStdOut();
-      solrCluster2.shutdown();
-    }
   }
 
   @After
