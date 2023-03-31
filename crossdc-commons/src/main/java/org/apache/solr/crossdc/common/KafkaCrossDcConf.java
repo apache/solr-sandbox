@@ -23,7 +23,6 @@ import org.apache.kafka.common.config.internals.BrokerSecurityConfigs;
 
 import java.util.*;
 
-import static org.apache.solr.crossdc.common.SensitivePropRedactionUtils.propertyRequiresRedaction;
 import static org.apache.solr.crossdc.common.SensitivePropRedactionUtils.redactPropertyIfNecessary;
 
 public class KafkaCrossDcConf extends CrossDcConf {
@@ -34,9 +33,12 @@ public class KafkaCrossDcConf extends CrossDcConf {
   public static final String DEFAULT_REQUEST_TIMEOUT = "60000";
   public static final String DEFAULT_MAX_REQUEST_SIZE = "5242880";
   public static final String DEFAULT_ENABLE_DATA_COMPRESSION = "none";
+  private static final String DEFAULT_INDEX_UNMIRRORABLE_DOCS = "false";
   public static final String DEFAULT_SLOW_SEND_THRESHOLD= "1000";
   public static final String DEFAULT_NUM_RETRIES = null; // by default, we control retries with DELIVERY_TIMEOUT_MS_DOC
   private static final String DEFAULT_RETRY_BACKOFF_MS = "500";
+
+  private static final String DEFAULT_CONSUMER_PROCESSING_THREADS = "5";
 
   private static final String DEFAULT_DELIVERY_TIMEOUT_MS = "120000";
 
@@ -70,11 +72,15 @@ public class KafkaCrossDcConf extends CrossDcConf {
 
   public static final String ENABLE_DATA_COMPRESSION = "enableDataCompression";
 
+  public static final String INDEX_UNMIRRORABLE_DOCS = "indexUnmirrorableDocs";
+
   public static final String SLOW_SUBMIT_THRESHOLD_MS = "slowSubmitThresholdMs";
 
   public static final String NUM_RETRIES = "numRetries";
 
   public static final String RETRY_BACKOFF_MS = "retryBackoffMs";
+
+  public static final String CONSUMER_PROCESSING_THREADS = "consumerProcessingThreads";
 
   public static final String DELIVERY_TIMEOUT_MS = "retryBackoffMs";
 
@@ -100,8 +106,6 @@ public class KafkaCrossDcConf extends CrossDcConf {
 
   public static final String GROUP_ID = "groupId";
 
-
-
   static {
     List<ConfigProperty> configProperties = new ArrayList<>(
         List.of(new ConfigProperty(TOPIC_NAME), new ConfigProperty(BOOTSTRAP_SERVERS),
@@ -111,6 +115,7 @@ public class KafkaCrossDcConf extends CrossDcConf {
             new ConfigProperty(REQUEST_TIMEOUT_MS, DEFAULT_REQUEST_TIMEOUT),
             new ConfigProperty(MAX_REQUEST_SIZE_BYTES, DEFAULT_MAX_REQUEST_SIZE),
             new ConfigProperty(ENABLE_DATA_COMPRESSION, DEFAULT_ENABLE_DATA_COMPRESSION),
+            new ConfigProperty(INDEX_UNMIRRORABLE_DOCS, DEFAULT_INDEX_UNMIRRORABLE_DOCS),
             new ConfigProperty(SLOW_SUBMIT_THRESHOLD_MS, DEFAULT_SLOW_SEND_THRESHOLD),
             new ConfigProperty(NUM_RETRIES, DEFAULT_NUM_RETRIES),
             new ConfigProperty(RETRY_BACKOFF_MS, DEFAULT_RETRY_BACKOFF_MS),
@@ -121,6 +126,7 @@ public class KafkaCrossDcConf extends CrossDcConf {
             new ConfigProperty(FETCH_MIN_BYTES, DEFAULT_FETCH_MIN_BYTES),
             new ConfigProperty(FETCH_MAX_BYTES, DEFAULT_FETCH_MAX_BYTES),
             new ConfigProperty(FETCH_MAX_WAIT_MS, DEFAULT_FETCH_MAX_WAIT_MS),
+            new ConfigProperty(CONSUMER_PROCESSING_THREADS, DEFAULT_CONSUMER_PROCESSING_THREADS),
 
             new ConfigProperty(MAX_PARTITION_FETCH_BYTES, DEFAULT_MAX_PARTITION_FETCH_BYTES),
             new ConfigProperty(MAX_POLL_RECORDS, DEFAULT_MAX_POLL_RECORDS),

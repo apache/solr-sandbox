@@ -105,6 +105,15 @@ import java.util.*;
   public static void afterSolrAndKafkaIntegrationTest() throws Exception {
     ObjectReleaseTracker.clear();
 
+    if (solrCluster1 != null) {
+      solrCluster1.getZkServer().getZkClient().printLayoutToStdOut();
+      solrCluster1.shutdown();
+    }
+    if (solrCluster2 != null) {
+      solrCluster2.getZkServer().getZkClient().printLayoutToStdOut();
+      solrCluster2.shutdown();
+    }
+
     consumer.shutdown();
 
     try {
@@ -115,14 +124,6 @@ import java.util.*;
       log.error("Exception stopping Kafka cluster", e);
     }
 
-    if (solrCluster1 != null) {
-      solrCluster1.getZkServer().getZkClient().printLayoutToStdOut();
-      solrCluster1.shutdown();
-    }
-    if (solrCluster2 != null) {
-      solrCluster2.getZkServer().getZkClient().printLayoutToStdOut();
-      solrCluster2.shutdown();
-    }
   }
 
   @After
@@ -141,7 +142,7 @@ import java.util.*;
 
     QueryResponse results = null;
     boolean foundUpdates = false;
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 100; i++) {
       solrCluster2.getSolrClient().commit(COLLECTION);
       solrCluster1.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
       results = solrCluster2.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
@@ -160,17 +161,18 @@ import java.util.*;
     assertEquals("results=" + results1, 7, results1.getResults().getNumFound());
     assertEquals("results=" + results2, 7, results2.getResults().getNumFound());
 
+    System.out.println("adding second docs");
     addDocs(client, "second");
 
     foundUpdates = false;
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 100; i++) {
       solrCluster2.getSolrClient().commit(COLLECTION);
-      solrCluster1.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
-      results = solrCluster2.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
+      solrCluster1.getSolrClient().query(COLLECTION, new SolrQuery("text:second"));
+      results = solrCluster2.getSolrClient().query(COLLECTION, new SolrQuery("text:second"));
       if (results.getResults().getNumFound() == 7) {
         foundUpdates = true;
       } else {
-        Thread.sleep(100);
+        Thread.sleep(200);
       }
     }
 
@@ -179,8 +181,8 @@ import java.util.*;
     assertTrue("results=" + results, foundUpdates);
     System.out.println("Rest: " + results);
 
-    results1 =solrCluster1.getSolrClient().query(COLLECTION, new SolrQuery("second"));
-    results2 = solrCluster2.getSolrClient().query(COLLECTION, new SolrQuery("second"));
+    results1 =solrCluster1.getSolrClient().query(COLLECTION, new SolrQuery("text:second"));
+    results2 = solrCluster2.getSolrClient().query(COLLECTION, new SolrQuery("text:second"));
 
     assertEquals("results=" + results1, 7, results1.getResults().getNumFound());
     assertEquals("results=" + results2, 7, results2.getResults().getNumFound());
@@ -188,10 +190,10 @@ import java.util.*;
     addDocs(client, "third");
 
     foundUpdates = false;
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 100; i++) {
       solrCluster2.getSolrClient().commit(COLLECTION);
-      solrCluster1.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
-      results = solrCluster2.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
+      solrCluster1.getSolrClient().query(COLLECTION, new SolrQuery("text:third"));
+      results = solrCluster2.getSolrClient().query(COLLECTION, new SolrQuery("text:third"));
       if (results.getResults().getNumFound() == 7) {
         foundUpdates = true;
       } else {
@@ -204,8 +206,8 @@ import java.util.*;
     assertTrue("results=" + results, foundUpdates);
     System.out.println("Rest: " + results);
 
-    results1 =solrCluster1.getSolrClient().query(COLLECTION, new SolrQuery("third"));
-    results2 = solrCluster2.getSolrClient().query(COLLECTION, new SolrQuery("third"));
+    results1 =solrCluster1.getSolrClient().query(COLLECTION, new SolrQuery("text:third"));
+    results2 = solrCluster2.getSolrClient().query(COLLECTION, new SolrQuery("text:third"));
 
     assertEquals("results=" + results1, 7, results1.getResults().getNumFound());
     assertEquals("results=" + results2, 7, results2.getResults().getNumFound());
