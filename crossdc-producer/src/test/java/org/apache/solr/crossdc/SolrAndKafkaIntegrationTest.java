@@ -57,10 +57,10 @@ import static org.mockito.Mockito.spy;
   static final String VERSION_FIELD = "_version_";
 
   private static final int NUM_BROKERS = 1;
-  public EmbeddedKafkaCluster kafkaCluster;
+  public static EmbeddedKafkaCluster kafkaCluster;
 
-  protected volatile MiniSolrCloudCluster solrCluster1;
-  protected volatile MiniSolrCloudCluster solrCluster2;
+  protected static volatile MiniSolrCloudCluster solrCluster1;
+  protected static volatile MiniSolrCloudCluster solrCluster2;
 
   protected static volatile Consumer consumer;
 
@@ -68,10 +68,10 @@ import static org.mockito.Mockito.spy;
 
   private static String COLLECTION = "collection1";
   private static String ALT_COLLECTION = "collection2";
-  private Thread.UncaughtExceptionHandler uceh;
+  private static Thread.UncaughtExceptionHandler uceh;
 
-  @Before
-  public void beforeSolrAndKafkaIntegrationTest() throws Exception {
+  @BeforeClass
+  public static void beforeSolrAndKafkaIntegrationTest() throws Exception {
     uceh = Thread.getDefaultUncaughtExceptionHandler();
     Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
       log.error("Uncaught exception in thread " + t, e);
@@ -127,8 +127,8 @@ import static org.mockito.Mockito.spy;
 
   }
 
-  @After
-  public void afterSolrAndKafkaIntegrationTest() throws Exception {
+  @AfterClass
+  public static void afterSolrAndKafkaIntegrationTest() throws Exception {
     ObjectReleaseTracker.clear();
 
     if (solrCluster1 != null) {
@@ -211,12 +211,12 @@ import static org.mockito.Mockito.spy;
   @Test
   public void testMirroringUpdateProcessor() throws Exception {
     final SolrInputDocument tooLargeDoc = new SolrInputDocument();
-    tooLargeDoc.addField("id", "tooLarge-" + System.currentTimeMillis());
+    tooLargeDoc.addField("id", System.nanoTime());
     tooLargeDoc.addField("text", new String(new byte[2 * MAX_DOC_SIZE_BYTES]));
     final SolrInputDocument normalDoc = new SolrInputDocument();
-    normalDoc.addField("id", "normalDoc-" + System.currentTimeMillis());
+    normalDoc.addField("id", System.nanoTime());
     normalDoc.addField("text", "Hello world");
-    final List<SolrInputDocument> docsToIndex = new ArrayList<>();
+    List<SolrInputDocument> docsToIndex = new ArrayList<>();
     docsToIndex.add(normalDoc);
     docsToIndex.add(tooLargeDoc);
 
@@ -227,6 +227,8 @@ import static org.mockito.Mockito.spy;
       // expected
     }
     cluster1Client.commit(COLLECTION);
+
+
 
     // Primary and secondary should each only index 'normalDoc'
     final String normalDocQuery = "id:" + normalDoc.get("id").getFirstValue();
@@ -247,6 +249,21 @@ import static org.mockito.Mockito.spy;
 
       cluster1Client.add(ALT_COLLECTION, docsToIndex);
       cluster1Client.commit(ALT_COLLECTION);
+
+      // try adding another doc
+//      final SolrInputDocument newDoc = new SolrInputDocument();
+//
+//      newDoc.addField("id", System.nanoTime());
+//      newDoc.addField("text", "Hello world");
+//      docsToIndex = new ArrayList<>();
+//      docsToIndex.add(newDoc);
+//
+//    try {
+//      cluster1Client.add(ALT_COLLECTION, docsToIndex);
+//    } catch (BaseCloudSolrClient.RouteException e) {
+//      // expected
+//    }
+//      cluster1Client.commit(ALT_COLLECTION);
 
       // Primary should have both 'normal' and 'large' docs; secondary should only have 'normal' doc.
       assertClusterEventuallyHasDocs(cluster1Client, ALT_COLLECTION, "*:*", 2);
@@ -277,7 +294,7 @@ import static org.mockito.Mockito.spy;
   private void assertClusterEventuallyHasDocs(SolrClient client, String collection, String query, int expectedNumDocs) throws Exception {
     QueryResponse results = null;
     boolean foundUpdates = false;
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 20; i++) {
       client.commit(collection);
       results = client.query(collection, new SolrQuery(query));
       if (results.getResults().getNumFound() == expectedNumDocs) {

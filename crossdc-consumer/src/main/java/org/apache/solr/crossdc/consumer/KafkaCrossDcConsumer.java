@@ -173,6 +173,10 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
       ConsumerRecords<String,MirroredSolrRequest> records = consumer.poll(Duration.ofMillis(KAFKA_CONSUMER_POLL_TIMEOUT_MS));
 
+      if (log.isTraceEnabled()) {
+        log.trace("poll return {} records", records.count());
+      }
+
       UpdateRequest solrReqBatch = null;
 
       ConsumerRecord<String,MirroredSolrRequest> lastRecord = null;
@@ -336,9 +340,6 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
   void processResult(ConsumerRecord<String,MirroredSolrRequest> record, IQueueHandler.Result<MirroredSolrRequest> result) throws MirroringException {
     switch (result.status()) {
       case FAILED_RESUBMIT:
-        // currently, we use a strategy taken from an earlier working implementation
-        // of just resubmitting back to the queue - note that in rare cases, this could
-        // allow for incorrect update reorders
         if (log.isTraceEnabled()) {
           log.trace("result=failed-resubmit");
         }
@@ -430,7 +431,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
     return new KafkaMirroringSink(conf);
   }
 
-  private class PartitionWork {
+  private static class PartitionWork {
     private final Queue<WorkUnit> partitionQueue = new LinkedList<>();
   }
 
