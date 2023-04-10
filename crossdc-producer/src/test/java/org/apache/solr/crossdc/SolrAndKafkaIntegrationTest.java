@@ -214,7 +214,7 @@ import static org.mockito.Mockito.spy;
     tooLargeDoc.addField("id", System.nanoTime());
     tooLargeDoc.addField("text", new String(new byte[2 * MAX_DOC_SIZE_BYTES]));
     final SolrInputDocument normalDoc = new SolrInputDocument();
-    normalDoc.addField("id", System.nanoTime());
+    normalDoc.addField("id", System.nanoTime() + 22);
     normalDoc.addField("text", "Hello world");
     List<SolrInputDocument> docsToIndex = new ArrayList<>();
     docsToIndex.add(normalDoc);
