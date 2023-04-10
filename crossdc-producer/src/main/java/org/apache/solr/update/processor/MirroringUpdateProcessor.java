@@ -29,10 +29,10 @@ import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static org.apache.solr.common.SolrException.ErrorCode.SERVER_ERROR;
 
+// review this code for bugs and performance improvements
 public class MirroringUpdateProcessor extends UpdateRequestProcessor {
 
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -42,14 +42,12 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
    * necessary to prevent circular mirroring between coupled cluster running this processor.
    */
   private final boolean doMirroring;
-  private final RequestMirroringHandler requestMirroringHandler;
+  final RequestMirroringHandler requestMirroringHandler;
 
   /**
    * The mirrored request starts as null, gets created and appended to at each process() call,
    * then submitted on finish().
    */
-  private UpdateRequest mirrorRequest;
-  private long mirrorRequestBytes;
   private final SolrParams mirrorParams;
 
 
@@ -57,7 +55,8 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
    * Controls whether docs exceeding the max-size (and thus cannot be mirrored) are indexed locally.
    */
   private final boolean indexUnmirrorableDocs;
-  private final long maxMirroringBatchSizeBytes;
+
+  private final long maxMirroringDocSizeBytes;
 
 
   /**
@@ -79,7 +78,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
     super(next);
     this.doMirroring = doMirroring;
     this.indexUnmirrorableDocs = indexUnmirrorableDocs;
-    this.maxMirroringBatchSizeBytes = maxMirroringBatchSizeBytes;
+    this.maxMirroringDocSizeBytes = maxMirroringBatchSizeBytes;
     this.mirrorParams = mirroredReqParams;
     this.distribPhase = distribPhase;
     this.requestMirroringHandler = requestMirroringHandler;
@@ -88,43 +87,47 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
 
   }
 
-  private UpdateRequest createAndOrGetMirrorRequest() {
-    if (mirrorRequest == null) {
-      mirrorRequest = new UpdateRequest();
+  UpdateRequest createMirrorRequest() {
+    UpdateRequest mirrorRequest = new UpdateRequest();
       mirrorRequest.setParams(new ModifiableSolrParams(mirrorParams));
-      mirrorRequestBytes = 0L;
-    }
-    if (log.isDebugEnabled())
-      log.debug("createOrGetMirrorRequest={}",
-          mirrorRequest);
-    return mirrorRequest;
+      return mirrorRequest;
   }
 
   @Override public void processAdd(final AddUpdateCommand cmd) throws IOException {
-
+    UpdateRequest mirrorRequest = createMirrorRequest();
     final SolrInputDocument doc = cmd.getSolrInputDocument().deepCopy();
     doc.removeField(CommonParams.VERSION_FIELD); // strip internal doc version
     final long estimatedDocSizeInBytes = ObjectSizeEstimator.estimate(doc);
-    final boolean tooLargeForKafka = estimatedDocSizeInBytes > maxMirroringBatchSizeBytes;
+    log.info("estimated doc size is {} bytes, max size is {}", estimatedDocSizeInBytes, maxMirroringDocSizeBytes);
+    final boolean tooLargeForKafka = estimatedDocSizeInBytes > maxMirroringDocSizeBytes;
     if (tooLargeForKafka && !indexUnmirrorableDocs) {
-      log.warn("Skipping indexing of doc {} as it exceeds the doc-size limit ({} bytes) and is unmirrorable.", cmd.getPrintableId(), maxMirroringBatchSizeBytes);
-    } else {
-      super.processAdd(cmd); // let this throw to prevent mirroring invalid reqs
+      throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "Update exceeds the doc-size limit and is unmirrorable. id="
+
+          + cmd.getPrintableId() + " doc size=" + estimatedDocSizeInBytes + " maxDocSize=" + maxMirroringDocSizeBytes);
+    } else if (tooLargeForKafka) {
+      log.warn(
+          "Skipping mirroring of doc {} as it exceeds the doc-size limit ({} bytes) and is unmirrorable. doc size={}",
+          cmd.getPrintableId(), maxMirroringDocSizeBytes, estimatedDocSizeInBytes);
     }
+
+    super.processAdd(cmd); // let this throw to prevent mirroring invalid reqs
 
     // submit only from the leader shards so we mirror each doc once
     boolean isLeader = isLeader(cmd.getReq(),  cmd.getIndexedIdStr(), null, cmd.getSolrInputDocument());
-    if (doMirroring && isLeader) {
-      if (tooLargeForKafka) {
-        log.error("Skipping mirroring of doc {} because estimated size exceeds batch size limit {} bytes", cmd.getPrintableId(), maxMirroringBatchSizeBytes);
-      } else {
-        createAndOrGetMirrorRequest().add(doc, cmd.commitWithin, cmd.overwrite);
-        mirrorRequestBytes += estimatedDocSizeInBytes;
+    if (!tooLargeForKafka && doMirroring && isLeader) {
+
+      mirrorRequest.add(doc, cmd.commitWithin, cmd.overwrite);
+
+      try {
+        requestMirroringHandler.mirror(mirrorRequest);
+      } catch (Exception e) {
+        log.error("mirror submit failed", e);
+        throw new SolrException(SERVER_ERROR, "mirror submit failed", e);
       }
     }
 
     if (log.isDebugEnabled())
-      log.debug("processAdd isLeader={} cmd={}", isLeader, cmd);
+      log.debug("processAdd isLeader={} doMirroring={} tooLargeForKafka={} cmd={}", isLeader, doMirroring, tooLargeForKafka, cmd);
   }
 
   @Override public void processDelete(final DeleteUpdateCommand cmd) throws IOException {
@@ -175,12 +178,21 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
 
     if (doMirroring) {
       boolean isLeader = false;
+      UpdateRequest mirrorRequest = createMirrorRequest();
       if (cmd.isDeleteById()) {
         // deleteById requests runs once per leader, so we just submit the request from the leader shard
         isLeader = isLeader(cmd.getReq(),  ((DeleteUpdateCommand)cmd).getId(), null != cmd.getRoute() ? cmd.getRoute() : cmd.getReq().getParams().get(
             ShardParams._ROUTE_), null);
         if (isLeader) {
-          createAndOrGetMirrorRequest().deleteById(cmd.getId()); // strip versions from deletes
+
+          mirrorRequest.deleteById(cmd.getId()); // strip versions from deletes
+
+          try {
+            requestMirroringHandler.mirror(mirrorRequest);
+          } catch (Exception e) {
+            log.error("mirror submit failed", e);
+            throw new SolrException(SERVER_ERROR, "mirror submit failed", e);
+          }
         }
         if (log.isDebugEnabled())
           log.debug("processDelete doMirroring={} isLeader={} cmd={}", true, isLeader, cmd);
@@ -191,7 +203,14 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
         // TODO: Can we actually support this considering DBQs aren't versioned.
 
         if (distribPhase == DistributedUpdateProcessor.DistribPhase.NONE) {
-          createAndOrGetMirrorRequest().deleteByQuery(cmd.query);
+          mirrorRequest.deleteByQuery(cmd.query);
+
+          try {
+            requestMirroringHandler.mirror(mirrorRequest);
+          } catch (Exception e) {
+            log.error("mirror submit failed", e);
+            throw new SolrException(SERVER_ERROR, "mirror submit failed", e);
+          }
         }
         if (log.isDebugEnabled())
           log.debug("processDelete doMirroring={} cmd={}", true, cmd);
@@ -214,7 +233,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
     }
   }
 
-  private boolean isLeader(SolrQueryRequest req, String id, String route, SolrInputDocument doc) {
+  boolean isLeader(SolrQueryRequest req, String id, String route, SolrInputDocument doc) {
     CloudDescriptor cloudDesc =
         req.getCore().getCoreDescriptor().getCloudDescriptor();
     String collection = cloudDesc.getCollectionName();
@@ -256,29 +275,6 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
 
   @Override public final void finish() throws IOException {
     super.finish();
-
-    if (doMirroring && mirrorRequest != null) {
-      // We are configured to mirror, but short-circuit on batches we already know will fail (because they cumulatively
-      // exceed the mirroring max-size)
-      if (mirrorRequestBytes > maxMirroringBatchSizeBytes) {
-        final String batchedIds = mirrorRequest.getDocuments().stream()
-                .map(doc -> doc.getField("id").getValue().toString())
-                .collect(Collectors.joining(", "));
-        log.warn("Mirroring skipped for request because batch size {} bytes exceeds limit {} bytes.  IDs: {}",
-                mirrorRequestBytes, maxMirroringBatchSizeBytes, batchedIds);
-        mirrorRequest = null;
-        mirrorRequestBytes = 0L;
-        return;
-      }
-
-      try {
-        requestMirroringHandler.mirror(mirrorRequest);
-        mirrorRequest = null; // so we don't accidentally submit it again
-      } catch (Exception e) {
-        log.error("mirror submit failed", e);
-        throw new SolrException(SERVER_ERROR, "mirror submit failed", e);
-      }
-    }
   }
 
   // package private for testing

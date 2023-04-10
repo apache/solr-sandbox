@@ -52,49 +52,51 @@ public class MirroredSolrRequestSerializer implements Serializer<MirroredSolrReq
     @Override
     public MirroredSolrRequest deserialize(String topic, byte[] data) {
         Map solrRequest;
-
-        JavaBinCodec codec = new JavaBinCodec();
-        ByteArrayInputStream bais = new ByteArrayInputStream(data);
-
-        try {
-            solrRequest = (Map) codec.unmarshal(bais);
-
-            if (log.isTraceEnabled()) {
-                log.trace("Deserialized class={} solrRequest={}", solrRequest.getClass().getName(),
-                    solrRequest);
-            }
-
-
-        } catch (Exception e) {
-            log.error("Exception unmarshalling JavaBin", e);
-            throw new RuntimeException(e);
-        }
-
         UpdateRequest updateRequest = new UpdateRequest();
-        List docs = (List) solrRequest.get("docs");
-        if (docs != null) {
-            updateRequest.add(docs);
-        } else {
-            updateRequest.add("id", "1");
-            updateRequest.getDocumentsMap().clear();
-        }
+        try (JavaBinCodec codec = new JavaBinCodec()) {
+            ByteArrayInputStream bais = new ByteArrayInputStream(data);
 
-        List deletes = (List) solrRequest.get("deletes");
-        if (deletes != null) {
-            updateRequest.deleteById(deletes);
-        }
+            try {
+                solrRequest = (Map) codec.unmarshal(bais);
 
-        List deletesQuery = (List) solrRequest.get("deleteQuery");
-        if (deletesQuery != null) {
-            for (Object delQuery : deletesQuery) {
-                updateRequest.deleteByQuery((String) delQuery);
+                if (log.isTraceEnabled()) {
+                    log.trace("Deserialized class={} solrRequest={}", solrRequest.getClass().getName(),
+                        solrRequest);
+                }
+
+            } catch (Exception e) {
+                log.error("Exception unmarshalling JavaBin", e);
+                throw new RuntimeException(e);
             }
-        }
 
 
-        Map params = (Map) solrRequest.get("params");
-        if (params != null) {
-            updateRequest.setParams(ModifiableSolrParams.of(new MapSolrParams(params)));
+            List docs = (List) solrRequest.get("docs");
+            if (docs != null) {
+                updateRequest.add(docs);
+            } else {
+                updateRequest.add("id", "1"); // TODO huh?
+                updateRequest.getDocumentsMap().clear();
+            }
+
+            List deletes = (List) solrRequest.get("deletes");
+            if (deletes != null) {
+                updateRequest.deleteById(deletes);
+            }
+
+            List deletesQuery = (List) solrRequest.get("deleteQuery");
+            if (deletesQuery != null) {
+                for (Object delQuery : deletesQuery) {
+                    updateRequest.deleteByQuery((String) delQuery);
+                }
+            }
+
+            Map params = (Map) solrRequest.get("params");
+            if (params != null) {
+                updateRequest.setParams(ModifiableSolrParams.of(new MapSolrParams(params)));
+            }
+        } catch (IOException e) {
+            log.error("Error in deserialize", e);
+            throw new RuntimeException(e);
         }
 
         return new MirroredSolrRequest(updateRequest);
@@ -120,12 +122,10 @@ public class MirroredSolrRequestSerializer implements Serializer<MirroredSolrReq
         try (JavaBinCodec codec = new JavaBinCodec(null)) {
 
             ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream();
-            Map map = new HashMap(4);
+            Map map = new HashMap(8);
             map.put("params", solrRequest.getParams());
             map.put("docs", solrRequest.getDocuments());
 
-            // TODO
-            //map.put("deletes", solrRequest.getDeleteByIdMap());
             map.put("deletes", solrRequest.getDeleteById());
             map.put("deleteQuery", solrRequest.getDeleteQuery());
 
@@ -134,6 +134,7 @@ public class MirroredSolrRequestSerializer implements Serializer<MirroredSolrReq
             return baos.byteArray();
 
         } catch (IOException e) {
+            log.error("Error in serialize", e);
             throw new RuntimeException(e);
         }
 

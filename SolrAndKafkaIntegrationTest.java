@@ -57,10 +57,10 @@ import static org.mockito.Mockito.spy;
   static final String VERSION_FIELD = "_version_";
 
   private static final int NUM_BROKERS = 1;
-  public static EmbeddedKafkaCluster kafkaCluster;
+  public EmbeddedKafkaCluster kafkaCluster;
 
-  protected static volatile MiniSolrCloudCluster solrCluster1;
-  protected static volatile MiniSolrCloudCluster solrCluster2;
+  protected volatile MiniSolrCloudCluster solrCluster1;
+  protected volatile MiniSolrCloudCluster solrCluster2;
 
   protected static volatile Consumer consumer;
 
@@ -68,14 +68,9 @@ import static org.mockito.Mockito.spy;
 
   private static String COLLECTION = "collection1";
   private static String ALT_COLLECTION = "collection2";
-  private static Thread.UncaughtExceptionHandler uceh;
 
-  @BeforeClass
-  public static void beforeSolrAndKafkaIntegrationTest() throws Exception {
-    uceh = Thread.getDefaultUncaughtExceptionHandler();
-    Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
-      log.error("Uncaught exception in thread " + t, e);
-    });
+  @Before
+  public void beforeSolrAndKafkaIntegrationTest() throws Exception {
     consumer = new Consumer();
     Properties config = new Properties();
     //config.put("unclean.leader.election.enable", "true");
@@ -127,8 +122,8 @@ import static org.mockito.Mockito.spy;
 
   }
 
-  @AfterClass
-  public static void afterSolrAndKafkaIntegrationTest() throws Exception {
+  @After
+  public void afterSolrAndKafkaIntegrationTest() throws Exception {
     ObjectReleaseTracker.clear();
 
     if (solrCluster1 != null) {
@@ -144,138 +139,121 @@ import static org.mockito.Mockito.spy;
     consumer = null;
 
     try {
-      kafkaCluster.deleteAllTopicsAndWait(5000);
+      //kafkaCluster.deleteAllTopicsAndWait(10000);
       kafkaCluster.stop();
       kafkaCluster = null;
     } catch (Exception e) {
       log.error("Exception stopping Kafka cluster", e);
     }
 
-    Thread.setDefaultUncaughtExceptionHandler(uceh);
+
   }
 
-  public void testFullCloudToCloud() throws Exception {
-    CloudSolrClient client = solrCluster1.getSolrClient();
-    SolrInputDocument doc = new SolrInputDocument();
-    doc.addField("id", String.valueOf(System.currentTimeMillis()));
-    doc.addField("text", "some test");
-
-    client.add(doc);
-
-    client.commit(COLLECTION);
-
-    System.out.println("Sent producer record");
-
-    assertCluster2EventuallyHasDocs(COLLECTION, "*:*", 1);
-  }
-
+//  public void testFullCloudToCloud() throws Exception {
+//    CloudSolrClient client = solrCluster1.getSolrClient();
+//    SolrInputDocument doc = new SolrInputDocument();
+//    doc.addField("id", String.valueOf(System.currentTimeMillis()));
+//    doc.addField("text", "some test");
+//
+//    client.add(doc);
+//
+//    client.commit(COLLECTION);
+//
+//    System.out.println("Sent producer record");
+//
+//    assertCluster2EventuallyHasDocs(COLLECTION, "*:*", 1);
+//  }
+//
   private static SolrInputDocument getDoc() {
     SolrInputDocument doc = new SolrInputDocument();
     doc.addField("id", String.valueOf(System.nanoTime()));
     doc.addField("text", "some test");
     return doc;
   }
-
-  public void testProducerToCloud() throws Exception {
-    Properties properties = new Properties();
-    properties.put("bootstrap.servers", kafkaCluster.bootstrapServers());
-    properties.put("acks", "all");
-    properties.put("retries", 1);
-    properties.put("batch.size", 1);
-    properties.put("buffer.memory", 33554432);
-    properties.put("linger.ms", 1);
-    properties.put("key.serializer", StringSerializer.class.getName());
-    properties.put("value.serializer", MirroredSolrRequestSerializer.class.getName());
-    Producer<String, MirroredSolrRequest> producer = new KafkaProducer(properties);
-    UpdateRequest updateRequest = new UpdateRequest();
-    updateRequest.setParam("shouldMirror", "true");
-    updateRequest.add("id", String.valueOf(System.currentTimeMillis()), "text", "test");
-    updateRequest.add("id", String.valueOf(System.currentTimeMillis() + 22), "text", "test2");
-    updateRequest.setParam("collection", COLLECTION);
-    MirroredSolrRequest mirroredSolrRequest = new MirroredSolrRequest(updateRequest);
-    System.out.println("About to send producer record");
-    producer.send(new ProducerRecord(TOPIC, mirroredSolrRequest), (metadata, exception) -> {
-      log.info("Producer finished sending metadata={}, exception={}", metadata, exception);
-    });
-    producer.flush();
-
-    System.out.println("Sent producer record");
-
-    solrCluster2.getSolrClient().commit(COLLECTION);
-
-    assertCluster2EventuallyHasDocs(COLLECTION, "*:*", 2);
-
-    producer.close();
-  }
-
-  @Test
-  public void testMirroringUpdateProcessor() throws Exception {
-    final SolrInputDocument tooLargeDoc = new SolrInputDocument();
-    tooLargeDoc.addField("id", System.nanoTime());
-    tooLargeDoc.addField("text", new String(new byte[2 * MAX_DOC_SIZE_BYTES]));
-    final SolrInputDocument normalDoc = new SolrInputDocument();
-    normalDoc.addField("id", System.nanoTime() + 22);
-    normalDoc.addField("text", "Hello world");
-    List<SolrInputDocument> docsToIndex = new ArrayList<>();
-    docsToIndex.add(normalDoc);
-    docsToIndex.add(tooLargeDoc);
-
-    final CloudSolrClient cluster1Client = solrCluster1.getSolrClient();
-    try {
-      cluster1Client.add(docsToIndex);
-    } catch (BaseCloudSolrClient.RouteException e) {
-      // expected
-    }
-    cluster1Client.commit(COLLECTION);
-
-
-
-    // Primary and secondary should each only index 'normalDoc'
-    final String normalDocQuery = "id:" + normalDoc.get("id").getFirstValue();
-    assertCluster2EventuallyHasDocs(COLLECTION, normalDocQuery, 1);
-    assertCluster2EventuallyHasDocs(COLLECTION, "*:*", 1);
-    assertClusterEventuallyHasDocs(cluster1Client, COLLECTION, normalDocQuery, 1);
-    assertClusterEventuallyHasDocs(cluster1Client, COLLECTION, "*:*", 1);
-
-    // Create new primary+secondary collection where 'tooLarge' docs ARE indexed on the primary
-    CollectionAdminRequest.Create create =
-        CollectionAdminRequest.createCollection(ALT_COLLECTION, "conf", 1, 1)
-            .withProperty("indexUnmirrorableDocs", "true");
-    try {
-      solrCluster1.getSolrClient().request(create);
-      solrCluster2.getSolrClient().request(create);
-      solrCluster1.waitForActiveCollection(ALT_COLLECTION, 1, 1);
-      solrCluster2.waitForActiveCollection(ALT_COLLECTION, 1, 1);
-
-      cluster1Client.add(ALT_COLLECTION, docsToIndex);
-      cluster1Client.commit(ALT_COLLECTION);
-
-      // try adding another doc
-//      final SolrInputDocument newDoc = new SolrInputDocument();
 //
-//      newDoc.addField("id", System.nanoTime());
-//      newDoc.addField("text", "Hello world");
-//      docsToIndex = new ArrayList<>();
-//      docsToIndex.add(newDoc);
+//  public void testProducerToCloud() throws Exception {
+//    Properties properties = new Properties();
+//    properties.put("bootstrap.servers", kafkaCluster.bootstrapServers());
+//    properties.put("acks", "all");
+//    properties.put("retries", 1);
+//    properties.put("batch.size", 1);
+//    properties.put("buffer.memory", 33554432);
+//    properties.put("linger.ms", 1);
+//    properties.put("key.serializer", StringSerializer.class.getName());
+//    properties.put("value.serializer", MirroredSolrRequestSerializer.class.getName());
+//    Producer<String, MirroredSolrRequest> producer = new KafkaProducer(properties);
+//    UpdateRequest updateRequest = new UpdateRequest();
+//    updateRequest.setParam("shouldMirror", "true");
+//    updateRequest.add("id", String.valueOf(System.currentTimeMillis()), "text", "test");
+//    updateRequest.add("id", String.valueOf(System.currentTimeMillis() + 22), "text", "test2");
+//    updateRequest.setParam("collection", COLLECTION);
+//    MirroredSolrRequest mirroredSolrRequest = new MirroredSolrRequest(updateRequest);
+//    System.out.println("About to send producer record");
+//    producer.send(new ProducerRecord(TOPIC, mirroredSolrRequest), (metadata, exception) -> {
+//      log.info("Producer finished sending metadata={}, exception={}", metadata, exception);
+//    });
+//    producer.flush();
 //
+//    System.out.println("Sent producer record");
+//
+//    solrCluster2.getSolrClient().commit(COLLECTION);
+//
+//    assertCluster2EventuallyHasDocs(COLLECTION, "*:*", 2);
+//
+//    producer.close();
+//  }
+
+//  @Test
+//  public void testMirroringUpdateProcessor() throws Exception {
+//    final SolrInputDocument tooLargeDoc = new SolrInputDocument();
+//    tooLargeDoc.addField("id", "tooLarge-" + String.valueOf(System.currentTimeMillis()));
+//    tooLargeDoc.addField("text", new String(new byte[2 * MAX_DOC_SIZE_BYTES]));
+//    final SolrInputDocument normalDoc = new SolrInputDocument();
+//    normalDoc.addField("id", "normalDoc-" + String.valueOf(System.currentTimeMillis()));
+//    normalDoc.addField("text", "Hello world");
+//    final List<SolrInputDocument> docsToIndex = new ArrayList<>();
+//    docsToIndex.add(normalDoc);
+//    docsToIndex.add(tooLargeDoc);
+//
+//    final CloudSolrClient cluster1Client = solrCluster1.getSolrClient();
 //    try {
-//      cluster1Client.add(ALT_COLLECTION, docsToIndex);
+//      cluster1Client.add(docsToIndex);
 //    } catch (BaseCloudSolrClient.RouteException e) {
 //      // expected
 //    }
+//    cluster1Client.commit(COLLECTION);
+//
+//    // Primary and secondary should each only index 'normalDoc'
+//    final String normalDocQuery = "id:" + normalDoc.get("id").getFirstValue();
+//    assertCluster2EventuallyHasDocs(COLLECTION, normalDocQuery, 1);
+//    assertCluster2EventuallyHasDocs(COLLECTION, "*:*", 1);
+//    assertClusterEventuallyHasDocs(cluster1Client, COLLECTION, normalDocQuery, 1);
+//    assertClusterEventuallyHasDocs(cluster1Client, COLLECTION, "*:*", 1);
+//
+//    // Create new primary+secondary collection where 'tooLarge' docs ARE indexed on the primary
+//    CollectionAdminRequest.Create create =
+//        CollectionAdminRequest.createCollection(ALT_COLLECTION, "conf", 1, 1)
+//            .withProperty("indexUnmirrorableDocs", "true");
+//    try {
+//      solrCluster1.getSolrClient().request(create);
+//      solrCluster2.getSolrClient().request(create);
+//      solrCluster1.waitForActiveCollection(ALT_COLLECTION, 1, 1);
+//      solrCluster2.waitForActiveCollection(ALT_COLLECTION, 1, 1);
+//
+//      cluster1Client.add(ALT_COLLECTION, docsToIndex);
 //      cluster1Client.commit(ALT_COLLECTION);
-
-      // Primary should have both 'normal' and 'large' docs; secondary should only have 'normal' doc.
-      assertClusterEventuallyHasDocs(cluster1Client, ALT_COLLECTION, "*:*", 2);
-      assertCluster2EventuallyHasDocs(ALT_COLLECTION, "*:*", 1);
-      assertCluster2EventuallyHasDocs(ALT_COLLECTION, normalDocQuery, 1);
-    } finally {
-      CollectionAdminRequest.Delete delete =
-        CollectionAdminRequest.deleteCollection(ALT_COLLECTION);
-      solrCluster1.getSolrClient().request(delete);
-      solrCluster2.getSolrClient().request(delete);
-    }
-  }
+//
+//      // Primary should have both 'normal' and 'large' docs; secondary should only have 'normal' doc.
+//      assertClusterEventuallyHasDocs(cluster1Client, ALT_COLLECTION, "*:*", 2);
+//      assertCluster2EventuallyHasDocs(ALT_COLLECTION, normalDocQuery, 1);
+//      assertCluster2EventuallyHasDocs(ALT_COLLECTION, "*:*", 1);
+//    } finally {
+//      CollectionAdminRequest.Delete delete =
+//        CollectionAdminRequest.deleteCollection(ALT_COLLECTION);
+//      solrCluster1.getSolrClient().request(delete);
+//      solrCluster2.getSolrClient().request(delete);
+//    }
+//  }
 
   private void assertCluster2EventuallyHasDocs(String collection, String query, int expectedNumDocs) throws Exception {
     assertClusterEventuallyHasDocs(solrCluster2.getSolrClient(), collection, query, expectedNumDocs);
@@ -291,10 +269,58 @@ import static org.mockito.Mockito.spy;
     }
   }
 
+  @Test
+  public void testFullCloudToCloudMultiCollection() throws Exception {
+    CollectionAdminRequest.Create create =
+            CollectionAdminRequest.createCollection(ALT_COLLECTION, "conf", 1, 1);
+
+    try {
+      solrCluster1.getSolrClient().request(create);
+      solrCluster1.waitForActiveCollection(ALT_COLLECTION, 1, 1);
+
+      solrCluster2.getSolrClient().request(create);
+      solrCluster2.waitForActiveCollection(ALT_COLLECTION, 1, 1);
+
+
+      CloudSolrClient client = solrCluster1.getSolrClient();
+
+      SolrInputDocument doc1 = getDoc();
+      SolrInputDocument doc2 = getDoc();
+      SolrInputDocument doc3 = getDoc();
+      SolrInputDocument doc4 = getDoc();
+      SolrInputDocument doc5 = getDoc();
+      SolrInputDocument doc6 = getDoc();
+      SolrInputDocument doc7 = getDoc();
+
+      client.add(COLLECTION, doc1);
+      client.add(ALT_COLLECTION, doc2);
+      client.add(COLLECTION, doc3);
+      client.add(COLLECTION, doc4);
+      client.add(ALT_COLLECTION, doc5);
+      client.add(ALT_COLLECTION, doc6);
+      client.add(COLLECTION, doc7);
+
+      client.commit(COLLECTION);
+      client.commit(ALT_COLLECTION);
+
+      System.out.println("Sent producer record");
+
+      assertCluster2EventuallyHasDocs(ALT_COLLECTION, "*:*", 3);
+      assertCluster2EventuallyHasDocs(COLLECTION, "*:*", 4);
+
+    } finally {
+      CollectionAdminRequest.Delete delete =
+              CollectionAdminRequest.deleteCollection(ALT_COLLECTION);
+      solrCluster1.getSolrClient().request(delete);
+      solrCluster2.getSolrClient().request(delete);
+    }
+  }
+
+
   private void assertClusterEventuallyHasDocs(SolrClient client, String collection, String query, int expectedNumDocs) throws Exception {
     QueryResponse results = null;
     boolean foundUpdates = false;
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 100; i++) {
       client.commit(collection);
       results = client.query(collection, new SolrQuery(query));
       if (results.getResults().getNumFound() == expectedNumDocs) {

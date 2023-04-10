@@ -60,9 +60,6 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         implements SolrCoreAware, UpdateRequestProcessorFactory.RunAlways {
 
     private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-    public static final NoOpUpdateRequestProcessor NO_OP_UPDATE_REQUEST_PROCESSOR =
-        new NoOpUpdateRequestProcessor();
-
     // Flag for mirroring requests
     public static final String SERVER_SHOULD_MIRROR = "shouldMirror";
 
@@ -71,7 +68,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
 
 
     private boolean enabled = true;
-    private boolean indexUnmirrorableDocs = false;
+
     private KafkaCrossDcConf conf;
 
     private final Map<String,Object> properties = new HashMap<>();
@@ -83,11 +80,6 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         Boolean enabled = args.getBooleanArg("enabled");
         if (enabled != null && !enabled) {
             this.enabled = false;
-        }
-
-        final Boolean indexUnmirrorableDocsArg = args.getBooleanArg("indexUnmirrorableDocs");
-        if (indexUnmirrorableDocsArg != null && indexUnmirrorableDocsArg) {
-            this.indexUnmirrorableDocs = true;
         }
 
         for (ConfigProperty configKey : KafkaCrossDcConf.CONFIG_PROPERTIES) {
@@ -210,7 +202,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
                                                 final UpdateRequestProcessor next) {
 
         if (!enabled) {
-            return NO_OP_UPDATE_REQUEST_PROCESSOR;
+            return new NoOpUpdateRequestProcessor(next);
         }
 
         // if the class fails to initialize
@@ -221,6 +213,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         // Check if mirroring is disabled in request params, defaults to true
         boolean doMirroring = req.getParams().getBool(SERVER_SHOULD_MIRROR, true);
         final long maxMirroringBatchSizeBytes = conf.getInt(MAX_REQUEST_SIZE_BYTES);
+        Boolean indexUnmirrorableDocs = conf.getBool(INDEX_UNMIRRORABLE_DOCS);
 
         ModifiableSolrParams mirroredParams = null;
         if (doMirroring) {
@@ -256,8 +249,8 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
     }
 
     private static class NoOpUpdateRequestProcessor extends UpdateRequestProcessor {
-        NoOpUpdateRequestProcessor() {
-            super(null);
+        NoOpUpdateRequestProcessor(UpdateRequestProcessor next) {
+            super(next);
         }
     }
 

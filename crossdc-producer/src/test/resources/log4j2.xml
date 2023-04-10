@@ -59,11 +59,11 @@
     <Logger name="org.apache.solr.hadoop" level="INFO"/>
     <Logger name="org.eclipse.jetty" level="INFO"/>
 
-    <Logger name="org.apache.solr.crossdc.consumer.KafkaCrossDcConsumer" level="INFO"/>
-    <Logger name="org.apache.solr.update.processor.MirroringUpdateProcessor" level="INFO"/>
-    <Logger name="org.apache.solr.update.processor.KafkaRequestMirroringHandler" level="INFO"/>
-    <Logger name="org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor" level="INFO"/>
-    <Logger name="org.apache.solr.crossdc.common.KafkaMirroringSink" level="INFO"/>
+    <Logger name="org.apache.solr.crossdc.consumer.KafkaCrossDcConsumer" level="TRACE"/>
+    <Logger name="org.apache.solr.update.processor.MirroringUpdateProcessor" level="TRACE"/>
+    <Logger name="org.apache.solr.update.processor.KafkaRequestMirroringHandler" level="TRACE"/>
+    <Logger name="org.apache.solr.crossdc.messageprocessor.SolrMessageProcessor" level="TRACE"/>
+    <Logger name="org.apache.solr.crossdc.common.KafkaMirroringSink" level="TRACE"/>
 
 
     <Root level="INFO">
