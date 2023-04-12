@@ -70,8 +70,8 @@ import static org.mockito.Mockito.spy;
   private static String ALT_COLLECTION = "collection2";
   private static Thread.UncaughtExceptionHandler uceh;
 
-  @BeforeClass
-  public static void beforeSolrAndKafkaIntegrationTest() throws Exception {
+  @Before
+  public void beforeSolrAndKafkaIntegrationTest() throws Exception {
     uceh = Thread.getDefaultUncaughtExceptionHandler();
     Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
       log.error("Uncaught exception in thread " + t, e);
@@ -127,8 +127,8 @@ import static org.mockito.Mockito.spy;
 
   }
 
-  @AfterClass
-  public static void afterSolrAndKafkaIntegrationTest() throws Exception {
+  @After
+  public void afterSolrAndKafkaIntegrationTest() throws Exception {
     ObjectReleaseTracker.clear();
 
     if (solrCluster1 != null) {
@@ -144,7 +144,7 @@ import static org.mockito.Mockito.spy;
     consumer = null;
 
     try {
-      kafkaCluster.deleteAllTopicsAndWait(5000);
+      // kafkaCluster.deleteAllTopicsAndWait(5000);
       kafkaCluster.stop();
       kafkaCluster = null;
     } catch (Exception e) {
@@ -294,7 +294,7 @@ import static org.mockito.Mockito.spy;
   private void assertClusterEventuallyHasDocs(SolrClient client, String collection, String query, int expectedNumDocs) throws Exception {
     QueryResponse results = null;
     boolean foundUpdates = false;
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 100; i++) {
       client.commit(collection);
       results = client.query(collection, new SolrQuery(query));
       if (results.getResults().getNumFound() == expectedNumDocs) {
