@@ -28,5 +28,5 @@ description 'Root for Solr plugins sandbox'
 
 subprojects {
     group "org.apache.solr.crossdc"
-    //group "org.apache.solr.encryption"
+    group "org.apache.solr.encryption"
 }

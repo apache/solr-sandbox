@@ -49,6 +49,8 @@ public class SimpleSolrIntegrationTest extends SolrCloudTestCase {
     if (cluster1 != null) {
       cluster1.shutdown();
     }
+    cluster1 = null;
+    processor = null;
   }
 
   public void testDocumentSanitization() {

@@ -124,6 +124,11 @@ import java.util.*;
       log.error("Exception stopping Kafka cluster", e);
     }
 
+    solrCluster1 = null;
+    solrCluster2 = null;
+    kafkaCluster = null;
+    consumer = null;
+
   }
 
   @After

@@ -43,13 +43,6 @@ import static org.mockito.Mockito.*;
 public class TestMessageProcessor {
     static final String VERSION_FIELD = "_version_";
 
-    static class NoOpResubmitBackoffPolicy implements ResubmitBackoffPolicy {
-        @Override
-        public long getBackoffTimeMs(MirroredSolrRequest resubmitRequest) {
-            return 0;
-        }
-    }
-
     @Mock
     private CloudSolrClient solrClient;
     private SolrMessageProcessor processor;

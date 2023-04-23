@@ -34,7 +34,10 @@ sourceSets {
 }
 
 dependencies {
-    provided 'org.apache.solr:solr-solrj:8.11.2'
+    provided 'org.apache.solr:solr-solrj:8.11.2', {
+        exclude group: "org.apache.logging.log4j", module: "*"
+        exclude group: "org.slf4j", module: "*"
+    }
     implementation 'org.apache.kafka:kafka-clients:2.8.1'
     implementation 'com.google.guava:guava:14.0'
 }

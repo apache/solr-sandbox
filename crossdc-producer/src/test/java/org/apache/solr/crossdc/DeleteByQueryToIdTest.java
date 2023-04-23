@@ -16,10 +16,7 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.util.ObjectReleaseTracker;
 import org.apache.solr.crossdc.common.KafkaCrossDcConf;
 import org.apache.solr.crossdc.consumer.Consumer;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
+import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +28,6 @@ import java.util.Properties;
 
 @ThreadLeakFilters(defaultFilters = true, filters = { SolrIgnoredThreadsFilter.class,
     QuickPatchThreadsFilter.class, SolrKafkaTestsIgnoredThreadsFilter.class })
-@Ignore
 @ThreadLeakLingering(linger = 5000) public class DeleteByQueryToIdTest extends
     SolrTestCaseJ4 {
 
@@ -136,6 +132,11 @@ import java.util.Properties;
       solrCluster2.getZkServer().getZkClient().printLayoutToStdOut();
       solrCluster2.shutdown();
     }
+
+    solrCluster1 = null;
+    solrCluster2 = null;
+    kafkaCluster = null;
+    consumer = null;
   }
 
   @After
@@ -147,6 +148,7 @@ import java.util.Properties;
     solrCluster2.getSolrClient().commit();
   }
 
+  @Test
   public void testDBQ() throws Exception {
 
     CloudSolrClient client = solrCluster1.getSolrClient();
