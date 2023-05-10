@@ -57,12 +57,12 @@ import static org.mockito.Mockito.spy;
   static final String VERSION_FIELD = "_version_";
 
   private static final int NUM_BROKERS = 1;
-  public static EmbeddedKafkaCluster kafkaCluster;
+  public EmbeddedKafkaCluster kafkaCluster;
 
-  protected static volatile MiniSolrCloudCluster solrCluster1;
-  protected static volatile MiniSolrCloudCluster solrCluster2;
+  protected volatile MiniSolrCloudCluster solrCluster1;
+  protected volatile MiniSolrCloudCluster solrCluster2;
 
-  protected static volatile Consumer consumer;
+  protected volatile Consumer consumer;
 
   private static String TOPIC = "topic1";
 

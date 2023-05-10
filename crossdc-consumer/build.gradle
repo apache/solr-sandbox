@@ -32,24 +32,34 @@ dependencies {
     implementation group: 'org.apache.solr', name: 'solr-solrj', version: '8.11.2'
     implementation project(path: ':crossdc-commons', configuration: 'shadow')
 
-    implementation 'io.dropwizard.metrics:metrics-core:4.2.9'
-    implementation 'org.slf4j:slf4j-api:1.7.36'
+    implementation 'io.dropwizard.metrics:metrics-core:4.2.17'
+    implementation 'org.slf4j:slf4j-api:2.0.5'
     implementation 'org.eclipse.jetty:jetty-http:9.4.41.v20210516'
     implementation 'org.eclipse.jetty:jetty-server:9.4.41.v20210516'
+    implementation group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.20.0' // log4j impl can use StackLocatorUtil which is in the api jar
     implementation 'org.eclipse.jetty:jetty-servlet:9.4.41.v20210516'
-    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.2'
-    runtimeOnly ('com.google.protobuf:protobuf-java-util:3.19.2')
-    runtimeOnly ('commons-codec:commons-codec:1.13')
+    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.20.0'
+    testImplementation project(path: ':crossdc-commons')
+    testImplementation project(path: ':crossdc-commons')
+    runtimeOnly ('com.google.protobuf:protobuf-java-util:3.22.2')
+    runtimeOnly ('commons-codec:commons-codec:1.15')
     testImplementation 'org.hamcrest:hamcrest:2.2'
     testImplementation 'junit:junit:4.13.2'
-    testImplementation('org.mockito:mockito-core:4.3.1', {
-        exclude group: "net.bytebuddy", module: "byte-buddy-agent"
-    })
+    testImplementation('org.mockito:mockito-inline:5.2.0')
 
     testImplementation  project(':crossdc-producer')
 
-    testImplementation group: 'org.apache.solr', name: 'solr-core', version: '8.11.2'
-    testImplementation group: 'org.apache.solr', name: 'solr-test-framework', version: '8.11.2'
+    testImplementation group: 'org.apache.solr', name: 'solr-core', version: '8.11.2', {
+        exclude group: "org.apache.logging.log4j", module: "*"
+        exclude group: "org.slf4j", module: "*"
+        exclude group: "org.eclipse.jetty", module: "jetty-http"
+        exclude group: "org.eclipse.jetty", module: "jetty-server"
+        exclude group: "org.eclipse.jetty", module: "jetty-servlet"
+    }
+    testImplementation group: 'org.apache.solr', name: 'solr-test-framework', version: '8.11.2', {
+        exclude group: "org.apache.logging.log4j", module: "*"
+        exclude group: "org.slf4j", module: "*"
+    }
     testImplementation 'org.apache.kafka:kafka_2.13:2.8.1'
     testImplementation 'org.apache.kafka:kafka-streams:2.8.1'
     testImplementation 'org.apache.kafka:kafka_2.13:2.8.1:test'
@@ -58,6 +68,8 @@ dependencies {
 
 test {
     jvmArgs '-Djava.security.egd=file:/dev/./urandom'
+    minHeapSize = "128m"
+    maxHeapSize = "512m"
 }
 
 tasks.withType(Tar){

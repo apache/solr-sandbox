@@ -38,7 +38,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
   private final MetricRegistry metrics = SharedMetricRegistries.getOrCreate("metrics");
 
-  private final KafkaConsumer<String,MirroredSolrRequest> consumer;
+  private final KafkaConsumer<String,MirroredSolrRequest> kafkaConsumer;
   private final CountDownLatch startLatch;
   KafkaMirroringSink kafkaMirroringSink;
 
@@ -48,22 +48,14 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
   private final CloudSolrClient solrClient;
 
-  private final ArrayBlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(10) {
-    @Override public boolean offer(Runnable r) {
-      //return super.offer(r);
-      try {
-        super.put(r);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        return false;
-      }
-      return true;
-    }
+   private final ThreadPoolExecutor executor;
 
-  };
-  private final ThreadPoolExecutor executor;
 
-  private final ConcurrentHashMap<TopicPartition,PartitionWork> partitionWorkMap = new ConcurrentHashMap<>();
+  private PartitionManager partitionManager;
+
+  private BlockingQueue<Runnable> queue = new BlockingQueue<>(10);
+
+
 
   /**
    * @param conf       The Kafka consumer configuration
@@ -95,22 +87,26 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
     kafkaConsumerProps.putAll(conf.getAdditionalProperties());
     int threads = conf.getInt(KafkaCrossDcConf.CONSUMER_PROCESSING_THREADS);
+
     executor = new ThreadPoolExecutor(threads, threads, 0L, TimeUnit.MILLISECONDS, queue, new ThreadFactory() {
-      @Override public Thread newThread(Runnable r) {
-        Thread t = new Thread(r);
-        t.setName("KafkaCrossDcConsumerWorker");
-        return t;
-      }
+            @Override
+            public Thread newThread(Runnable r) {
+                Thread t = new Thread(r);
+                t.setName("KafkaCrossDcConsumerWorker");
+                return t;
+            }
     });
     executor.prestartAllCoreThreads();
 
     solrClient = createSolrClient(conf);
 
-    messageProcessor = new SolrMessageProcessor(solrClient, resubmitRequest -> 0L);
+    messageProcessor = createSolrMessageProcessor();
+
+
 
     log.info("Creating Kafka consumer with configuration {}", kafkaConsumerProps);
-    consumer = createConsumer(kafkaConsumerProps);
-
+    kafkaConsumer = createKafkaConsumer(kafkaConsumerProps);
+    partitionManager = new PartitionManager(kafkaConsumer);
     // Create producer for resubmitting failed requests
     log.info("Creating Kafka resubmit producer");
     this.kafkaMirroringSink = createKafkaMirroringSink(conf);
@@ -118,7 +114,11 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
   }
 
-  public KafkaConsumer<String,MirroredSolrRequest> createConsumer(Properties properties) {
+  protected SolrMessageProcessor createSolrMessageProcessor() {
+    return new SolrMessageProcessor(solrClient, resubmitRequest -> 0L);
+  }
+
+  public KafkaConsumer<String,MirroredSolrRequest> createKafkaConsumer(Properties properties) {
     return new KafkaConsumer<>(properties, new StringDeserializer(), new MirroredSolrRequestSerializer());
   }
 
@@ -133,7 +133,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
     try {
 
-      consumer.subscribe(Arrays.asList((topicNames)));
+      kafkaConsumer.subscribe(Arrays.asList((topicNames)));
 
       log.info("Consumer started");
       startLatch.countDown();
@@ -144,7 +144,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
       log.info("Closed kafka consumer. Exiting now.");
       try {
-        consumer.close();
+        kafkaConsumer.close();
       } catch (Exception e) {
         log.warn("Failed to close kafka consumer", e);
       }
@@ -167,11 +167,14 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
   boolean pollAndProcessRequests() {
     log.trace("Entered pollAndProcessRequests loop");
     try {
-      for (TopicPartition partition : partitionWorkMap.keySet()) {
-        checkForOffsetUpdates(partition);
+      try {
+        partitionManager.checkOffsetUpdates();
+      } catch (Throwable e) {
+        log.error("Error while checking offset updates, shutting down", e);
+        return false;
       }
 
-      ConsumerRecords<String,MirroredSolrRequest> records = consumer.poll(Duration.ofMillis(KAFKA_CONSUMER_POLL_TIMEOUT_MS));
+      ConsumerRecords<String,MirroredSolrRequest> records = kafkaConsumer.poll(Duration.ofMillis(KAFKA_CONSUMER_POLL_TIMEOUT_MS));
 
       if (log.isTraceEnabled()) {
         log.trace("poll return {} records", records.count());
@@ -184,14 +187,9 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
       for (TopicPartition partition : records.partitions()) {
         List<ConsumerRecord<String,MirroredSolrRequest>> partitionRecords = records.records(partition);
 
-        PartitionWork partitionWork = partitionWorkMap.compute(partition, (k, v) -> {
-          if (v == null) {
-            return new PartitionWork();
-          }
-          return v;
-        });
-        WorkUnit workUnit = new WorkUnit();
-        workUnit.nextOffset = getOffsetForPartition(partitionRecords);
+        PartitionManager.PartitionWork partitionWork = partitionManager.getPartitionWork(partition);
+        PartitionManager.WorkUnit workUnit = new PartitionManager.WorkUnit(partition);
+        workUnit.nextOffset = PartitionManager.getOffsetForPartition(partitionRecords);
         partitionWork.partitionQueue.add(workUnit);
         try {
           ModifiableSolrParams lastParams = null;
@@ -218,8 +216,8 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
               lastParamsAsNamedList = null;
               sendBatch(solrReqBatch, lastRecord, workUnit);
               solrReqBatch = new UpdateRequest();
-              workUnit = new WorkUnit();
-              workUnit.nextOffset = getOffsetForPartition(partitionRecords);
+              workUnit = new PartitionManager.WorkUnit(partition);
+              workUnit.nextOffset = PartitionManager.getOffsetForPartition(partitionRecords);
               partitionWork.partitionQueue.add(workUnit);
             }
 
@@ -247,8 +245,12 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
           }
 
           sendBatch(solrReqBatch, lastRecord, workUnit);
-
-          checkForOffsetUpdates(partition);
+          try {
+            partitionManager.checkForOffsetUpdates(partition);
+          } catch (Throwable e) {
+            log.error("Error while checking offset updates, shutting down", e);
+            return false;
+          }
 
           // handleItem sets the thread interrupt, let's exit if there has been an interrupt set
           if (Thread.currentThread().isInterrupted()) {
@@ -263,15 +265,18 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
           if (e instanceof ClassCastException || e instanceof SerializationException) { // TODO: optional
             log.error("Non retryable error", e);
-            break;
+            return false;
           }
           log.error("Exception occurred in Kafka consumer thread, stopping the Consumer.", e);
-          break;
+          return false;
         }
       }
 
-      for (TopicPartition partition : partitionWorkMap.keySet()) {
-        checkForOffsetUpdates(partition);
+      try {
+        partitionManager.checkOffsetUpdates();
+      } catch (Throwable e) {
+        log.error("Error while checking offset updates, shutting down", e);
+        return false;
       }
 
     } catch (WakeupException e) {
@@ -289,53 +294,32 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
     return true;
   }
 
-  public void sendBatch(UpdateRequest solrReqBatch, ConsumerRecord<String,MirroredSolrRequest> lastRecord, WorkUnit workUnit) {
+  public void sendBatch(UpdateRequest solrReqBatch, ConsumerRecord<String,MirroredSolrRequest> lastRecord, PartitionManager.WorkUnit workUnit) {
     UpdateRequest finalSolrReqBatch = solrReqBatch;
     Future<?> future = executor.submit(() -> {
-      IQueueHandler.Result<MirroredSolrRequest> result = messageProcessor.handleItem(new MirroredSolrRequest(finalSolrReqBatch));
       try {
+        IQueueHandler.Result<MirroredSolrRequest> result = messageProcessor.handleItem(new MirroredSolrRequest(finalSolrReqBatch));
+
         processResult(lastRecord, result);
       } catch (MirroringException e) {
         // We don't really know what to do here
         log.error("Mirroring exception occurred while resubmitting to Kafka. We are going to stop the consumer thread now.", e);
         throw new RuntimeException(e);
+      } finally {
+        executor.submit(() -> {
+          try {
+            partitionManager.checkForOffsetUpdates(workUnit.partition);
+          } catch (Throwable e) {
+            // already logging in checkForOffsetUpdates
+          }
+        });
       }
+
     });
     workUnit.workItems.add(future);
   }
 
-  private void checkForOffsetUpdates(TopicPartition partition) {
-    PartitionWork work;
-    while ((work = partitionWorkMap.get(partition)) != null) {
-      WorkUnit workUnit = work.partitionQueue.peek();
-      if (workUnit != null) {
-        for (Future<?> future : workUnit.workItems) {
-          if (!future.isDone()) {
-            if (log.isTraceEnabled()) {
-              log.trace("Future for update is not done topic={}", partition.topic());
-            }
-            return;
-          }
-          if (log.isTraceEnabled()) {
-            log.trace("Future for update is done topic={}", partition.topic());
-          }
-          try {
-            future.get();
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-          } catch (ExecutionException e) {
-            log.error("Exception resubmitting updates to Kafka, stopping the Consumer thread", e);
-            work.partitionQueue.poll();
-            throw new RuntimeException("Exception resubmitting updates to Kafka, stopping the Consumer thread", e);
-          }
-          work.partitionQueue.poll();
-        }
 
-        updateOffset(partition, workUnit.nextOffset);
-
-      }
-    }
-  }
 
   void processResult(ConsumerRecord<String,MirroredSolrRequest> record, IQueueHandler.Result<MirroredSolrRequest> result) throws MirroringException {
     switch (result.status()) {
@@ -370,44 +354,13 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
     }
   }
 
-  /**
-   * Reset the local offset so that the consumer reads the records from Kafka again.
-   *
-   * @param partition        The TopicPartition to reset the offset for
-   * @param partitionRecords PartitionRecords for the specified partition
-   */
-  private void resetOffsetForPartition(TopicPartition partition, List<ConsumerRecord<String,MirroredSolrRequest>> partitionRecords) {
-    if (log.isTraceEnabled()) {
-      log.trace("Resetting offset to: {}", partitionRecords.get(0).offset());
-    }
-    long resetOffset = partitionRecords.get(0).offset();
-    consumer.seek(partition, resetOffset);
-  }
 
-  /**
-   * Logs and updates the commit point for the partition that has been processed.
-   *
-   * @param partition  The TopicPartition to update the offset for
-   * @param nextOffset The next offset to commit for this partition.
-   */
-  private void updateOffset(TopicPartition partition, long nextOffset) {
-    if (log.isTraceEnabled()) {
-      log.trace("Updated offset for topic={} partition={} to offset={}", partition.topic(), partition.partition(), nextOffset);
-    }
-
-    consumer.commitSync(Collections.singletonMap(partition, new OffsetAndMetadata(nextOffset)));
-  }
-
-  private static long getOffsetForPartition(List<ConsumerRecord<String,MirroredSolrRequest>> partitionRecords) {
-    long nextOffset = partitionRecords.get(partitionRecords.size() - 1).offset() + 1;
-    return nextOffset;
-  }
 
   /**
    * Shutdown the Kafka consumer by calling wakeup.
    */
   public final void shutdown() {
-    consumer.wakeup();
+    kafkaConsumer.wakeup();
     log.info("Shutdown called on KafkaCrossDcConsumer");
     try {
       if (!executor.isShutdown()) {
@@ -431,12 +384,5 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
     return new KafkaMirroringSink(conf);
   }
 
-  private static class PartitionWork {
-    private final Queue<WorkUnit> partitionQueue = new LinkedList<>();
-  }
 
-  static class WorkUnit {
-    Set<Future<?>> workItems = new HashSet<>();
-    long nextOffset;
-  }
 }

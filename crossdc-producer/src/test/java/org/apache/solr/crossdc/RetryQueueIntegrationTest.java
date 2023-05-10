@@ -161,6 +161,13 @@ import java.util.Properties;
     if (zkTestServer2 != null) {
       zkTestServer2.shutdown();
     }
+
+    consumer = null;
+    solrCluster1 = null;
+    solrCluster2 = null;
+    kafkaCluster = null;
+    zkTestServer1 = null;
+    zkTestServer2 = null;
   }
 
   @After

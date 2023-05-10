@@ -40,10 +40,10 @@ dependencies {
 
     provided  group: 'org.apache.solr', name: 'solr-core', version: '8.11.2'
 
-    testImplementation 'org.slf4j:slf4j-api'
+    testImplementation 'org.slf4j:slf4j-api:2.0.5'
     testImplementation 'org.hamcrest:hamcrest:2.2'
     testImplementation 'junit:junit:4.13.2'
-    testImplementation('org.mockito:mockito-inline:4.3.1')
+    testImplementation('org.mockito:mockito-inline:5.2.0')
     testImplementation group: 'org.apache.solr', name: 'solr-core', version: '8.11.2'
     testImplementation group: 'org.apache.solr', name: 'solr-test-framework', version: '8.11.2'
 
@@ -65,9 +65,11 @@ shadowJar {
 jar.dependsOn(shadowJar)
 
 artifacts {
-    shadowJar;
+    shadowJar
 }
 
 test {
     jvmArgs '-Djava.security.egd=file:/dev/./urandom'
+    minHeapSize = "128m"
+    maxHeapSize = "512m"
 }

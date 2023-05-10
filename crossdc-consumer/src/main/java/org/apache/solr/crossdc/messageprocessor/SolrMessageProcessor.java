@@ -198,7 +198,8 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
     private void logRequest(SolrRequest request) {
         if(request instanceof UpdateRequest) {
             final StringBuilder rmsg = new StringBuilder(64);
-            rmsg.append("Submitting update request");
+            String collection = request.getCollection();
+            rmsg.append("Submitting update request for collection=").append(collection != null ? collection : request.getParams().get("collection"));
             if(((UpdateRequest) request).getDeleteById() != null) {
                 final int numDeleteByIds = ((UpdateRequest) request).getDeleteById().size();
                 metrics.counter("numDeleteByIds").inc(numDeleteByIds);
@@ -282,7 +283,7 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
      *
      * @param mirroredSolrRequest MirroredSolrRequest object that is being processed.
      */
-    private void preventCircularMirroring(MirroredSolrRequest mirroredSolrRequest) {
+    void preventCircularMirroring(MirroredSolrRequest mirroredSolrRequest) {
         if (mirroredSolrRequest.getSolrRequest() instanceof UpdateRequest) {
             UpdateRequest updateRequest = (UpdateRequest) mirroredSolrRequest.getSolrRequest();
             ModifiableSolrParams params = updateRequest.getParams();
