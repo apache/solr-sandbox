@@ -1,33 +1,35 @@
-# Solr Cross DC: Getting Started
+# Apache Solr CrossDC Module Documentation
 
 Solr Cross DC is a simple cross-data-center fail-over solution for Apache Solr. It has three key components: the CrossDC Producer, the CrossDC Consumer, and Apache Kafka. The Producer is a Solr UpdateProcessor plugin that forwards updates from the primary data center, while the Consumer is an update request consumer application that receives updates in the backup data center. Kafka is the distributed queue that connects the two.
 
 ## Overview
 
-Solr Cross DC is designed to provide a simple and reliable way to replicate Solr updates across multiple data centers. It is particularly useful for organizations that need to ensure high availability and disaster recovery for their Solr clusters.
+Apache Solr CrossDC is a robust fail-over solution for Apache Solr, facilitating seamless replication of Solr updates across multiple data centers. Consisting of three integral components - the CrossDC Producer, the CrossDC Consumer, and Apache Kafka, it provides high availability and disaster recovery for your Solr clusters.
 
-The CrossDC Producer intercepts updates when the node acts as the leader and puts those updates onto the distributed queue. The CrossDC Consumer polls the distributed queue and forwards updates to the configured Solr cluster upon receiving the update requests.
+ * CrossDC Producer: An UpdateProcessor plugin for Solr, it intercepts updates in the primary data center and dispatches them to a distributed queue.
+ * CrossDC Consumer: An update request consumer application that pulls updates from the distributed queue and forwards them to a Solr cluster in the backup data center.
+ * Apache Kafka: A distributed queue system that links the Producer and Consumer.
 
-## Getting Started
+## Setup Procedure
 
-To use Solr Cross DC, follow these steps:
+Implementing the Solr CrossDC involves the following steps:
 
-1. Startup or obtain access to an Apache Kafka cluster to provide the distributed queue between data centers.
-2. Install the CrossDC Solr plugin on each node in your Solr cluster (in both primary and backup data centers). Place the jar in the sharedLib directory specified in solr.xml and configure solrconfig.xml to reference the new UpdateProcessor and configure it for the Kafka cluster.
-3. Install the CrossDC consumer application in the backup data center and configure it for the Kafka cluster and the Solr cluster it will send consumed updates to.
+1. Apache Kafka Cluster: Ensure the availability of an Apache Kafka cluster. This acts as the distributed queue interconnecting data centers.
+2. CrossDC Solr Plugin: Install this plugin on each node in your Solr cluster (in both primary and backup data centers). Configure solrconfig.xml to reference the new UpdateProcessor and set it up for the Kafka cluster.
+3. CrossDC Consumer Application: Install this application in the backup data center, then configure it for both the Kafka and Solr clusters.
 
-### Configuration and Startup
+### Detailed Configuration & Startup
 
-#### Installing and Configuring the Cross DC Producer Solr Plug-In
+#### CrossDC Producer Solr Plug-In
 
-1. Configure the sharedLib directory in solr.xml (e.g., sharedLIb=lib) and place the CrossDC producer plug-in jar file into the specified folder. 
+1. Define the sharedLib directory in solr.xml and place the CrossDC producer plug-in jar file in this directory. 
     **solr.xml**
 
    ```xml
    <solr>
      <str name="sharedLib">${solr.sharedLib:}</str>
    ```
-3. Configure the new UpdateProcessor in solrconfig.xml.
+3. Add the new UpdateProcessor in solrconfig.xml.
     ```xml
        <updateRequestProcessorChain  name="mirrorUpdateChain" default="true">
        
@@ -39,46 +41,65 @@ To use Solr Cross DC, follow these steps:
          <processor class="solr.LogUpdateProcessorFactory" />
          <processor class="solr.RunUpdateProcessorFactory" />
        </updateRequestProcessorChain>
-       ```
-4. Add an external version constraint UpdateProcessor to the update chain added to solrconfig.xml to allow user-provided update versions.
+       
+4. Add an external version constraint UpdateProcessor to the update chain added to solrconfig.xml to accept user-provided update versions.
    See https://solr.apache.org/guide/8_11/update-request-processors.html#general-use-updateprocessorfactories and https://solr.apache.org/docs/8_1_1/solr-core/org/apache/solr/update/processor/DocBasedVersionConstraintsProcessor.html
-4. Start or restart the Solr cluster(s).
+5. Start or restart your Solr clusters.
 
-##### Configuration Properties
+##### Configuration Properties for the CrossDC Producer:
 
-There are two configuration properties: 
+The required configuration properties are:
 - `bootstrapServers`: list of servers used to connect to the Kafka cluster
-- `topicName`: Kafka topicName used to indicate which Kafka queue the Solr updates will be pushed on 
+- `topicName`: Kafka topicName used to indicate which Kafka queue the Solr updates will be pushed on
 
-#### Installing and Configuring the CrossDC Consumer Application
+Optional configuration properties:
+- `batchSizeBytes`: maximum batch size in bytes for the Kafka queue
+- `bufferMemoryBytes`: memory allocated by the Producer in total for buffering 
+- `lingerMs`: amount of time that the Producer will wait to add to a batch
+- `requestTimeout`: request timeout for the Producer 
+- `indexUnmirrorableDocs`: if set to True, updates that are too large for the Kafka queue will still be indexed on the primary.
+- `enableDataCompression`: whether to use compression for data sent over the Kafka queue - can be none (default), gzip, snappy, lz4, or zstd
+- `numRetries`: Setting a value greater than zero will cause the Producer to resend any record whose send fails with a potentially transient error.
+- `retryBackoffMs`: The amount of time to wait before attempting to retry a failed request to a given topic partition.
+- `deliveryTimeoutMS`: Updates sent to the Kafka queue will be failed before the number of retries has been exhausted if the timeout configured by delivery.timeout.ms expires first
+- `maxRequestSizeBytes`: The maximum size of a Kafka queue request in bytes - limits the number of requests that will be sent over the queue in a single batch.
 
-1. Uncompress the distribution tar or zip file for the CrossDC Consumer into an appropriate install location on a node in the receiving data center.
-2. Start the Consumer process via the included shell start script at bin/crossdc-consumer.
-3. Configure the CrossDC Consumer via Java system properties pass in the CROSSDC_CONSUMER_OPTS environment variable.
+#### CrossDC Consumer Application
+
+1. Extract the CrossDC Consumer distribution file into an appropriate location in the backup data center.
+2. Start the Consumer process using the included start script at bin/crossdc-consumer.
+3. Configure the CrossDC Consumer with Java system properties using the CROSSDC_CONSUMER_OPTS environment variable.
+
+##### Configuration Properties for the CrossDC Consumer:
 
 The required configuration properties are: 
-- `bootstrapServers`: list of servers used to connect to the Kafka cluster 
+- `bootstrapServers`: list of Kafka bootstrap servers.
 - `topicName`: Kafka topicName used to indicate which Kafka queue the Solr updates will be pushed to. This can be a comma separated list for the Consumer if you would like to consume multiple topics.
-- `zkConnectString`: Zookeeper connection string used by Solr to connect to its Zookeeper cluster in the backup data center
+- `zkConnectString`: Zookeeper connection string used to connect to Solr.
 
-The following additional configuration properties should either be specified for both the producer and the consumer or in the shared Zookeeper central config properties file:
+Optional configuration properties:
+- `consumerProcessingThreads`: The number of threads used by the consumer to concurrently process updates from the Kafka queue.
 
-- `batchSizeBytes`: maximum batch size in bytes for the queue
+Optional configuration properties used when the consumer must retry by putting updates back on the Kafka queue:
+- `batchSizeBytes`: maximum batch size in bytes for the Kafka queue
 - `bufferMemoryBytes`: memory allocated by the Producer in total for buffering 
 - `lingerMs`: amount of time that the Producer will wait to add to a batch
 - `requestTimeout`: request timeout for the Producer 
 
 #### Central Configuration Option
 
-You can manage the configuration centrally in Solr's Zookeeper cluster by placing a properties file called *crossdc.properties* in the root Solr Zookeeper znode, eg, */solr/crossdc.properties*. Both *bootstrapServers* and *topicName* properties can be put in this file. For the CrossDC Consumer application, you would only have to set *zkConnectString* for the local Solr cluster.
+Manage configuration centrally in Solr's Zookeeper cluster by placing a properties file called crossdc.properties in the root Solr
+Zookeeper znode, eg, */solr/crossdc.properties*. The bootstrapServers and topicName properties can be included in this file. For
+the Producer plugin, all of the crossdc configuration properties can be used here. For the CrossDC Consumer application you can also
+configure all of the crossdc properies here, however you will need to set the zkConnectString as a system property to allow retrieving
+the rest of the configuration from Zookeeper.
 
-#### Making the Cross DC UpdateProcessor Optional in a Common solrconfig.xml
+#### Disabling CrossDC via Configuration
 
-Use the *enabled* attribute, false turns the processor into a NOOP in the chain.
+To make the Cross DC UpdateProcessor optional in a common solrconfig.xml, use the enabled attribute. Setting it to false turns the processor into a NOOP in the chain.
 
 ## Limitations
 
 - Delete-By-Query converts to DeleteById, which can be much less efficient for queries matching large numbers of documents.
-  Forwarding a real Delete-By-Query could also be reasonable if it is not strictly reliant on not being reordered with other requests.
+  Forwarding a real Delete-By-Query could also be a reasonable option to add if it is not strictly reliant on not being reordered with other requests.
 
-cluster.sh* script located in the root of the CrossDC repository. This script is a helpful developer tool for manual testing and it will download Solr and Kafka and then configure both for Cross DC.
