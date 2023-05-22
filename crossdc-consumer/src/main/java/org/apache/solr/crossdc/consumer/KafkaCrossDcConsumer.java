@@ -53,6 +53,9 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
     kafkaConsumerProps.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, conf.getInt(KafkaCrossDcConf.MAX_POLL_RECORDS));
 
+    kafkaConsumerProps.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, conf.get(KafkaCrossDcConf.MAX_POLL_INTERVAL_MS));
+
+    kafkaConsumerProps.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, conf.get(KafkaCrossDcConf.SESSION_TIMEOUT_MS));
     kafkaConsumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
     kafkaConsumerProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
@@ -142,14 +145,19 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
                   record.partition(), record.key(), record.value());
             }
             IQueueHandler.Result<MirroredSolrRequest> result = messageProcessor.handleItem(record.value());
+            if (log.isTraceEnabled()) {
+              log.trace("Finished processing record from topic={} partition={} key={} value={} result={}",
+                  record.topic(), record.partition(), record.key(), record.value(), result);
+            }
+
             switch (result.status()) {
               case FAILED_RESUBMIT:
                 // currently, we use a strategy taken from an earlier working implementation
                 // of just resubmitting back to the queue - note that in rare cases, this could
                 // allow for incorrect update reorders
-                if (log.isTraceEnabled()) {
-                  log.trace("result=failed-resubmit");
-                }
+
+                log.info("Resubmitting failed Solr update to Kafka queue");
+
                 metrics.counter("failed-resubmit").inc();
                 kafkaMirroringSink.submit(record.value());
                 break;
@@ -228,9 +236,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
    */
   private void resetOffsetForPartition(TopicPartition partition,
       List<ConsumerRecord<String, MirroredSolrRequest>> partitionRecords) {
-    if (log.isTraceEnabled()) {
-      log.trace("Resetting offset to: {}", partitionRecords.get(0).offset());
-    }
+    log.info("Resetting offset to: {}", partitionRecords.get(0).offset());
     long resetOffset = partitionRecords.get(0).offset();
     consumer.seek(partition, resetOffset);
   }
@@ -245,12 +251,17 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
       List<ConsumerRecord<String, MirroredSolrRequest>> partitionRecords) {
     long nextOffset = partitionRecords.get(partitionRecords.size() - 1).offset() + 1;
 
-    if (log.isTraceEnabled()) {
-      log.trace("Updated offset for topic={} partition={} to offset={}", partition.topic(),
+    if (log.isDebugEnabled()) {
+      log.trace("Updating offset for topic={} partition={} to offset={}", partition.topic(),
           partition.partition(), nextOffset);
     }
 
     consumer.commitSync(Collections.singletonMap(partition, new OffsetAndMetadata(nextOffset)));
+
+    if (log.isDebugEnabled()) {
+      log.trace("Finished updating offset for topic={} partition={} to offset={}", partition.topic(),
+          partition.partition(), nextOffset);
+    }
   }
 
   /**
