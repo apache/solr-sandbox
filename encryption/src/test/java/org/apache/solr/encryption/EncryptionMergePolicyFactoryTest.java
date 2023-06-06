@@ -40,6 +40,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static org.apache.solr.encryption.TestingKeySupplier.KEY_ID_1;
+import static org.apache.solr.encryption.TestingKeySupplier.KEY_ID_2;
+
 /**
  * Tests {@link EncryptionMergePolicyFactory}.
  */
@@ -75,44 +78,44 @@ public class EncryptionMergePolicyFactoryTest extends LuceneTestCase {
    */
   @Test
   public void testSegmentReencryption() throws Exception {
-    KeyManager keyManager = new TestingKeyManager.Supplier().getKeyManager();
+    KeySupplier keySupplier = new TestingKeySupplier.Factory().create();
     try (Directory dir = new EncryptionDirectory(new MMapDirectory(createTempDir(), FSLockFactory.getDefault()),
                                                  LightAesCtrEncrypter.FACTORY,
-                                                 keyManager)) {
+                                                 keySupplier)) {
       IndexWriterConfig iwc = new IndexWriterConfig(new WhitespaceAnalyzer());
       iwc.setMergeScheduler(new ConcurrentMergeScheduler());
       iwc.setMergePolicy(createMergePolicy());
       try (IndexWriter writer = new IndexWriter(dir, iwc)) {
 
         // Index 3 segments with encryption key id 1.
-        commit(writer, keyManager, TestingKeyManager.KEY_ID_1);
+        commit(writer, keySupplier, KEY_ID_1);
         int numSegments = 3;
         for (int i = 0; i < numSegments; ++i) {
           writer.addDocument(new Document());
-          commit(writer, keyManager, TestingKeyManager.KEY_ID_1);
+          commit(writer, keySupplier, KEY_ID_1);
         }
         Set<String> initialSegmentNames = readSegmentNames(dir);
         assertEquals(numSegments, initialSegmentNames.size());
 
         // Run a force merge with the special max num segments trigger.
         writer.forceMerge(Integer.MAX_VALUE);
-        commit(writer, keyManager, TestingKeyManager.KEY_ID_1);
+        commit(writer, keySupplier, KEY_ID_1);
         // Verify no segments are merged because they are encrypted with
         // the latest active key id.
         assertEquals(initialSegmentNames, readSegmentNames(dir));
 
         // Set the latest encryption key id 2.
-        commit(writer, keyManager, TestingKeyManager.KEY_ID_1, TestingKeyManager.KEY_ID_2);
+        commit(writer, keySupplier, KEY_ID_1, KEY_ID_2);
 
         // Run a force merge with any non-special max num segments.
         writer.forceMerge(10);
-        commit(writer, keyManager, TestingKeyManager.KEY_ID_1, TestingKeyManager.KEY_ID_2);
+        commit(writer, keySupplier, KEY_ID_1, KEY_ID_2);
         // Verify no segments are merged.
         assertEquals(initialSegmentNames, readSegmentNames(dir));
 
         // Run a force merge with the special max num segments trigger.
         writer.forceMerge(Integer.MAX_VALUE);
-        commit(writer, keyManager, TestingKeyManager.KEY_ID_1, TestingKeyManager.KEY_ID_2);
+        commit(writer, keySupplier, KEY_ID_1, KEY_ID_2);
         // Verify each segment has been rewritten.
         Set<String> segmentNames = readSegmentNames(dir);
         assertEquals(initialSegmentNames.size(), segmentNames.size());
@@ -123,10 +126,10 @@ public class EncryptionMergePolicyFactoryTest extends LuceneTestCase {
     }
   }
 
-  private void commit(IndexWriter writer, KeyManager keyManager, String... keyIds) throws IOException {
+  private void commit(IndexWriter writer, KeySupplier keySupplier, String... keyIds) throws IOException {
     Map<String, String> commitData = new HashMap<>();
     for (String keyId : keyIds) {
-      EncryptionUtil.setNewActiveKeyIdInCommit(keyId, keyManager.getKeyCookie(keyId), commitData);
+      EncryptionUtil.setNewActiveKeyIdInCommit(keyId, keySupplier.getKeyCookie(keyId, null), commitData);
     }
     writer.setLiveCommitData(commitData.entrySet());
     writer.commit();

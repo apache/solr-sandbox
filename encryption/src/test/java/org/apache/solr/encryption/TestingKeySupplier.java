@@ -17,24 +17,20 @@
 package org.apache.solr.encryption;
 
 import org.apache.lucene.index.IndexFileNames;
-import org.apache.solr.common.util.NamedList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.solr.common.params.SolrParams;
 
-import java.lang.invoke.MethodHandles;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.function.Function;
 
 /**
- * Mocked implementation of {@link KeyManager}.
+ * Mocked implementation of {@link KeySupplier}.
  */
-public class TestingKeyManager implements KeyManager {
-
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+public class TestingKeySupplier implements KeySupplier {
 
   public static final String KEY_ID_1 = "mock1";
   public static final String KEY_ID_2 = "mock2";
@@ -74,8 +70,6 @@ public class TestingKeyManager implements KeyManager {
   // dvd    - Doc values data
   // ustd   - UniformSplit index (FST)
   // ustb   - UniformSplit terms (including metadata)
-  // stustd - HintDriven UniformSplit index (FST)
-  // stustb - HintDriven UniformSplit terms (including metadata)
   // cfs    - Compound file (contains all the above files data)
 
   // Cleartext temporary files:
@@ -83,19 +77,10 @@ public class TestingKeyManager implements KeyManager {
   private static final String TMP_DOC_IDS = "-doc_ids"; // FieldsIndexWriter
   private static final String TMP_FILE_POINTERS = "file_pointers"; // FieldsIndexWriter
 
-  static {
-    try {
-      assert false;
-      log.error(TestingKeyManager.class.getSimpleName() + " must not be used in production");
-    } catch (AssertionError e) {
-      // Ok.
-    }
-  }
-
-  private TestingKeyManager() {}
+  private TestingKeySupplier() {}
 
   @Override
-  public boolean isEncryptable(String fileName) {
+  public boolean shouldEncrypt(String fileName) {
     String extension = IndexFileNames.getExtension(fileName);
     if (extension == null) {
       // segments and pending_segments are never passed as parameter of this method.
@@ -126,45 +111,46 @@ public class TestingKeyManager implements KeyManager {
   }
 
   @Override
-  public byte[] getKeyCookie(String keyId) {
-    //TODO: Replace this mock. This class should be the key cache.
-    byte[] cookie = MOCK_COOKIES.get(keyId);
-    if (cookie == null) {
+  public Map<String, String> getKeyCookie(String keyId, Map<String, String> params) {
+    byte[] wrappedKeySecret = MOCK_COOKIES.get(keyId);
+    if (wrappedKeySecret == null) {
       throw new NoSuchElementException("No key defined for " + keyId);
     }
-    return cookie;
+    return Map.of("wrappedSecret", Base64.getEncoder().encodeToString(wrappedKeySecret));
   }
 
   @Override
-  public byte[] getKeySecret(String keyId, String keyRef, Function<String, byte[]> cookieSupplier) {
-    //TODO: Replace this mock. This class should be the key cache.
+  public byte[] getKeySecret(String keyId, Function<String, Map<String, String>> cookieSupplier) {
     byte[] secret = MOCK_KEYS.get(keyId);
     if (secret == null) {
       throw new NoSuchElementException("No key defined for " + keyId);
     }
-    byte[] cookie = cookieSupplier.apply(keyRef);
-    byte[] expectedCookie = MOCK_COOKIES.get(keyId);
-    if (cookie != null && expectedCookie != null && !Arrays.equals(cookie, expectedCookie)
-      || (cookie == null || expectedCookie == null) && cookie != expectedCookie) {
+    Map<String, String> cookie = cookieSupplier.apply(keyId);
+    String wrappedKeySecretAsString = cookie == null ? null : cookie.get("wrappedSecret");
+    byte[] wrappedKeySecret = wrappedKeySecretAsString == null ?
+      null : Base64.getDecoder().decode(wrappedKeySecretAsString);
+    byte[] expectedWrappedKeySecret = MOCK_COOKIES.get(keyId);
+    if (wrappedKeySecret != null && expectedWrappedKeySecret != null && !Arrays.equals(wrappedKeySecret, expectedWrappedKeySecret)
+      || (wrappedKeySecret == null || expectedWrappedKeySecret == null) && wrappedKeySecret != expectedWrappedKeySecret) {
       throw new IllegalStateException("Wrong cookie provided");
     }
     return secret;
   }
 
   /**
-   * Supplies the {@link TestingKeyManager} singleton.
+   * Supplies the {@link TestingKeySupplier} singleton.
    */
-  public static class Supplier implements KeyManager.Supplier {
+  public static class Factory implements KeySupplier.Factory {
 
-    private static final KeyManager SINGLETON = new TestingKeyManager();
+    private static final KeySupplier SINGLETON = new TestingKeySupplier();
 
     @Override
-    public void init(NamedList<?> args) {
+    public void init(SolrParams params) {
       // Do nothing.
     }
 
     @Override
-    public KeyManager getKeyManager() {
+    public KeySupplier create() {
       return SINGLETON;
     }
   }

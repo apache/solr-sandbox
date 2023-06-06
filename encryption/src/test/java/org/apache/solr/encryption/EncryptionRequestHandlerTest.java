@@ -34,11 +34,15 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static org.apache.solr.encryption.EncryptionDirectoryFactory.PROPERTY_INNER_ENCRYPTION_DIRECTORY_FACTORY;
 import static org.apache.solr.encryption.EncryptionRequestHandler.*;
 import static org.apache.solr.encryption.EncryptionUtil.getKeyIdFromCommit;
+import static org.apache.solr.encryption.TestingKeySupplier.KEY_ID_1;
+import static org.apache.solr.encryption.TestingKeySupplier.KEY_ID_2;
 
 /**
  * Tests {@link EncryptionRequestHandler} (re)encryption logic.
@@ -56,7 +60,7 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    System.setProperty(EncryptionDirectoryFactory.PROPERTY_INNER_ENCRYPTION_DIRECTORY_FACTORY, MockFactory.class.getName());
+    System.setProperty(PROPERTY_INNER_ENCRYPTION_DIRECTORY_FACTORY, MockFactory.class.getName());
     TestUtil.setInstallDirProperty();
     cluster = new MiniSolrCloudCluster.Builder(1, createTempDir())
       .addConfig("config", TestUtil.getConfigPath("collection1"))
@@ -65,7 +69,7 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
 
   @AfterClass
   public static void afterClass() throws Exception {
-    System.clearProperty(EncryptionDirectoryFactory.PROPERTY_INNER_ENCRYPTION_DIRECTORY_FACTORY);
+    System.clearProperty(PROPERTY_INNER_ENCRYPTION_DIRECTORY_FACTORY);
     cluster.shutdown();
   }
 
@@ -90,7 +94,7 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
   @Test
   public void testEncryptionFromNoKeysToOneKey_NoIndex() throws Exception {
     // Send an encrypt request with a key id on an empty index.
-    NamedList<Object> response = encrypt(TestingKeyManager.KEY_ID_1);
+    NamedList<Object> response = encrypt(KEY_ID_1);
     assertEquals(STATUS_SUCCESS, response.get(STATUS));
     assertEquals(STATE_COMPLETE, response.get(ENCRYPTION_STATE));
 
@@ -108,7 +112,7 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
   @Test
   public void testEncryptionFromNoKeysToOneKeyToNoKeys_NoIndex() throws Exception {
     // Send an encrypt request with a key id on an empty index.
-    NamedList<Object> response = encrypt(TestingKeyManager.KEY_ID_1);
+    NamedList<Object> response = encrypt(KEY_ID_1);
     assertEquals(STATUS_SUCCESS, response.get(STATUS));
     assertEquals(STATE_COMPLETE, response.get(ENCRYPTION_STATE));
 
@@ -142,17 +146,17 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     mockDir.forceClearText = false;
 
     // Send an encrypt request with a key id.
-    NamedList<Object> response = encrypt(TestingKeyManager.KEY_ID_1);
+    NamedList<Object> response = encrypt(KEY_ID_1);
     assertEquals(STATUS_SUCCESS, response.get(STATUS));
     assertEquals(STATE_PENDING, response.get(ENCRYPTION_STATE));
 
-    waitUntilEncryptionIsComplete(TestingKeyManager.KEY_ID_1);
+    waitUntilEncryptionIsComplete(KEY_ID_1);
 
     // Verify that the segment is encrypted.
     mockDir.forceClearText = true;
     testUtil.assertCannotReloadCore();
     mockDir.forceClearText = false;
-    mockDir.soleKeyIdAllowed = TestingKeyManager.KEY_ID_1;
+    mockDir.soleKeyIdAllowed = KEY_ID_1;
     testUtil.reloadCore();
     testUtil.assertQueryReturns("weather", 2);
     mockDir.clearMockValues();
@@ -166,17 +170,17 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     testUtil.indexDocsAndCommit("foggy weather");
 
     // Send an encrypt request with another key id.
-    NamedList<Object> response = encrypt(TestingKeyManager.KEY_ID_2);
+    NamedList<Object> response = encrypt(KEY_ID_2);
     assertEquals(STATUS_SUCCESS, response.get(STATUS));
     assertEquals(STATE_PENDING, response.get(ENCRYPTION_STATE));
 
-    waitUntilEncryptionIsComplete(TestingKeyManager.KEY_ID_2);
+    waitUntilEncryptionIsComplete(KEY_ID_2);
 
     // Verify that the segment is encrypted.
     mockDir.forceClearText = true;
     testUtil.assertCannotReloadCore();
     mockDir.forceClearText = false;
-    mockDir.soleKeyIdAllowed = TestingKeyManager.KEY_ID_2;
+    mockDir.soleKeyIdAllowed = KEY_ID_2;
     testUtil.reloadCore();
     testUtil.assertQueryReturns("weather", 3);
   }
@@ -205,17 +209,17 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     testUtil.indexDocsAndCommit("cloudy weather");
 
     // Send an encrypt request with another key id.
-    response = encrypt(TestingKeyManager.KEY_ID_2);
+    response = encrypt(KEY_ID_2);
     assertEquals(STATUS_SUCCESS, response.get(STATUS));
     assertEquals(STATE_PENDING, response.get(ENCRYPTION_STATE));
 
-    waitUntilEncryptionIsComplete(TestingKeyManager.KEY_ID_2);
+    waitUntilEncryptionIsComplete(KEY_ID_2);
 
     // Verify that the segment is encrypted.
     mockDir.forceClearText = true;
     testUtil.assertCannotReloadCore();
     mockDir.forceClearText = false;
-    mockDir.soleKeyIdAllowed = TestingKeyManager.KEY_ID_2;
+    mockDir.soleKeyIdAllowed = KEY_ID_2;
     testUtil.reloadCore();
     testUtil.assertQueryReturns("weather", 4);
   }
@@ -247,8 +251,8 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     @Override
     public EncryptionDirectory create(Directory delegate,
                                       AesCtrEncrypterFactory encrypterFactory,
-                                      KeyManager keyManager) throws IOException {
-      return mockDir = new MockEncryptionDirectory(delegate, encrypterFactory, keyManager);
+                                      KeySupplier keySupplier) throws IOException {
+      return mockDir = new MockEncryptionDirectory(delegate, encrypterFactory, keySupplier);
     }
   }
 
@@ -257,9 +261,9 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     boolean forceClearText;
     String soleKeyIdAllowed;
 
-    MockEncryptionDirectory(Directory delegate, AesCtrEncrypterFactory encrypterFactory, KeyManager keyManager)
+    MockEncryptionDirectory(Directory delegate, AesCtrEncrypterFactory encrypterFactory, KeySupplier keySupplier)
       throws IOException {
-      super(delegate, encrypterFactory, keyManager);
+      super(delegate, encrypterFactory, keySupplier);
     }
 
     void clearMockValues() {
@@ -275,10 +279,26 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     @Override
     protected byte[] getKeySecret(String keyRef) throws IOException {
       if (soleKeyIdAllowed != null) {
-        String keyId = getKeyIdFromCommit(keyRef, getLatestCommitData().data);
+        String keyId = getKeyIdFromCommit(keyRef, ((TestCommitUserData) getLatestCommitData()).getData());
         assertEquals(soleKeyIdAllowed, keyId);
       }
       return super.getKeySecret(keyRef);
+    }
+
+    @Override
+    protected CommitUserData createCommitUserData(String segmentFileName, Map<String, String> data) {
+      return new TestCommitUserData(segmentFileName, data);
+    }
+
+    private static class TestCommitUserData extends CommitUserData {
+
+      TestCommitUserData(String segmentFileName, Map<String, String> data) {
+        super(segmentFileName, data);
+      }
+
+      Map<String, String> getData() {
+        return data;
+      }
     }
   }
 }

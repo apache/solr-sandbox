@@ -53,7 +53,7 @@ import static org.apache.solr.encryption.EncryptionUtil.*;
  * {@link FilterDirectory} that wraps a delegate {@link Directory} to encrypt/decrypt files on the fly.
  * <p>
  * When opening an {@link IndexOutput} for writing:
- * <br>If {@link KeyManager#isEncryptable(String)} returns true, and if there is an
+ * <br>If {@link KeySupplier#shouldEncrypt(String)} returns true, and if there is an
  * {@link EncryptionUtil#getActiveKeyRefFromCommit(Map) active encryption key} defined in the latest
  * commit user data, then the output is wrapped with a {@link EncryptingIndexOutput} to be encrypted
  * on the fly. In this case an {@link #ENCRYPTION_MAGIC} header is written at the beginning of the output,
@@ -81,7 +81,7 @@ public class EncryptionDirectory extends FilterDirectory {
 
   protected final AesCtrEncrypterFactory encrypterFactory;
 
-  protected final KeyManager keyManager;
+  protected final KeySupplier keySupplier;
 
   /** Cache of the latest commit user data. */
   protected volatile CommitUserData commitUserData;
@@ -97,13 +97,13 @@ public class EncryptionDirectory extends FilterDirectory {
    * files on the fly.
    *
    * @param encrypterFactory creates {@link AesCtrEncrypter}.
-   * @param keyManager      provides key secrets and determines which files are encryptable.
+   * @param keySupplier      provides the key secrets and determines which files should be encrypted.
    */
-  public EncryptionDirectory(Directory delegate, AesCtrEncrypterFactory encrypterFactory, KeyManager keyManager)
+  public EncryptionDirectory(Directory delegate, AesCtrEncrypterFactory encrypterFactory, KeySupplier keySupplier)
     throws IOException {
     super(delegate);
     this.encrypterFactory = encrypterFactory;
-    this.keyManager = keyManager;
+    this.keySupplier = keySupplier;
     commitUserData = readLatestCommitUserData();
 
     // If there is no encryption key id parameter in the latest commit user data, then we know the index
@@ -136,7 +136,7 @@ public class EncryptionDirectory extends FilterDirectory {
       shouldReadCommitUserData = true;
       return indexOutput;
     }
-    if (!keyManager.isEncryptable(fileName)) {
+    if (!keySupplier.shouldEncrypt(fileName)) {
       // The file should not be encrypted, based on its name. Do not wrap the IndexOutput.
       return indexOutput;
     }
@@ -218,7 +218,7 @@ public class EncryptionDirectory extends FilterDirectory {
           }
           // New segments file, so we have to read it.
           SegmentInfos segmentInfos = SegmentInfos.readCommit(EncryptionDirectory.this, segmentFileName);
-          return new CommitUserData(segmentFileName, segmentInfos.getUserData());
+          return createCommitUserData(segmentFileName, segmentInfos.getUserData());
         }
       }.run();
     } catch (NoSuchFileException | FileNotFoundException e) {
@@ -227,24 +227,28 @@ public class EncryptionDirectory extends FilterDirectory {
     }
   }
 
-  /**
-   * Gets the key secret from the provided key reference number.
-   * First, gets the key id corresponding to the key reference based on the mapping defined in the latest
-   * commit user data. Then, calls the {@link KeyManager} to get the corresponding key secret.
-   */
-  protected byte[] getKeySecret(String keyRef) throws IOException {
-    String keyId = getKeyIdFromCommit(keyRef, getLatestCommitData().data);
-    return keyManager.getKeySecret(keyId, keyRef, this::getKeyCookie);
+  protected CommitUserData createCommitUserData(String segmentFileName, Map<String, String> data) {
+    return new CommitUserData(segmentFileName, data);
   }
 
   /**
-   * Gets the key cookie to provide to the {@link KeyManager} to get the key secret.
+   * Gets the key secret from the provided key reference number.
+   * First, gets the key id corresponding to the key reference based on the mapping defined in the latest
+   * commit user data. Then, calls the {@link KeySupplier} to get the corresponding key secret.
+   */
+  protected byte[] getKeySecret(String keyRef) throws IOException {
+    String keyId = getKeyIdFromCommit(keyRef, getLatestCommitData().data);
+    return keySupplier.getKeySecret(keyId, this::getKeyCookie);
+  }
+
+  /**
+   * Gets the key cookie to provide to the {@link KeySupplier} to get the key secret.
    *
-   * @return the key cookie bytes; or null if none.
+   * @return the key cookie key-value pairs; or null if none.
    */
   @Nullable
-  protected byte[] getKeyCookie(String keyRef) {
-    return getKeyCookieFromCommit(keyRef, commitUserData.data);
+  protected Map<String, String> getKeyCookie(String keyId) {
+    return commitUserData.keyCookies.get(keyId);
   }
 
   @Override
@@ -322,7 +326,7 @@ public class EncryptionDirectory extends FilterDirectory {
     }
     for (SegmentCommitInfo segmentCommitInfo : segmentInfos) {
       for (String fileName : segmentCommitInfo.files()) {
-        if (keyManager.isEncryptable(fileName)) {
+        if (keySupplier.shouldEncrypt(fileName)) {
           try (IndexInput fileInput = in.openInput(fileName, IOContext.READ)) {
             String keyRef = getKeyRefForReading(fileInput);
             String keyId = keyRef == null ? null : getKeyIdFromCommit(keyRef, segmentInfos.getUserData());
@@ -348,12 +352,14 @@ public class EncryptionDirectory extends FilterDirectory {
 
     protected static final CommitUserData EMPTY = new CommitUserData("", Collections.emptyMap());
 
-    public final String segmentFileName;
-    public final Map<String, String> data;
+    protected final String segmentFileName;
+    protected final Map<String, String> data;
+    protected final KeyCookies keyCookies;
 
     protected CommitUserData(String segmentFileName, Map<String, String> data) {
       this.segmentFileName = segmentFileName;
       this.data = data;
+      keyCookies = getKeyCookiesFromCommit(data);
     }
   }
 }

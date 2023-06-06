@@ -31,15 +31,15 @@ import java.io.IOException;
  * <p/>
  * To be configured with two parameters:
  * <ul>
- *   <li>{@link #PARAM_KEY_MANAGER_SUPPLIER} defines the {@link KeyManager.Supplier} to use.
+ *   <li>{@link #PARAM_KEY_SUPPLIER_FACTORY} defines the {@link KeySupplier.Factory} to use.
  *   Required.</li>
  *   <li>{@link #PARAM_ENCRYPTER_FACTORY} defines which {@link AesCtrEncrypterFactory} to use.
- *   Default is {@link CipherAesCtrEncrypter.Factory}.</li>
+ *   Optional; default is {@link CipherAesCtrEncrypter.Factory}.</li>
  * </ul>
  * <pre>
  *   <directoryFactory name="DirectoryFactory"
  *       class="${solr.directoryFactory:org.apache.solr.encryption.EncryptionDirectoryFactory}">
- *     <str name="keyManagerSupplier">${solr.keyManagerSupplier:com.myproject.MyKeyManagerSupplier}</str>
+ *     <str name="keySupplierFactory">${solr.keySupplierFactory:com.myproject.MyKeySupplierFactory}</str>
  *     <str name="encrypterFactory">${solr.encrypterFactory:org.apache.solr.encryption.crypto.LightAesCtrEncrypter$Factory}</str>
  *   </directoryFactory>
  * </pre>
@@ -54,14 +54,14 @@ public class EncryptionDirectoryFactory extends MMapDirectoryFactory {
   //  Right now, EncryptionDirectoryFactory extends MMapDirectoryFactory. And we hope we will
   //  refactor later.
 
-  public static final String PARAM_KEY_MANAGER_SUPPLIER = "keyManagerSupplier";
+  public static final String PARAM_KEY_SUPPLIER_FACTORY = "keySupplierFactory";
   public static final String PARAM_ENCRYPTER_FACTORY = "encrypterFactory";
   /**
    * Visible for tests only - Property defining the class name of the inner encryption directory factory.
    */
   static final String PROPERTY_INNER_ENCRYPTION_DIRECTORY_FACTORY = "innerEncryptionDirectoryFactory";
 
-  private KeyManager keyManager;
+  private KeySupplier keySupplier;
   private AesCtrEncrypterFactory encrypterFactory;
   private InnerFactory innerFactory;
 
@@ -70,14 +70,14 @@ public class EncryptionDirectoryFactory extends MMapDirectoryFactory {
     super.init(args);
     SolrParams params = args.toSolrParams();
 
-    String keyManagerSupplierClass = params.get(PARAM_KEY_MANAGER_SUPPLIER);
-    if (keyManagerSupplierClass == null) {
-      throw new IllegalArgumentException("Missing " + PARAM_KEY_MANAGER_SUPPLIER + " argument for " + getClass().getName());
+    String keySupplierFactoryClass = params.get(PARAM_KEY_SUPPLIER_FACTORY, System.getProperty("solr." + PARAM_KEY_SUPPLIER_FACTORY));
+    if (keySupplierFactoryClass == null) {
+      throw new IllegalArgumentException("Missing " + PARAM_KEY_SUPPLIER_FACTORY + " argument for " + getClass().getName());
     }
-    KeyManager.Supplier keyManagerSupplier = coreContainer.getResourceLoader().newInstance(keyManagerSupplierClass,
-                                                                                           KeyManager.Supplier.class);
-    keyManagerSupplier.init(args);
-    keyManager = keyManagerSupplier.getKeyManager();
+    KeySupplier.Factory keySupplierFactory = coreContainer.getResourceLoader().newInstance(keySupplierFactoryClass,
+                                                                                          KeySupplier.Factory.class);
+    keySupplierFactory.init(params);
+    keySupplier = keySupplierFactory.create();
 
     String encrypterFactoryClass = params.get(PARAM_ENCRYPTER_FACTORY, CipherAesCtrEncrypter.Factory.class.getName());
     encrypterFactory = coreContainer.getResourceLoader().newInstance(encrypterFactoryClass,
@@ -104,21 +104,21 @@ public class EncryptionDirectoryFactory extends MMapDirectoryFactory {
     }
   }
 
-  /** Gets the {@link KeyManager} used by this factory and all the encryption directories it creates. */
-  public KeyManager getKeyManager() {
-    return keyManager;
+  /** Gets the {@link KeySupplier} used by this factory and all the encryption directories it creates. */
+  public KeySupplier getKeySupplier() {
+    return keySupplier;
   }
 
   @Override
   protected Directory create(String path, LockFactory lockFactory, DirContext dirContext) throws IOException {
-    return innerFactory.create(super.create(path, lockFactory, dirContext), encrypterFactory, getKeyManager());
+    return innerFactory.create(super.create(path, lockFactory, dirContext), encrypterFactory, getKeySupplier());
   }
 
   /**
    * Visible for tests only - Inner factory that creates {@link EncryptionDirectory} instances.
    */
   interface InnerFactory {
-    EncryptionDirectory create(Directory delegate, AesCtrEncrypterFactory encrypterFactory, KeyManager keyManager)
+    EncryptionDirectory create(Directory delegate, AesCtrEncrypterFactory encrypterFactory, KeySupplier keySupplier)
       throws IOException;
   }
 }

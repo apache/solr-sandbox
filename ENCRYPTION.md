@@ -62,7 +62,7 @@ the Encryption plug-in jar file into the specified folder.
 
     <directoryFactory name="DirectoryFactory"
                       class="org.apache.solr.encryption.EncryptionDirectoryFactory">
-        <str name="keyManagerSupplier">com.yourApp.YourKeyManager$Supplier</str>
+        <str name="keySupplierFactory">com.yourApp.YourKeySupplier$Factory</str>
         <str name="encrypterFactory">org.apache.solr.encryption.crypto.CipherAesCtrEncrypter$Factory</str>
     </directoryFactory>
 
@@ -81,8 +81,8 @@ the Encryption plug-in jar file into the specified folder.
 
 `EncryptionDirectoryFactory` is the DirectoryFactory that encrypts/decrypts all (or some) the index files.
 
-`keyManagerSupplier` is a required parameter to specify your implementation of
-`org.apache.solr.encryption.KeyManager.Supplier`. This class is used to get your `KeyManager`.
+`keySupplierFactory` is a required parameter to specify your implementation of
+`org.apache.solr.encryption.KeySupplier.Factory`. This class is used to get your `KeySupplier`.
 
 `encrypterFactory` is an optional parameter to specify the `org.apache.solr.encryption.crypto.AesCtrEncrypterFactory`
 to use. By default `CipherAesCtrEncrypter$Factory` is used. You can change to `LightAesCtrEncrypter$Factory` for a

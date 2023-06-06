@@ -18,8 +18,8 @@ package org.apache.solr.encryption;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -67,12 +67,12 @@ public class EncryptionUtil {
    * New index files will be encrypted using this new key.
    *
    * @param keyId          the new active encryption key id; must not be null.
-   * @param keyCookie      may be null if none.
+   * @param keyCookie      the key-value pairs associated to the key id; may be null.
    * @param commitUserData read to retrieve the current active key ref, and then updated with the new
    *                       active key ref.
    */
   public static void setNewActiveKeyIdInCommit(String keyId,
-                                               @Nullable byte[] keyCookie,
+                                               @Nullable Map<String, String> keyCookie,
                                                Map<String, String> commitUserData) {
     // Key references are integers stored as strings. They are ordered by the natural ordering of
     // integers. This method is the only location where key references are created. Outside, key
@@ -84,7 +84,20 @@ public class EncryptionUtil {
     commitUserData.put(COMMIT_ACTIVE_KEY, newKeyRef);
     commitUserData.put(COMMIT_KEY_ID + newKeyRef, keyId);
     if (keyCookie != null) {
-      commitUserData.put(COMMIT_KEY_COOKIE + newKeyRef, Base64.getEncoder().encodeToString(keyCookie));
+      setKeyCookieInCommit(newKeyRef, keyCookie, commitUserData);
+    }
+  }
+
+  private static void setKeyCookieInCommit(String keyRef,
+                                           Map<String, String> keyCookie,
+                                           Map<String, String> commitUserData) {
+    String commitKeyCookie = COMMIT_KEY_COOKIE + keyRef;
+    commitUserData.put(commitKeyCookie, Integer.toString(keyCookie.size()));
+    int entryIndex = 0;
+    for (Map.Entry<String, String> cookieEntry : keyCookie.entrySet()) {
+      String entryPrefix = commitKeyCookie + '.' + entryIndex++ + '.';
+      commitUserData.put(entryPrefix + 'k', cookieEntry.getKey());
+      commitUserData.put(entryPrefix + 'v', cookieEntry.getValue());
     }
   }
 
@@ -120,17 +133,6 @@ public class EncryptionUtil {
   }
 
   /**
-   * Gets the key cookie from the provided commit user data, for the given key reference number.
-   *
-   * @return the key cookie bytes; or null if none.
-   */
-  @Nullable
-  public static byte[] getKeyCookieFromCommit(String keyRef, Map<String, String> commitUserData) {
-    String cookieString = commitUserData.get(COMMIT_KEY_COOKIE + keyRef);
-    return cookieString == null ? null : Base64.getDecoder().decode(cookieString);
-  }
-
-  /**
    * @return Whether the provided commit user data contain some encryption key ids (active or not).
    */
   public static boolean hasKeyIdInCommit(Map<String, String> commitUserData) {
@@ -140,6 +142,36 @@ public class EncryptionUtil {
       }
     }
     return false;
+  }
+
+  /**
+   * Gets the cookies (key-value pairs) for all the key ids, from the provided commit user data.
+   *
+   * @return the cookies for all key ids.
+   */
+  public static KeyCookies getKeyCookiesFromCommit(Map<String, String> commitUserData) {
+    Map<String, Map<String, String>> keyCookies = null;
+    for (Map.Entry<String, String> dataEntry : commitUserData.entrySet()) {
+      if (dataEntry.getKey().startsWith(COMMIT_KEY_ID)) {
+        String keyId = dataEntry.getValue();
+        String keyRef = dataEntry.getKey().substring(COMMIT_KEY_ID.length());
+        String commitKeyCookie = COMMIT_KEY_COOKIE + keyRef;
+        String cookieSizeAsString = commitUserData.get(commitKeyCookie);
+        if (cookieSizeAsString != null) {
+          int cookieSize = Integer.parseInt(cookieSizeAsString);
+          Map<String, String> cookie = new HashMap<>((int) (cookieSize / 0.75f) + 1);
+          for (int i = 0; i < cookieSize; i++) {
+            String entryPrefix = commitKeyCookie + '.' + i + '.';
+            cookie.put(commitUserData.get(entryPrefix + 'k'), commitUserData.get(entryPrefix + 'v'));
+          }
+          if (keyCookies == null) {
+            keyCookies = new HashMap<>();
+          }
+          keyCookies.put(keyId, cookie);
+        }
+      }
+    }
+    return keyCookies == null ? KeyCookies.EMPTY : new KeyCookies(keyCookies);
   }
 
   /**
@@ -164,8 +196,39 @@ public class EncryptionUtil {
       inactiveKeyRefs.sort(Comparator.naturalOrder());
       for (Integer keyRef : inactiveKeyRefs.subList(0, inactiveKeyRefs.size() - INACTIVE_KEY_IDS_TO_KEEP)) {
         commitUserData.remove(COMMIT_KEY_ID + keyRef);
-        commitUserData.remove(COMMIT_KEY_COOKIE + keyRef);
+        String commitKeyCookie = COMMIT_KEY_COOKIE + keyRef;
+        String cookieSizeAsString = commitUserData.remove(commitKeyCookie);
+        if (cookieSizeAsString != null) {
+          int cookieSize = Integer.parseInt(cookieSizeAsString);
+          for (int i = 0; i < cookieSize; i++) {
+            String entryPrefix = commitKeyCookie + '.' + i + '.';
+            commitUserData.remove(entryPrefix + 'k');
+            commitUserData.remove(entryPrefix + 'v');
+          }
+        }
       }
+    }
+  }
+
+  /**
+   * Key cookie key-value pairs optionally associated to a key id in the commit user data.
+   */
+  public static class KeyCookies {
+
+    private static final KeyCookies EMPTY = new KeyCookies(Map.of());
+
+    private final Map<String, Map<String, String>> cookies;
+
+    private KeyCookies(Map<String, Map<String, String>> cookies) {
+      this.cookies = cookies;
+    }
+
+    /**
+     * Gets the cookie corresponding to the provided key id; or null if none.
+     */
+    @Nullable
+    public Map<String, String> get(String keyId) {
+      return cookies.get(keyId);
     }
   }
 }

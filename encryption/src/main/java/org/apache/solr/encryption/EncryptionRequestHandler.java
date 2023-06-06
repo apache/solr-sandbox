@@ -74,7 +74,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   /**
-   * Key id request parameter.
+   * Key id request parameter - required.
    * Its value should be {@link #NO_KEY_ID} for no key.
    */
   public static final String PARAM_KEY_ID = "encryptionKeyId";
@@ -169,12 +169,19 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     } else if (keyId.equals(NO_KEY_ID)) {
       keyId = null;
     }
+    if (!(req.getCore().getDirectoryFactory() instanceof EncryptionDirectoryFactory)) {
+      throw new SolrException(SolrException.ErrorCode.SERVICE_UNAVAILABLE,
+                              DirectoryFactory.class.getSimpleName()
+                                + " must be configured with an "
+                                + EncryptionDirectoryFactory.class.getSimpleName()
+                                + " to use " + getClass().getSimpleName());
+    }
     boolean success = false;
     String encryptionState = STATE_PENDING;
     try {
       SegmentInfos segmentInfos = readLatestCommit(req.getCore());
       if (segmentInfos.size() == 0) {
-        commitEmptyIndexForEncryption(keyId, segmentInfos, req);
+        commitEmptyIndexForEncryption(keyId, segmentInfos, req, rsp);
         encryptionState = STATE_COMPLETE;
         success = true;
         return;
@@ -214,7 +221,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
         pendingEncryptions.put(req.getCore().getName(), new PendingKeyId(keyId));
       }
       try {
-        commitEncryptionStart(keyId, segmentInfos, req);
+        commitEncryptionStart(keyId, segmentInfos, req, rsp);
         encryptAsync(req, startTimeMs);
         success = true;
       } finally {
@@ -238,36 +245,39 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
 
   private void commitEmptyIndexForEncryption(@Nullable String keyId,
                                              SegmentInfos segmentInfos,
-                                             SolrQueryRequest req) throws IOException {
+                                             SolrQueryRequest req,
+                                             SolrQueryResponse rsp) throws IOException {
     // Commit no change, with the new active key id in the commit user data.
     log.debug("commit on empty index for keyId={}", keyId);
     CommitUpdateCommand commitCmd = new CommitUpdateCommand(req, false);
     commitCmd.commitData = new HashMap<>(segmentInfos.getUserData());
     commitCmd.commitData.remove(COMMIT_ENCRYPTION_PENDING);
-    setNewActiveKeyIdInCommit(keyId, commitCmd, req);
+    setNewActiveKeyIdInCommit(keyId, commitCmd, req, rsp);
     assert !commitCmd.commitData.isEmpty();
     req.getCore().getUpdateHandler().commit(commitCmd);
   }
 
-  private void setNewActiveKeyIdInCommit(String keyId, CommitUpdateCommand commitCmd, SolrQueryRequest req)
-    throws IOException {
+  private void setNewActiveKeyIdInCommit(String keyId,
+                                         CommitUpdateCommand commitCmd,
+                                         SolrQueryRequest req,
+                                         SolrQueryResponse rsp) throws IOException {
     if (keyId == null) {
       removeActiveKeyRefFromCommit(commitCmd.commitData);
       ensureNonEmptyCommitDataForEmptyCommit(commitCmd.commitData);
     } else {
-      byte[] keyCookie = getKeyManager(req).getKeyCookie(keyId);
+      KeySupplier keySupplier = ((EncryptionDirectoryFactory) req.getCore().getDirectoryFactory()).getKeySupplier();
+      Map<String, String> keyCookie = keySupplier.getKeyCookie(keyId, buildGetCookieParams(req, rsp));
       EncryptionUtil.setNewActiveKeyIdInCommit(keyId, keyCookie, commitCmd.commitData);
     }
   }
 
-  private KeyManager getKeyManager(SolrQueryRequest req) {
-    try {
-      return ((EncryptionDirectoryFactory) req.getCore().getDirectoryFactory()).getKeyManager();
-    } catch (ClassCastException e) {
-      throw new SolrException(SolrException.ErrorCode.SERVICE_UNAVAILABLE,
-                              "DirectoryFactory class must be set to " + EncryptionDirectoryFactory.class.getName() + " to use " + getClass().getSimpleName(),
-                              e);
-    }
+  /**
+   * Can be extended to build cookie params based on the request.
+   * If a required param is missing, it throws an exception and sets the response status to failure.
+   */
+  protected Map<String, String> buildGetCookieParams(SolrQueryRequest req, SolrQueryResponse rsp)
+    throws IOException {
+    return null;
   }
 
   private void commitEncryptionComplete(String keyId,
@@ -295,12 +305,13 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
 
   private void commitEncryptionStart(String keyId,
                                      SegmentInfos segmentInfos,
-                                     SolrQueryRequest req) throws IOException {
+                                     SolrQueryRequest req,
+                                     SolrQueryResponse rsp) throws IOException {
     log.debug("commit encryption starting for keyId={}", keyId);
     CommitUpdateCommand commitCmd = new CommitUpdateCommand(req, false);
     commitCmd.commitData = new HashMap<>(segmentInfos.getUserData());
     commitCmd.commitData.put(COMMIT_ENCRYPTION_PENDING, "true");
-    setNewActiveKeyIdInCommit(keyId, commitCmd, req);
+    setNewActiveKeyIdInCommit(keyId, commitCmd, req, rsp);
     req.getCore().getUpdateHandler().commit(commitCmd);
   }
 

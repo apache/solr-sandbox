@@ -25,7 +25,7 @@
 
   <directoryFactory name="DirectoryFactory"
                     class="org.apache.solr.encryption.EncryptionDirectoryFactory">
-    <str name="keyManagerSupplier">org.apache.solr.encryption.TestingKeyManager$Supplier</str>
+    <str name="keySupplierFactory">org.apache.solr.encryption.TestingKeySupplier$Factory</str>
     <str name="encrypterFactory">org.apache.solr.encryption.crypto.LightAesCtrEncrypter$Factory</str>
   </directoryFactory>
 
