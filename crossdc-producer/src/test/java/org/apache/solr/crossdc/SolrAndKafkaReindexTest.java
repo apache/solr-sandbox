@@ -107,14 +107,6 @@ import java.util.*;
 
     consumer.shutdown();
 
-    try {
-      if (kafkaCluster != null) {
-        kafkaCluster.stop();
-      }
-    } catch (Exception e) {
-      log.error("Exception stopping Kafka cluster", e);
-    }
-
     if (solrCluster1 != null) {
       solrCluster1.getZkServer().getZkClient().printLayoutToStdOut();
       solrCluster1.shutdown();
@@ -122,6 +114,14 @@ import java.util.*;
     if (solrCluster2 != null) {
       solrCluster2.getZkServer().getZkClient().printLayoutToStdOut();
       solrCluster2.shutdown();
+    }
+
+    try {
+      if (kafkaCluster != null) {
+        kafkaCluster.stop();
+      }
+    } catch (Exception e) {
+      log.error("Exception stopping Kafka cluster", e);
     }
   }
 

@@ -186,11 +186,16 @@ For situations where you do want to control and enforce a single updateRequestPr
 
 ## Limitations
 
-- Delete-By-Query is not officially supported.
+- Delete-By-Query is not officially supported, however, there are a number of options you can attempt to use if needed.
+  Which option to use can be controlled with the update parameter "deleteMethod". A different default can be configured using CrossDC configuration parameter defaultDBQMethod. Just set it to the desired default value.
+1. default: This is the method used if no deleteMethod parameter is provided, or if it's provided with the value "default". This method will use pagination to fetch documents matching the delete query. It fetches a subset of documents (currently 1000), and deletes them iteratively until all matching documents have been deleted.
 
-    - Work-In-Progress: A non-efficient option to issue multiple delete by id queries using the results of a given standard query.
+2. convert_no_paging: If the deleteMethod parameter is provided with the value "convert_no_paging", the delete by query operation will convert the delete query into individual delete-by-id commands. This method fetches all documents that match the delete query at once (up to 10000), and then deletes each document one by one.
 
-    - Simply forwarding a real Delete-By-Query could also be reasonable if it is not strictly reliant on not being reordered with other requests.
+3. delete_by_query: If the deleteMethod parameter is provided with the value "delete_by_query", the delete by query operation will be performed as a single operation. It will delete all documents that match the delete query at once, both locally and in the mirror cluster (via Kafka).
+   With this method, if the system goes down at a bad time, there are no gaurantees around the replaying of the dbq or the order that it happens in relative to other document updates or additions if replayed upon recovery.
+
+4. delete_by_query_local: If the deleteMethod parameter is provided with the value "delete_by_query_local", the delete by query operation will be performed as a single operation, but only in the local cluster. No deletion will be mirrored in the other clusters.
 
 
 

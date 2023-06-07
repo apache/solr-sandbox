@@ -129,12 +129,6 @@ import static org.mockito.Mockito.spy;
 
     consumer.shutdown();
 
-    try {
-      kafkaCluster.stop();
-    } catch (Exception e) {
-      log.error("Exception stopping Kafka cluster", e);
-    }
-
     if (solrCluster1 != null) {
       solrCluster1.getZkServer().getZkClient().printLayoutToStdOut();
       solrCluster1.shutdown();
@@ -142,6 +136,12 @@ import static org.mockito.Mockito.spy;
     if (solrCluster2 != null) {
       solrCluster2.getZkServer().getZkClient().printLayoutToStdOut();
       solrCluster2.shutdown();
+    }
+
+    try {
+      kafkaCluster.stop();
+    } catch (Exception e) {
+      log.error("Exception stopping Kafka cluster", e);
     }
   }
 

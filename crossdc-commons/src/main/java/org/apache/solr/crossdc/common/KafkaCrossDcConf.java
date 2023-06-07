@@ -57,6 +57,8 @@ public class KafkaCrossDcConf extends CrossDcConf {
 
   private static final String DEFAULT_GROUP_ID = "SolrCrossDCConsumer";
 
+  public static final String DEFAULT_DBQ_METHOD = "defaultDBQMethod";
+
 
   public static final String TOPIC_NAME = "topicName";
 
@@ -131,6 +133,7 @@ public class KafkaCrossDcConf extends CrossDcConf {
             new ConfigProperty(NUM_RETRIES, DEFAULT_NUM_RETRIES),
             new ConfigProperty(RETRY_BACKOFF_MS, DEFAULT_RETRY_BACKOFF_MS),
             new ConfigProperty(DELIVERY_TIMEOUT_MS, DEFAULT_DELIVERY_TIMEOUT_MS),
+            new ConfigProperty(DEFAULT_DBQ_METHOD, null),
 
             // Consumer only zkConnectString
             new ConfigProperty(ZK_CONNECT_STRING, null),
