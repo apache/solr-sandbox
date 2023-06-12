@@ -249,8 +249,10 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
             log.trace("Create MirroringUpdateProcessor with mirroredParams={}", mirroredParams);
         }
 
+        String defaultDBQMethod = conf.get(KafkaCrossDcConf.DEFAULT_DBQ_METHOD);
+
         return new MirroringUpdateProcessor(next, doMirroring, indexUnmirrorableDocs, maxMirroringBatchSizeBytes, mirroredParams,
-                DistribPhase.parseParam(req.getParams().get(DISTRIB_UPDATE_PARAM)), doMirroring ? mirroringHandler : null);
+                DistribPhase.parseParam(req.getParams().get(DISTRIB_UPDATE_PARAM)), doMirroring ? mirroringHandler : null, defaultDBQMethod);
     }
 
     private static class NoOpUpdateRequestProcessor extends UpdateRequestProcessor {

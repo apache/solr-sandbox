@@ -142,12 +142,6 @@ import java.util.Properties;
 
     consumer.shutdown();
 
-    try {
-      kafkaCluster.stop();
-    } catch (Exception e) {
-      log.error("Exception stopping Kafka cluster", e);
-    }
-
     if (solrCluster1 != null) {
       solrCluster1.shutdown();
     }
@@ -160,6 +154,13 @@ import java.util.Properties;
     }
     if (zkTestServer2 != null) {
       zkTestServer2.shutdown();
+    }
+
+
+    try {
+      kafkaCluster.stop();
+    } catch (Exception e) {
+      log.error("Exception stopping Kafka cluster", e);
     }
   }
 
