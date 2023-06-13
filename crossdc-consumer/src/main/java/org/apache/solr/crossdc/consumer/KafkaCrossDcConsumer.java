@@ -66,6 +66,8 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
     kafkaConsumerProps.put(ConsumerConfig.FETCH_MAX_BYTES_CONFIG, conf.getInt(KafkaCrossDcConf.FETCH_MAX_BYTES));
     kafkaConsumerProps.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, conf.getInt(KafkaCrossDcConf.MAX_PARTITION_FETCH_BYTES));
 
+    kafkaConsumerProps.put(ConsumerConfig.REQUEST_TIMEOUT_MS_CONFIG, conf.getInt(KafkaCrossDcConf.REQUEST_TIMEOUT_MS));
+
     KafkaCrossDcConf.addSecurityProps(conf, kafkaConsumerProps);
 
     kafkaConsumerProps.putAll(conf.getAdditionalProperties());
