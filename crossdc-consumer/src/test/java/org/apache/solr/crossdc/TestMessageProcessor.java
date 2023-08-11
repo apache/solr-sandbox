@@ -47,7 +47,12 @@ public class TestMessageProcessor {
     private CloudSolrClient solrClient;
     private SolrMessageProcessor processor;
 
-    private ResubmitBackoffPolicy backoffPolicy = spy(new NoOpResubmitBackoffPolicy());
+    private ResubmitBackoffPolicy backoffPolicy = spy(new ResubmitBackoffPolicy() {
+        @Override
+        public long getBackoffTimeMs(MirroredSolrRequest resubmitRequest) {
+            return 0;
+        }
+    });
 
     @Before
     public void setUp() {

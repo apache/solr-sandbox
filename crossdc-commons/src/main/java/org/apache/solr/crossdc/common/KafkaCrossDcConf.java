@@ -51,6 +51,10 @@ public class KafkaCrossDcConf extends CrossDcConf {
 
   public static final String DEFAULT_MAX_PARTITION_FETCH_BYTES = "33554432";
 
+  public static final String DEFAULT_MAX_POLL_INTERVAL_MS = "90000";
+
+  public static final String DEFAULT_SESSION_TIMEOUT_MS = "10000";
+
   public static final String DEFAULT_PORT = "8090";
 
   private static final String DEFAULT_GROUP_ID = "SolrCrossDCConsumer";
@@ -92,6 +96,18 @@ public class KafkaCrossDcConf extends CrossDcConf {
 
   public static final String FETCH_MAX_BYTES = "fetchMaxBytes";
 
+  // The maximum delay between invocations of poll() when using consumer group management. This places
+  // an upper bound on the amount of time that the consumer can be idle before fetching more records.
+  // If poll() is not called before expiration of this timeout, then the consumer is considered failed
+  // and the group will rebalance in order to reassign the partitions to another member. For consumers
+  // using a non-null <code>group.instance.id</code> which reach this timeout, partitions will not be
+  // immediately reassigned. Instead, the consumer will stop sending heartbeats and partitions will be
+  // reassigned after expiration of <code>session.timeout.ms</code>. This mirrors the behavior of a
+  // static consumer which has shutdown.
+  public static final String MAX_POLL_INTERVAL_MS = "maxPollIntervalMs";
+
+  public static final String SESSION_TIMEOUT_MS = "sessionTimeoutMs";
+
   public static final String MAX_PARTITION_FETCH_BYTES = "maxPartitionFetchBytes";
 
   public static final String ZK_CONNECT_STRING = "zkConnectString";
@@ -127,6 +143,9 @@ public class KafkaCrossDcConf extends CrossDcConf {
             new ConfigProperty(FETCH_MAX_BYTES, DEFAULT_FETCH_MAX_BYTES),
             new ConfigProperty(FETCH_MAX_WAIT_MS, DEFAULT_FETCH_MAX_WAIT_MS),
             new ConfigProperty(CONSUMER_PROCESSING_THREADS, DEFAULT_CONSUMER_PROCESSING_THREADS),
+            new ConfigProperty(MAX_POLL_INTERVAL_MS, DEFAULT_MAX_POLL_INTERVAL_MS),
+            new ConfigProperty(SESSION_TIMEOUT_MS, DEFAULT_SESSION_TIMEOUT_MS),
+
 
             new ConfigProperty(MAX_PARTITION_FETCH_BYTES, DEFAULT_MAX_PARTITION_FETCH_BYTES),
             new ConfigProperty(MAX_POLL_RECORDS, DEFAULT_MAX_POLL_RECORDS),

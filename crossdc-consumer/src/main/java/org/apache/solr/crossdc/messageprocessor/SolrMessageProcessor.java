@@ -82,8 +82,8 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
         SolrRequest request = mirroredSolrRequest.getSolrRequest();
         final SolrParams requestParams = request.getParams();
 
-        if (log.isTraceEnabled()) {
-            log.trace("handleSolrRequest params={}", requestParams);
+        if (log.isDebugEnabled()) {
+            log.debug("handleSolrRequest start params={}", requestParams);
         }
 
         // TODO: isn't this handled by the mirroring handler?
@@ -103,7 +103,9 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
         } catch (Exception e) {
             result = handleException(mirroredSolrRequest, e);
         }
-
+        if (log.isDebugEnabled()) {
+            log.debug("handleSolrRequest end params={} result={}", requestParams, result);
+        }
         return result;
     }
 
@@ -111,7 +113,7 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
         final SolrException solrException = SolrExceptionUtil.asSolrException(e);
         logIf4xxException(solrException);
         if (!isRetryable(e)) {
-            logFailure(mirroredSolrRequest, e, solrException, false);
+            log.error("Non retryable exception processing Solr update", e);
             return new Result<>(ResultStatus.FAILED_NO_RETRY, e);
         } else {
             logFailure(mirroredSolrRequest, e, solrException, true);
@@ -171,8 +173,8 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
      * Process the SolrRequest. If not, this method throws an exception.
      */
     private Result<MirroredSolrRequest> processMirroredSolrRequest(SolrRequest request) throws Exception {
-        if (log.isTraceEnabled()) {
-            log.trace("Sending request to Solr at ZK address={} with params {}", client.getZkStateReader().getZkClient().getZkServerAddress(), request.getParams());
+        if (log.isDebugEnabled()) {
+            log.debug("Sending request to Solr at ZK address={} with params {}", client.getZkStateReader().getZkClient().getZkServerAddress(), request.getParams());
         }
         Result<MirroredSolrRequest> result;
 
@@ -190,7 +192,9 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
         }
 
         metrics.counter("processed").inc();
-
+        if (log.isDebugEnabled()) {
+            log.debug("Finished sending request to Solr at ZK address={} with params {} status_code={}", client.getZkStateReader().getZkClient().getZkServerAddress(), request.getParams(), status);
+        }
         result = new Result<>(ResultStatus.HANDLED);
         return result;
     }

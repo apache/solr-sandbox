@@ -85,6 +85,7 @@ Optional configuration properties used when the consumer must retry by putting u
 - `bufferMemoryBytes`: memory allocated by the Producer in total for buffering 
 - `lingerMs`: amount of time that the Producer will wait to add to a batch
 - `requestTimeout`: request timeout for the Producer 
+- `maxPollIntervalMs`: the maximum delay between invocations of poll() when using consumer group management.
 
 #### Central Configuration Option
 
