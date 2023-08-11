@@ -56,7 +56,7 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
         // Create Producer record
         try {
 
-            producer.send(new ProducerRecord<>(conf.get(KafkaCrossDcConf.TOPIC_NAME), request), (metadata, exception) -> {
+            producer.send(new ProducerRecord<>(conf.get(KafkaCrossDcConf.TOPIC_NAME).split(",")[0], request), (metadata, exception) -> {
                 if (exception != null) {
                     log.error("Failed adding update to CrossDC queue! request=" + request.getSolrRequest(), exception);
                 }
