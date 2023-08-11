@@ -44,12 +44,12 @@ public class KafkaCrossDcConf extends CrossDcConf {
 
   public static final String DEFAULT_MAX_POLL_RECORDS = "500"; // same default as Kafka
 
-  private static final String DEFAULT_FETCH_MIN_BYTES = "512000";
-  private static final String DEFAULT_FETCH_MAX_WAIT_MS = "1000"; // Kafka default is 500
+  private static final String DEFAULT_FETCH_MIN_BYTES = "1";
+  private static final String DEFAULT_FETCH_MAX_WAIT_MS = "500"; // Kafka default is 500
 
   public static final String DEFAULT_FETCH_MAX_BYTES = "100663296";
 
-  public static final String DEFAULT_MAX_PARTITION_FETCH_BYTES = "33554432";
+  public static final String DEFAULT_MAX_PARTITION_FETCH_BYTES = "1048576";
 
   public static final String DEFAULT_MAX_POLL_INTERVAL_MS = "90000";
 
