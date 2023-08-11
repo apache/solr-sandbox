@@ -82,7 +82,7 @@ public class KafkaCrossDcConf extends CrossDcConf {
 
   public static final String CONSUMER_PROCESSING_THREADS = "consumerProcessingThreads";
 
-  public static final String DELIVERY_TIMEOUT_MS = "retryBackoffMs";
+  public static final String DELIVERY_TIMEOUT_MS = "deliveryTimeoutMS";
 
   public static final String FETCH_MIN_BYTES = "fetchMinBytes";
 
