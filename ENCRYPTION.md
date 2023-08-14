@@ -33,11 +33,6 @@ on performance: expect -20% on most queries, -60% on multi-term queries.
 - Currently, this encryption module does not encrypt TLogs.
 That means the update requests data that are stored in these logs are cleartext.
 
-- Currently, EncryptionMergePolicy does not fully work, so it is disabled.
-That means a call to /admin/encrypt to re-encrypt a Solr Core index will trigger
-an optimized commit which merges all index segments into one. This works but is
-heavyweight.
-
 ## Installing and Configuring the Encryption Plug-In
 
 1. Configure the sharedLib directory in solr.xml (e.g. sharedLIb=lib) and place
@@ -66,8 +61,7 @@ the Encryption plug-in jar file into the specified folder.
         <str name="encrypterFactory">org.apache.solr.encryption.crypto.CipherAesCtrEncrypter$Factory</str>
     </directoryFactory>
 
-    <updateHandler class="org.apache.solr.encryption.EncryptionUpdateHandler">
-    </updateHandler>
+    <updateHandler class="org.apache.solr.encryption.EncryptionUpdateHandler"/>
 
     <requestHandler name="/admin/encrypt" class="org.apache.solr.encryption.EncryptionRequestHandler"/>
 

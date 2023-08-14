@@ -60,20 +60,22 @@ public class EncryptionMergePolicy extends FilterMergePolicy {
     if (segmentInfos.size() == 0) {
       return null;
     }
-
-    //TODO: this does not seem to work correctly under heavy concurrent load.
-
     Directory dir = segmentInfos.info(0).info.dir;
     if (!(dir instanceof EncryptionDirectory)) {
       // This may happen if the DirectoryFactory configured is not the EncryptionDirectoryFactory,
-      // but this is a misconfiguration. Let's log a warning.
-      log.warn("{} is configured whereas {} is not set; check the DirectoryFactory configuration",
-               getClass().getName(), EncryptionDirectoryFactory.class.getName());
+      // but this is a misconfiguration. Let's log an error.
+      log.error("{} {} is configured whereas {} is not set; check the DirectoryFactory configuration",
+                ENCRYPTION_LOG_PREFIX, getClass().getName(), EncryptionDirectoryFactory.class.getName());
       return super.findForcedMerges(segmentInfos, maxSegmentCount, segmentsToMerge, mergeContext);
     }
     String keyRef = getActiveKeyRefFromCommit(segmentInfos.getUserData());
     String activeKeyId = keyRef == null ? null : getKeyIdFromCommit(keyRef, segmentInfos.getUserData());
-    List<SegmentCommitInfo> segmentsWithOldKeyId = ((EncryptionDirectory) dir).getSegmentsWithOldKeyId(segmentInfos, activeKeyId);
+    EncryptionDirectory encryptionDir = (EncryptionDirectory) dir;
+    // Make sure the EncryptionDirectory does not keep its cache for the commit user data.
+    // It must read the latest commit user data to get the latest active key, so below the
+    // segments with old key (to re-encrypt) are always accurate.
+    encryptionDir.forceReadCommitUserData();
+    List<SegmentCommitInfo> segmentsWithOldKeyId = encryptionDir.getSegmentsWithOldKeyId(segmentInfos, activeKeyId);
     if (segmentsWithOldKeyId.isEmpty()) {
       return null;
     }
