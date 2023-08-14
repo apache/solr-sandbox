@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 import static org.apache.solr.encryption.EncryptionRequestHandler.*;
-import static org.apache.solr.encryption.TestingKeyManager.*;
+import static org.apache.solr.encryption.TestingKeySupplier.*;
 
 /**
  * Tests the encryption handler under heavy concurrent load test.

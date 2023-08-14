@@ -17,59 +17,65 @@
 package org.apache.solr.encryption;
 
 import org.apache.lucene.index.IndexFileNames;
+import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
+import org.apache.solr.util.plugin.NamedListInitializedPlugin;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
+import java.util.Map;
 import java.util.function.Function;
 
 /**
- * Manages encryption keys and defines which index files to encrypt.
- * Supplies the encryption key secrets corresponding to provided key ids.
+ * Provides encryption key secrets corresponding to provided key ids and defines which index files to encrypt.
  */
-public interface KeyManager {
+public interface KeySupplier {
 
   /**
-   * Indicates whether the provided file is encryptable based on its name.
+   * Indicates whether the provided file should be encrypted based on its name.
    * <p/>
    * Segments files ({@link IndexFileNames#SEGMENTS} or {@link IndexFileNames#PENDING_SEGMENTS}) are never
    * passed as parameter because they are filtered before calling this method (they must not be encrypted).
    */
-  boolean isEncryptable(String fileName);
+  boolean shouldEncrypt(String fileName);
 
   /**
-   * Gets the cookie corresponding to a given key.
-   * The cookie is an additional binary data to provide to get the key secret.
+   * Gets the optional cookie corresponding to a given key.
+   * The cookie is a set of key-value pairs to provide to {@link #getKeySecret}.
    *
+   * @param params optional parameters in addition to the key id; or null if none.
+   * @return the key-value pairs; or null if none.
    * @throws java.util.NoSuchElementException if the key is unknown.
    */
-  byte[] getKeyCookie(String keyId) throws IOException;
+  @Nullable
+  Map<String, String> getKeyCookie(String keyId, Map<String, String> params) throws IOException;
 
   /**
    * Gets the encryption key secret corresponding to the provided key id.
+   * Typically, this {@link KeySupplier} holds a cache of key secrets, and may load the key secret if it is
+   * not in the cache or after expiration. In this case, this method may need to get additional data from
+   * the key cookie to load the key secret.
    *
    * @param keyId          Key id which identifies uniquely the encryption key.
-   * @param keyRef         Key internal reference number to provide to the cookie supplier to retrieve the
-   *                       corresponding cookie, if any.
-   * @param cookieSupplier Takes the key reference number as input and supplies an additional binary data
-   *                       cookie required to get the key secret. This supplier may not be called if the
-   *                       key secret is in the transient memory cache. It may return null if there are no
-   *                       cookies.
+   * @param cookieSupplier Takes the key id as input and supplies the optional key cookie key-value pairs
+   *                       that may be needed to retrieve the key secret. It may return null if there are
+   *                       no cookies for the key.
    * @return The key secret bytes. It must be either 16, 24 or 32 bytes long. The caller is not permitted
    * to modify its content. Returns null if the key is known but has no secret bytes, in this case the data
    * is not encrypted.
    * @throws java.util.NoSuchElementException if the key is unknown.
    */
-  byte[] getKeySecret(String keyId, String keyRef, Function<String, byte[]> cookieSupplier) throws IOException;
+  byte[] getKeySecret(String keyId, Function<String, Map<String, String>> cookieSupplier) throws IOException;
 
   /**
-   * Supplies the {@link KeyManager}.
+   * Creates {@link KeySupplier}.
    */
-  interface Supplier {
+  interface Factory extends NamedListInitializedPlugin {
 
-    /** This supplier may be configured with parameters defined in solrconfig.xml. */
+    /** This factory may be configured with parameters defined in solrconfig.xml. */
     void init(NamedList<?> args);
 
-    /** Gets the {@link KeyManager}. */
-    KeyManager getKeyManager();
+    /** Creates a {@link KeySupplier}. */
+    KeySupplier create();
   }
 }
