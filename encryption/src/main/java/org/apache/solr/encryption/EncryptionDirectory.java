@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -187,6 +188,13 @@ public class EncryptionDirectory extends FilterDirectory {
   }
 
   /**
+   * Forces this {@link EncryptionDirectory} to read the user data of the latest commit, to refresh its cache.
+   */
+  public void forceReadCommitUserData() {
+    shouldReadCommitUserData = true;
+  }
+
+  /**
    * Gets the user data from the latest commit, potentially reading the latest commit if the cache is stale.
    */
   protected CommitUserData getLatestCommitData() throws IOException {
@@ -237,7 +245,13 @@ public class EncryptionDirectory extends FilterDirectory {
    * commit user data. Then, calls the {@link KeySupplier} to get the corresponding key secret.
    */
   protected byte[] getKeySecret(String keyRef) throws IOException {
-    String keyId = getKeyIdFromCommit(keyRef, getLatestCommitData().data);
+    String keyId;
+    try {
+      keyId = getKeyIdFromCommit(keyRef, getLatestCommitData().data);
+    } catch (NoSuchElementException e) {
+      shouldReadCommitUserData = true;
+      keyId = getKeyIdFromCommit(keyRef, getLatestCommitData().data);
+    }
     return keySupplier.getKeySecret(keyId, this::getKeyCookie);
   }
 
@@ -320,7 +334,8 @@ public class EncryptionDirectory extends FilterDirectory {
     throws IOException {
     List<SegmentCommitInfo> segmentsWithOldKeyId = null;
     if (log.isDebugEnabled()) {
-      log.debug("reading segments {} for key ids different from {}",
+      log.debug("{} reading segments {} for key ids different from {}",
+                ENCRYPTION_LOG_PREFIX,
                 segmentInfos.asList().stream().map(i -> i.info.name).collect(Collectors.toList()),
                 activeKeyId);
     }
@@ -330,7 +345,8 @@ public class EncryptionDirectory extends FilterDirectory {
           try (IndexInput fileInput = in.openInput(fileName, IOContext.READ)) {
             String keyRef = getKeyRefForReading(fileInput);
             String keyId = keyRef == null ? null : getKeyIdFromCommit(keyRef, segmentInfos.getUserData());
-            log.debug("reading file {} of segment {} => keyId={}", fileName, segmentCommitInfo.info.name, keyId);
+            log.debug("{} reading file {} of segment {} => keyId={}",
+                      ENCRYPTION_LOG_PREFIX, fileName, segmentCommitInfo.info.name, keyId);
             if (!Objects.equals(keyId, activeKeyId)) {
               if (segmentsWithOldKeyId == null) {
                 segmentsWithOldKeyId = new ArrayList<>();

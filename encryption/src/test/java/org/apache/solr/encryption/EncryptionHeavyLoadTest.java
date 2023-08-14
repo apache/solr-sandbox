@@ -62,7 +62,7 @@ import static org.apache.solr.encryption.TestingKeySupplier.*;
 @RunWith(com.carrotsearch.randomizedtesting.RandomizedRunner.class)
 public class EncryptionHeavyLoadTest extends SolrCloudTestCase {
 
-  // Change the test duration manually to run longer, e.g. 3 minutes.
+  // Change the test duration manually to run longer, e.g. 20 minutes.
   private static final long TEST_DURATION_MS = TimeUnit.SECONDS.toMillis(10);
   private static final int RANDOM_DELAY_BETWEEN_INDEXING_BATCHES_MS = 50;
   private static final int RANDOM_NUM_DOCS_PER_BATCH = 200;

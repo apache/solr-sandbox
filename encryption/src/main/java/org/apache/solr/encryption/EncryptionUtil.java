@@ -17,8 +17,11 @@
 package org.apache.solr.encryption;
 
 import org.apache.solr.common.util.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -30,6 +33,11 @@ import java.util.NoSuchElementException;
  * Constants and methods for encryption.
  */
 public class EncryptionUtil {
+
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+  /** Log prefix for encryption, to ease log search. */
+  public static final String ENCRYPTION_LOG_PREFIX = "Encryption:";
 
   /**
    * Crypto parameter prefix, in the commit user data.
@@ -62,7 +70,7 @@ public class EncryptionUtil {
    * Number of inactive key ids to keep when clearing the old inactive key ids.
    * @see #clearOldInactiveKeyIdsFromCommit
    */
-  private static final int INACTIVE_KEY_IDS_TO_KEEP = 5;
+  private static final int INACTIVE_KEY_IDS_TO_KEEP = 10;
 
   /**
    * Sets the new active encryption key id, and its optional cookie in the provided commit user data.
@@ -160,7 +168,8 @@ public class EncryptionUtil {
   /**
    * Clear the oldest inactive key ids to keep only the most recent ones.
    * We don't clear all the inactive key ids just in the improbable case there would be pending
-   * segment creations using previous key id(s) still in flight. This is really to be safe.
+   * segment creations using previous key id(s) still in flight. This helps during the
+   * heavy-load test where re-encryption has a crazy rate, and this is really safe in prod.
    */
   public static void clearOldInactiveKeyIdsFromCommit(Map<String, String> commitUserData) {
     // List the inactive key references.
@@ -180,6 +189,7 @@ public class EncryptionUtil {
       for (Integer keyRef : inactiveKeyRefs.subList(0, inactiveKeyRefs.size() - INACTIVE_KEY_IDS_TO_KEEP)) {
         commitUserData.remove(COMMIT_KEY_ID + keyRef);
         commitUserData.remove(COMMIT_KEY_COOKIE + keyRef);
+        log.info("{} removing inactive key ref={}", ENCRYPTION_LOG_PREFIX, keyRef);
       }
     }
   }
