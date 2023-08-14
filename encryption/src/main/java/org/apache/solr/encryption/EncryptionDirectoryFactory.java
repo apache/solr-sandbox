@@ -18,7 +18,6 @@ package org.apache.solr.encryption;
 
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.LockFactory;
-import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.core.MMapDirectoryFactory;
 import org.apache.solr.encryption.crypto.AesCtrEncrypterFactory;
@@ -68,18 +67,17 @@ public class EncryptionDirectoryFactory extends MMapDirectoryFactory {
   @Override
   public void init(NamedList<?> args) {
     super.init(args);
-    SolrParams params = args.toSolrParams();
 
-    String keySupplierFactoryClass = params.get(PARAM_KEY_SUPPLIER_FACTORY, System.getProperty("solr." + PARAM_KEY_SUPPLIER_FACTORY));
+    String keySupplierFactoryClass = args._getStr(PARAM_KEY_SUPPLIER_FACTORY, System.getProperty("solr." + PARAM_KEY_SUPPLIER_FACTORY));
     if (keySupplierFactoryClass == null) {
       throw new IllegalArgumentException("Missing " + PARAM_KEY_SUPPLIER_FACTORY + " argument for " + getClass().getName());
     }
     KeySupplier.Factory keySupplierFactory = coreContainer.getResourceLoader().newInstance(keySupplierFactoryClass,
                                                                                           KeySupplier.Factory.class);
-    keySupplierFactory.init(params);
+    keySupplierFactory.init(args);
     keySupplier = keySupplierFactory.create();
 
-    String encrypterFactoryClass = params.get(PARAM_ENCRYPTER_FACTORY, CipherAesCtrEncrypter.Factory.class.getName());
+    String encrypterFactoryClass = args._getStr(PARAM_ENCRYPTER_FACTORY, CipherAesCtrEncrypter.Factory.class.getName());
     encrypterFactory = coreContainer.getResourceLoader().newInstance(encrypterFactoryClass,
                                                                      AesCtrEncrypterFactory.class);
     if (!encrypterFactory.isSupported()) {

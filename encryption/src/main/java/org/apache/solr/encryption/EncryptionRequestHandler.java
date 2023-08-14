@@ -252,31 +252,33 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     CommitUpdateCommand commitCmd = new CommitUpdateCommand(req, false);
     commitCmd.commitData = new HashMap<>(segmentInfos.getUserData());
     commitCmd.commitData.remove(COMMIT_ENCRYPTION_PENDING);
-    setNewActiveKeyIdInCommit(keyId, commitCmd, req, rsp);
+    setNewActiveKeyIdInCommit(keyId, commitCmd, rsp);
     assert !commitCmd.commitData.isEmpty();
     req.getCore().getUpdateHandler().commit(commitCmd);
   }
 
   private void setNewActiveKeyIdInCommit(String keyId,
                                          CommitUpdateCommand commitCmd,
-                                         SolrQueryRequest req,
                                          SolrQueryResponse rsp) throws IOException {
     if (keyId == null) {
       removeActiveKeyRefFromCommit(commitCmd.commitData);
       ensureNonEmptyCommitDataForEmptyCommit(commitCmd.commitData);
     } else {
-      KeySupplier keySupplier = ((EncryptionDirectoryFactory) req.getCore().getDirectoryFactory()).getKeySupplier();
-      Map<String, String> keyCookie = keySupplier.getKeyCookie(keyId, buildGetCookieParams(req, rsp));
+      KeySupplier keySupplier = ((EncryptionDirectoryFactory) commitCmd.getReq().getCore().getDirectoryFactory()).getKeySupplier();
+      Map<String, String> keyCookie = keySupplier.getKeyCookie(keyId, buildGetCookieParams(commitCmd.getReq(), rsp));
       EncryptionUtil.setNewActiveKeyIdInCommit(keyId, keyCookie, commitCmd.commitData);
     }
   }
 
   /**
-   * Can be extended to build cookie params based on the request.
-   * If a required param is missing, it throws an exception and sets the response status to failure.
+   * Build cookie parameters based on the request.
+   * If a required param is missing, it throws a {@link SolrException} with {@link SolrException.ErrorCode#BAD_REQUEST}
+   * and sets the response status to failure.
+   *
+   * @return the parameters to get the key cookie, this map is considered immutable; or null if none.
    */
-  protected Map<String, String> buildGetCookieParams(SolrQueryRequest req, SolrQueryResponse rsp)
-    throws IOException {
+  @Nullable
+  protected Map<String, String> buildGetCookieParams(SolrQueryRequest req, SolrQueryResponse rsp) {
     return null;
   }
 
@@ -311,7 +313,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     CommitUpdateCommand commitCmd = new CommitUpdateCommand(req, false);
     commitCmd.commitData = new HashMap<>(segmentInfos.getUserData());
     commitCmd.commitData.put(COMMIT_ENCRYPTION_PENDING, "true");
-    setNewActiveKeyIdInCommit(keyId, commitCmd, req, rsp);
+    setNewActiveKeyIdInCommit(keyId, commitCmd, rsp);
     req.getCore().getUpdateHandler().commit(commitCmd);
   }
 

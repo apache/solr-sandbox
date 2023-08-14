@@ -18,10 +18,12 @@ package org.apache.solr.encryption;
 
 import org.apache.lucene.index.IndexFileNames;
 import org.apache.solr.common.params.SolrParams;
+import org.apache.solr.common.util.NamedList;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -43,6 +45,8 @@ public class TestingKeySupplier implements KeySupplier {
   public static final byte[] KEY_SECRET_2 = "34567890123456789012345678901234".getBytes(StandardCharsets.UTF_8);
   public static final byte[] KEY_SECRET_3 = "78901234567890123456789012345678".getBytes(StandardCharsets.UTF_8);
   private static final Map<String, byte[]> MOCK_KEYS = Map.of(KEY_ID_1, KEY_SECRET_1, KEY_ID_2, KEY_SECRET_2, KEY_ID_3, KEY_SECRET_3);
+
+  private static final String WRAPPED_KEY_SECRET_KEY = "wrappedKeySecret";
 
   /**
    * File name extensions/suffixes that do NOT need to be encrypted because it lacks user/external data.
@@ -113,26 +117,41 @@ public class TestingKeySupplier implements KeySupplier {
   @Override
   public Map<String, String> getKeyCookie(String keyId, Map<String, String> params) {
     byte[] wrappedKeySecret = MOCK_COOKIES.get(keyId);
+    // Verify the key id is known.
     if (wrappedKeySecret == null) {
       throw new NoSuchElementException("No key defined for " + keyId);
     }
-    return Map.of("wrappedSecret", Base64.getEncoder().encodeToString(wrappedKeySecret));
+    // Verify the cookie params.
+    if (!TestingEncryptionRequestHandler.MOCK_COOKIE_PARAMS.equals(params)) {
+      throw new IllegalStateException("Wrong cookie params provided = " + params);
+    }
+    Map<String, String> cookie = new HashMap<>(params);
+    cookie.put(WRAPPED_KEY_SECRET_KEY, Base64.getEncoder().encodeToString(wrappedKeySecret));
+    return cookie;
   }
 
   @Override
   public byte[] getKeySecret(String keyId, Function<String, Map<String, String>> cookieSupplier) {
     byte[] secret = MOCK_KEYS.get(keyId);
+    // Verify the key id is known.
     if (secret == null) {
       throw new NoSuchElementException("No key defined for " + keyId);
     }
     Map<String, String> cookie = cookieSupplier.apply(keyId);
-    String wrappedKeySecretAsString = cookie == null ? null : cookie.get("wrappedSecret");
+    // Verify the key secret is equal to the expected one.
+    String wrappedKeySecretAsString = cookie == null ? null : cookie.get(WRAPPED_KEY_SECRET_KEY);
     byte[] wrappedKeySecret = wrappedKeySecretAsString == null ?
       null : Base64.getDecoder().decode(wrappedKeySecretAsString);
     byte[] expectedWrappedKeySecret = MOCK_COOKIES.get(keyId);
     if (wrappedKeySecret != null && expectedWrappedKeySecret != null && !Arrays.equals(wrappedKeySecret, expectedWrappedKeySecret)
       || (wrappedKeySecret == null || expectedWrappedKeySecret == null) && wrappedKeySecret != expectedWrappedKeySecret) {
-      throw new IllegalStateException("Wrong cookie provided");
+      throw new IllegalStateException("Wrong cookie provided = " + cookie);
+    }
+    // Verify the other cookie params.
+    Map<String, String> otherParams = new HashMap<>(cookie);
+    otherParams.remove(WRAPPED_KEY_SECRET_KEY);
+    if (!TestingEncryptionRequestHandler.MOCK_COOKIE_PARAMS.equals(otherParams)) {
+      throw new IllegalStateException("Wrong cookie params provided = " + cookie);
     }
     return secret;
   }
@@ -145,7 +164,7 @@ public class TestingKeySupplier implements KeySupplier {
     private static final KeySupplier SINGLETON = new TestingKeySupplier();
 
     @Override
-    public void init(SolrParams params) {
+    public void init(NamedList<?> args) {
       // Do nothing.
     }
 

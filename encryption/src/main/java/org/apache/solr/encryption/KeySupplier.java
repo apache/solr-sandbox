@@ -19,6 +19,7 @@ package org.apache.solr.encryption;
 import org.apache.lucene.index.IndexFileNames;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
+import org.apache.solr.util.plugin.NamedListInitializedPlugin;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -69,10 +70,10 @@ public interface KeySupplier {
   /**
    * Creates {@link KeySupplier}.
    */
-  interface Factory {
+  interface Factory extends NamedListInitializedPlugin {
 
     /** This factory may be configured with parameters defined in solrconfig.xml. */
-    void init(SolrParams params);
+    void init(NamedList<?> args);
 
     /** Creates a {@link KeySupplier}. */
     KeySupplier create();

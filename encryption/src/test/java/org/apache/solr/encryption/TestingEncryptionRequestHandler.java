@@ -14,36 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-plugins {
-    id 'java'
-}
+package org.apache.solr.encryption;
 
-description = 'Index Encryption At-Rest package'
+import org.apache.solr.request.SolrQueryRequest;
+import org.apache.solr.response.SolrQueryResponse;
 
-repositories {
-    mavenCentral()
-}
+import java.util.Map;
 
-configurations {
-    provided
-}
+public class TestingEncryptionRequestHandler extends EncryptionRequestHandler {
 
-sourceSets {
-    main { compileClasspath += configurations.provided }
-}
+  public static final Map<String, String> MOCK_COOKIE_PARAMS = Map.of("testParam", "testValue");
 
-dependencies {
-    implementation 'org.apache.solr:solr-core:9.2.1'
-    implementation 'org.apache.lucene:lucene-core:9.5.0'
-    implementation 'com.google.code.findbugs:jsr305:3.0.2'
-
-    // Remove when removing DirectUpdateHandler2Copy.
-    implementation 'javax.servlet:javax.servlet-api:3.1.0'
-
-    testImplementation 'org.apache.solr:solr-test-framework:9.2.1'
-    testImplementation 'org.apache.lucene:lucene-test-framework:9.5.0'
-}
-
-test {
-    jvmArgs '-Djava.security.egd=file:/dev/./urandom'
+  @Override
+  protected Map<String, String> buildGetCookieParams(SolrQueryRequest req, SolrQueryResponse rsp) {
+    return MOCK_COOKIE_PARAMS;
+  }
 }

@@ -35,6 +35,7 @@ import java.util.UUID;
 
 import static org.apache.solr.encryption.EncryptionDirectoryFactory.PARAM_KEY_SUPPLIER_FACTORY;
 import static org.apache.solr.encryption.EncryptionDirectoryFactory.PROPERTY_INNER_ENCRYPTION_DIRECTORY_FACTORY;
+import static org.apache.solr.encryption.TestingEncryptionRequestHandler.MOCK_COOKIE_PARAMS;
 import static org.apache.solr.encryption.TestingKeySupplier.KEY_ID_1;
 import static org.apache.solr.encryption.TestingKeySupplier.KEY_ID_2;
 import static org.apache.solr.encryption.TestingKeySupplier.KEY_SECRET_1;
@@ -260,7 +261,7 @@ public class EncryptionDirectoryTest extends SolrCloudTestCase {
         if (keyId == null) {
           EncryptionUtil.removeActiveKeyRefFromCommit(data);
         } else {
-          EncryptionUtil.setNewActiveKeyIdInCommit(keyId, keySupplier.getKeyCookie(keyId, null), data);
+          EncryptionUtil.setNewActiveKeyIdInCommit(keyId, keySupplier.getKeyCookie(keyId, MOCK_COOKIE_PARAMS), data);
         }
       }
       commitUserData = new CommitUserData(commitUserData.segmentFileName, data);

@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static org.apache.solr.encryption.TestingEncryptionRequestHandler.MOCK_COOKIE_PARAMS;
 import static org.apache.solr.encryption.TestingKeySupplier.KEY_ID_1;
 import static org.apache.solr.encryption.TestingKeySupplier.KEY_ID_2;
 
@@ -129,7 +130,7 @@ public class EncryptionMergePolicyFactoryTest extends LuceneTestCase {
   private void commit(IndexWriter writer, KeySupplier keySupplier, String... keyIds) throws IOException {
     Map<String, String> commitData = new HashMap<>();
     for (String keyId : keyIds) {
-      EncryptionUtil.setNewActiveKeyIdInCommit(keyId, keySupplier.getKeyCookie(keyId, null), commitData);
+      EncryptionUtil.setNewActiveKeyIdInCommit(keyId, keySupplier.getKeyCookie(keyId, MOCK_COOKIE_PARAMS), commitData);
     }
     writer.setLiveCommitData(commitData.entrySet());
     writer.commit();

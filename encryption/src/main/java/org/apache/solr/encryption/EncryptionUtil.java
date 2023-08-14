@@ -16,6 +16,8 @@
  */
 package org.apache.solr.encryption;
 
+import org.apache.solr.common.util.Utils;
+
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -84,20 +86,7 @@ public class EncryptionUtil {
     commitUserData.put(COMMIT_ACTIVE_KEY, newKeyRef);
     commitUserData.put(COMMIT_KEY_ID + newKeyRef, keyId);
     if (keyCookie != null) {
-      setKeyCookieInCommit(newKeyRef, keyCookie, commitUserData);
-    }
-  }
-
-  private static void setKeyCookieInCommit(String keyRef,
-                                           Map<String, String> keyCookie,
-                                           Map<String, String> commitUserData) {
-    String commitKeyCookie = COMMIT_KEY_COOKIE + keyRef;
-    commitUserData.put(commitKeyCookie, Integer.toString(keyCookie.size()));
-    int entryIndex = 0;
-    for (Map.Entry<String, String> cookieEntry : keyCookie.entrySet()) {
-      String entryPrefix = commitKeyCookie + '.' + entryIndex++ + '.';
-      commitUserData.put(entryPrefix + 'k', cookieEntry.getKey());
-      commitUserData.put(entryPrefix + 'v', cookieEntry.getValue());
+      commitUserData.put(COMMIT_KEY_COOKIE + newKeyRef, Utils.toJSONString(keyCookie));
     }
   }
 
@@ -149,29 +138,23 @@ public class EncryptionUtil {
    *
    * @return the cookies for all key ids.
    */
+  @SuppressWarnings("unchecked")
   public static KeyCookies getKeyCookiesFromCommit(Map<String, String> commitUserData) {
-    Map<String, Map<String, String>> keyCookies = null;
+    Map<String, Map<String, String>> cookiesByKey = null;
     for (Map.Entry<String, String> dataEntry : commitUserData.entrySet()) {
       if (dataEntry.getKey().startsWith(COMMIT_KEY_ID)) {
         String keyId = dataEntry.getValue();
         String keyRef = dataEntry.getKey().substring(COMMIT_KEY_ID.length());
-        String commitKeyCookie = COMMIT_KEY_COOKIE + keyRef;
-        String cookieSizeAsString = commitUserData.get(commitKeyCookie);
-        if (cookieSizeAsString != null) {
-          int cookieSize = Integer.parseInt(cookieSizeAsString);
-          Map<String, String> cookie = new HashMap<>((int) (cookieSize / 0.75f) + 1);
-          for (int i = 0; i < cookieSize; i++) {
-            String entryPrefix = commitKeyCookie + '.' + i + '.';
-            cookie.put(commitUserData.get(entryPrefix + 'k'), commitUserData.get(entryPrefix + 'v'));
+        String cookieString = commitUserData.get(COMMIT_KEY_COOKIE + keyRef);
+        if (cookieString != null) {
+          if (cookiesByKey == null) {
+            cookiesByKey = new HashMap<>();
           }
-          if (keyCookies == null) {
-            keyCookies = new HashMap<>();
-          }
-          keyCookies.put(keyId, cookie);
+          cookiesByKey.put(keyId, (Map<String, String>) Utils.fromJSONString(cookieString));
         }
       }
     }
-    return keyCookies == null ? KeyCookies.EMPTY : new KeyCookies(keyCookies);
+    return cookiesByKey == null ? KeyCookies.EMPTY : new KeyCookies(cookiesByKey);
   }
 
   /**
@@ -196,16 +179,7 @@ public class EncryptionUtil {
       inactiveKeyRefs.sort(Comparator.naturalOrder());
       for (Integer keyRef : inactiveKeyRefs.subList(0, inactiveKeyRefs.size() - INACTIVE_KEY_IDS_TO_KEEP)) {
         commitUserData.remove(COMMIT_KEY_ID + keyRef);
-        String commitKeyCookie = COMMIT_KEY_COOKIE + keyRef;
-        String cookieSizeAsString = commitUserData.remove(commitKeyCookie);
-        if (cookieSizeAsString != null) {
-          int cookieSize = Integer.parseInt(cookieSizeAsString);
-          for (int i = 0; i < cookieSize; i++) {
-            String entryPrefix = commitKeyCookie + '.' + i + '.';
-            commitUserData.remove(entryPrefix + 'k');
-            commitUserData.remove(entryPrefix + 'v');
-          }
-        }
+        commitUserData.remove(COMMIT_KEY_COOKIE + keyRef);
       }
     }
   }
@@ -217,10 +191,10 @@ public class EncryptionUtil {
 
     private static final KeyCookies EMPTY = new KeyCookies(Map.of());
 
-    private final Map<String, Map<String, String>> cookies;
+    private final Map<String, Map<String, String>> cookiesByKey;
 
-    private KeyCookies(Map<String, Map<String, String>> cookies) {
-      this.cookies = cookies;
+    private KeyCookies(Map<String, Map<String, String>> cookiesByKey) {
+      this.cookiesByKey = cookiesByKey;
     }
 
     /**
@@ -228,7 +202,7 @@ public class EncryptionUtil {
      */
     @Nullable
     public Map<String, String> get(String keyId) {
-      return cookies.get(keyId);
+      return cookiesByKey.get(keyId);
     }
   }
 }

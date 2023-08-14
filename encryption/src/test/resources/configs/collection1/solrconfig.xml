@@ -50,7 +50,7 @@
   </requestHandler>
 
   <!-- Encryption handler -->
-  <requestHandler name="/admin/encrypt" class="org.apache.solr.encryption.EncryptionRequestHandler"/>
+  <requestHandler name="/admin/encrypt" class="org.apache.solr.encryption.TestingEncryptionRequestHandler"/>
 
   <indexConfig>
     <mergeScheduler class="${solr.mscheduler:org.apache.lucene.index.ConcurrentMergeScheduler}"/>
