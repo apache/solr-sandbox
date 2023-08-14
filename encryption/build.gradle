@@ -33,15 +33,12 @@ sourceSets {
 }
 
 dependencies {
-    implementation 'org.apache.solr:solr-core:9.2.1'
-    implementation 'org.apache.lucene:lucene-core:9.5.0'
+    implementation 'org.apache.solr:solr-core:9.3.0'
+    implementation 'org.apache.lucene:lucene-core:9.7.0'
     implementation 'com.google.code.findbugs:jsr305:3.0.2'
 
-    // Remove when removing DirectUpdateHandler2Copy.
-    implementation 'javax.servlet:javax.servlet-api:3.1.0'
-
-    testImplementation 'org.apache.solr:solr-test-framework:9.2.1'
-    testImplementation 'org.apache.lucene:lucene-test-framework:9.5.0'
+    testImplementation 'org.apache.solr:solr-test-framework:9.3.0'
+    testImplementation 'org.apache.lucene:lucene-test-framework:9.7.0'
 }
 
 test {

@@ -19,7 +19,7 @@ package org.apache.solr.encryption;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.solr.core.SolrCore;
 import org.apache.solr.update.CommitUpdateCommand;
-import org.apache.solr.update.DirectUpdateHandler2Copy;
+import org.apache.solr.update.DirectUpdateHandler2;
 import org.apache.solr.update.UpdateHandler;
 
 import java.io.IOException;
@@ -32,8 +32,7 @@ import static org.apache.solr.encryption.CommitUtil.readLatestCommit;
  * Extends {@link org.apache.solr.update.DirectUpdateHandler2} and adds the capability
  * to transfer some transferable user data from the previous commit to the next one.
  */
-//TODO: extend DirectUpdateHandler2 once Solr 9.2 is available
-public class EncryptionUpdateHandler extends DirectUpdateHandler2Copy {
+public class EncryptionUpdateHandler extends DirectUpdateHandler2 {
 
   /**
    * Parameter prefix to state that this parameter should be transferred from a commit
