@@ -70,7 +70,7 @@ public class EncryptionUtil {
    * Number of inactive key ids to keep when clearing the old inactive key ids.
    * @see #clearOldInactiveKeyIdsFromCommit
    */
-  private static final int INACTIVE_KEY_IDS_TO_KEEP = 10;
+  private static final int INACTIVE_KEY_IDS_TO_KEEP = 15;
 
   /**
    * Sets the new active encryption key id, and its optional cookie in the provided commit user data.
