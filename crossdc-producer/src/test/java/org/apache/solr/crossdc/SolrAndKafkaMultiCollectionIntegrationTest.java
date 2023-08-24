@@ -14,6 +14,7 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.cloud.MiniSolrCloudCluster;
 import org.apache.solr.cloud.SolrCloudTestCase;
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.common.cloud.CollectionProperties;
 import org.apache.solr.common.util.ObjectReleaseTracker;
 import org.apache.solr.crossdc.common.KafkaCrossDcConf;
 import org.apache.solr.crossdc.consumer.Consumer;
@@ -72,7 +73,10 @@ import static org.apache.solr.crossdc.common.KafkaCrossDcConf.INDEX_UNMIRRORABLE
 
     kafkaCluster.createTopic(TOPIC, 1, 1);
 
-    System.setProperty("topicName", TOPIC);
+    // in this test we will count on collection properties for topicName and enabled=true
+    System.setProperty("enabled", "false");
+    // System.setProperty("topicName", TOPIC);
+
     System.setProperty("bootstrapServers", kafkaCluster.bootstrapServers());
     System.setProperty(INDEX_UNMIRRORABLE_DOCS, "false");
 
@@ -95,6 +99,14 @@ import static org.apache.solr.crossdc.common.KafkaCrossDcConf.INDEX_UNMIRRORABLE
     solrCluster2.waitForActiveCollection(COLLECTION, 1, 1);
 
     solrCluster2.getSolrClient().setDefaultCollection(COLLECTION);
+
+    // Update the collection property "enabled" to true
+    CollectionProperties cp = new CollectionProperties(solrCluster1.getZkClient());
+    cp.setCollectionProperty(COLLECTION, "crossdc.enabled", "true");
+    cp.setCollectionProperty(COLLECTION, "crossdc.topicName", TOPIC);
+    // Reloading the collection
+    CollectionAdminRequest.Reload reloadRequest = CollectionAdminRequest.reloadCollection(COLLECTION);
+    reloadRequest.process(solrCluster1.getSolrClient());
 
     String bootstrapServers = kafkaCluster.bootstrapServers();
     log.info("bootstrapServers={}", bootstrapServers);
@@ -168,6 +180,14 @@ import static org.apache.solr.crossdc.common.KafkaCrossDcConf.INDEX_UNMIRRORABLE
 
       solrCluster2.getSolrClient().request(create);
       solrCluster2.waitForActiveCollection(ALT_COLLECTION, 1, 1);
+
+      // Update the collection property "enabled" to true
+      CollectionProperties cp = new CollectionProperties(solrCluster1.getZkClient());
+      cp.setCollectionProperty(ALT_COLLECTION, "crossdc.enabled", "true");
+      cp.setCollectionProperty(ALT_COLLECTION, "crossdc.topicName", TOPIC);
+      // Reloading the collection
+      CollectionAdminRequest.Reload reloadRequest = CollectionAdminRequest.reloadCollection(ALT_COLLECTION);
+      reloadRequest.process(solrCluster1.getSolrClient());
 
 
       CloudSolrClient client = solrCluster1.getSolrClient();

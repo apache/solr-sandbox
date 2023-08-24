@@ -17,6 +17,7 @@
 package org.apache.solr.update.processor;
 
 import org.apache.solr.common.SolrException;
+import org.apache.solr.common.cloud.CollectionProperties;
 import org.apache.solr.common.params.CommonParams;
 import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.util.NamedList;
@@ -127,10 +128,6 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
     public void inform(SolrCore core) {
         log.info("KafkaRequestMirroringHandler inform enabled={}", this.enabled);
 
-        if (!enabled) {
-            return;
-        }
-
         log.info("Producer startup config properties before adding additional properties from Zookeeper={}", properties);
 
         Properties zkProps = null;
@@ -152,6 +149,22 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
 
                 KafkaCrossDcConf.readZkProps(properties, zkProps);
             }
+            CollectionProperties cp = new CollectionProperties(core.getCoreContainer().getZkController().getZkClient());
+             Map<String,String> collectionProperties = cp.getCollectionProperties(core.getCoreDescriptor().getCollectionName());
+            for (ConfigProperty configKey : KafkaCrossDcConf.CONFIG_PROPERTIES) {
+                String val = collectionProperties.get("crossdc." + configKey.getKey());
+                if (val != null && !val.isBlank()) {
+                    properties.put(configKey.getKey(), val);
+                }
+            }
+            String enabledVal = collectionProperties.get("crossdc.enabled");
+            if (enabledVal != null) {
+                if (Boolean.parseBoolean(enabledVal.toString())) {
+                    this.enabled = true;
+                } else {
+                    this.enabled = false;
+                }
+            }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.error("Interrupted looking for CrossDC configuration in Zookeeper", e);
@@ -159,6 +172,10 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         } catch (Exception e) {
             log.error("Exception looking for CrossDC configuration in Zookeeper", e);
             throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "Exception looking for CrossDC configuration in Zookeeper", e);
+        }
+
+        if (!enabled) {
+            return;
         }
 
         if (properties.get(BOOTSTRAP_SERVERS) == null) {
