@@ -60,8 +60,8 @@ dependencies {
         exclude group: "org.apache.logging.log4j", module: "*"
         exclude group: "org.slf4j", module: "*"
     }
-    testImplementation 'org.apache.kafka:kafka_2.13:2.8.1'
-    testImplementation 'org.apache.kafka:kafka-streams:2.8.1'
+    implementation 'org.apache.kafka:kafka_2.13:2.8.1'
+    implementation 'org.apache.kafka:kafka-streams:2.8.1'
     testImplementation 'org.apache.kafka:kafka_2.13:2.8.1:test'
     testImplementation 'org.apache.kafka:kafka-streams:2.8.1:test'
 }
