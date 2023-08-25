@@ -34,6 +34,7 @@ import org.apache.solr.crossdc.common.MirroredSolrRequest;
 import org.apache.solr.crossdc.common.SolrExceptionUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.lang.invoke.MethodHandles;
 import java.util.List;
@@ -63,11 +64,13 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
 
     @Override
     public Result<MirroredSolrRequest> handleItem(MirroredSolrRequest mirroredSolrRequest) {
-        connectToSolrIfNeeded();
+        try (final MDC.MDCCloseable mdc = MDC.putCloseable("collection", getCollectionFromRequest(mirroredSolrRequest))) {
+            connectToSolrIfNeeded();
 
-        // preventCircularMirroring(mirroredSolrRequest); TODO: isn't this handled by the mirroring handler?
+            // preventCircularMirroring(mirroredSolrRequest); TODO: isn't this handled by the mirroring handler?
 
-        return processMirroredRequest(mirroredSolrRequest);
+            return processMirroredRequest(mirroredSolrRequest);
+        }
     }
 
     private Result<MirroredSolrRequest> processMirroredRequest(MirroredSolrRequest request) {
@@ -353,4 +356,9 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
         }
     }
 
+    private static String getCollectionFromRequest(MirroredSolrRequest mirroredSolrRequest) {
+        if (mirroredSolrRequest == null || mirroredSolrRequest.getSolrRequest() == null) return null;
+
+        return mirroredSolrRequest.getSolrRequest().getCollection();
+    }
 }
