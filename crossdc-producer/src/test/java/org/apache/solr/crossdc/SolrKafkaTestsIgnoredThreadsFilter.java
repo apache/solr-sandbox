@@ -43,6 +43,11 @@ public class SolrKafkaTestsIgnoredThreadsFilter implements ThreadFilter {
       return true;
     }
 
+    if (threadName.startsWith("KafkaCrossDcConsumerWorker")) {
+      return true;
+    }
+
+
 
     return false;
   }

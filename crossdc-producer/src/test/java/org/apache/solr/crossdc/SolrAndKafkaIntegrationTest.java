@@ -40,6 +40,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.apache.solr.crossdc.common.KafkaCrossDcConf.DEFAULT_MAX_REQUEST_SIZE;
 import static org.apache.solr.crossdc.common.KafkaCrossDcConf.INDEX_UNMIRRORABLE_DOCS;
@@ -275,6 +279,47 @@ import static org.mockito.Mockito.spy;
       solrCluster1.getSolrClient().request(delete);
       solrCluster2.getSolrClient().request(delete);
     }
+  }
+
+    @Test
+  public void testParallelUpdatesToCluster2() throws Exception {
+    ExecutorService executorService = Executors.newFixedThreadPool(50);
+    List<Future<Boolean>> futures = new ArrayList<>();
+
+    CloudSolrClient client1 = solrCluster1.getSolrClient();
+
+    // Prepare and send 500 updates in parallel
+    for (int i = 0; i < 500; i++) {
+      final int docId = i;
+      Future<Boolean> future = executorService.submit(() -> {
+        try {
+          SolrInputDocument doc = new SolrInputDocument();
+          doc.addField("id", String.valueOf(docId));
+          doc.addField("text", "parallel test");
+          client1.add(doc);
+          client1.commit(COLLECTION);
+          return true;
+        } catch (Exception e) {
+          log.error("Exception while adding doc", e);
+          return false;
+        }
+      });
+      futures.add(future);
+    }
+
+    // Wait for all updates to complete
+    executorService.shutdown();
+    if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
+      executorService.shutdownNow();
+    }
+
+    // Check if all updates were successful
+    for (Future<Boolean> future : futures) {
+      assertTrue(future.get());
+    }
+
+    // Check if these documents are correctly reflected in the second cluster
+    assertCluster2EventuallyHasDocs(COLLECTION, "*:*", 500);
   }
 
   private void assertCluster2EventuallyHasDocs(String collection, String query, int expectedNumDocs) throws Exception {

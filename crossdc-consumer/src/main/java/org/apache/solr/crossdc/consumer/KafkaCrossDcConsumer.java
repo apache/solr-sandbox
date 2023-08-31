@@ -48,9 +48,13 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
   private final CloudSolrClient solrClient;
 
-   private final ThreadPoolExecutor executor;
+  private final ThreadPoolExecutor executor;
 
-
+  private final ExecutorService offsetCheckExecutor = Executors.newCachedThreadPool(r -> {
+      Thread t = new Thread(r);
+      t.setName("offset-check-thread");
+      return t;
+  });
   private PartitionManager partitionManager;
 
   private BlockingQueue<Runnable> queue = new BlockingQueue<>(10);
@@ -311,7 +315,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
         log.error("Mirroring exception occurred while resubmitting to Kafka. We are going to stop the consumer thread now.", e);
         throw new RuntimeException(e);
       } finally {
-        executor.submit(() -> {
+        offsetCheckExecutor.submit(() -> {
           try {
             partitionManager.checkForOffsetUpdates(workUnit.partition);
           } catch (Throwable e) {
@@ -371,6 +375,10 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
       if (!executor.isShutdown()) {
         executor.shutdown();
         executor.awaitTermination(30, TimeUnit.SECONDS);
+      }
+      if (!offsetCheckExecutor.isShutdown()) {
+        offsetCheckExecutor.shutdown();
+        offsetCheckExecutor.awaitTermination(30, TimeUnit.SECONDS);
       }
       solrClient.close();
     } catch (InterruptedException e) {
