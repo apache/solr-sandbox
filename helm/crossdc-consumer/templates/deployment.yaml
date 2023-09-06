@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "solr-crossdc-consumer"
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: "solr-crossdc-consumer"
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: "solr-crossdc-consumer"
+  template:
+    metadata:
+      labels:
+        app: "solr-crossdc-consumer"
+    spec:
+      containers:
+        - name: "solr-crossdc-consumer"
+          image: {{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}
+          env:
+          {{- if .Values.env }}
+          {{- toYaml .Values.env | nindent 12 }}
+          {{- end }}
+

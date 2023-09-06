@@ -1,0 +1,8 @@
+image:
+  repository: solr
+  name: "solr-crossdc-consumer"
+  tag: latest
+
+replicas: 1
+
+env: []

@@ -1,0 +1,11 @@
+apiVersion: v2
+name: "solr-crossdc-consumer"
+version: "0.0.1"
+appVersion: "1"
+keywords:
+  - solr
+  - crossdc
+  - consumer
+maintainers:
+  - name: Solr Dev Community
+    email: dev@solr.apache.org

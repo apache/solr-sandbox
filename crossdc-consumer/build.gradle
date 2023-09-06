@@ -16,6 +16,7 @@
  */
 plugins {
     id 'application'
+    id 'com.google.cloud.tools.jib' version '3.2.1'
 }
 
 description = 'Cross-DC Consumer package'
@@ -77,4 +78,26 @@ tasks.withType(Tar){
 }
 tasks.withType(Zip){
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+jib {
+    container {
+        mainClass = 'org.apache.solr.crossdc.consumer.ConsumerEnvWrapper'
+        creationTime = 'USE_CURRENT_TIMESTAMP'
+    }
+    extraDirectories {
+        paths {
+            path {
+                from = 'src/resources'
+                into = '/app/resources'
+                includes = ['log4j2.xml']
+            }
+        }
+    }
+    from {
+        image = 'eclipse-temurin:11-jdk'
+    }
+    to {
+        image = 'solr-crossdc-consumer'
+    }
 }
