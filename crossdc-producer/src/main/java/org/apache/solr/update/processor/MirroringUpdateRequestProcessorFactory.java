@@ -130,25 +130,8 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
 
         log.info("Producer startup config properties before adding additional properties from Zookeeper={}", properties);
 
-        Properties zkProps = null;
         try {
-            if (core.getCoreContainer().getZkController()
-                .getZkClient().exists(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH,
-                    CrossDcConf.CROSSDC_PROPERTIES), true)) {
-                byte[] data = core.getCoreContainer().getZkController().getZkClient().getData(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH,
-                    CrossDcConf.CROSSDC_PROPERTIES), null, null, true);
-
-                if (data == null) {
-                    log.error(CrossDcConf.CROSSDC_PROPERTIES + " file in Zookeeper has no data");
-                    throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, CrossDcConf.CROSSDC_PROPERTIES
-                        + " file in Zookeeper has no data");
-                }
-
-                zkProps = new Properties();
-                zkProps.load(new ByteArrayInputStream(data));
-
-                KafkaCrossDcConf.readZkProps(properties, zkProps);
-            }
+            ConfUtil.fillProperties(core.getCoreContainer().getZkController().getZkClient(), properties);
             CollectionProperties cp = new CollectionProperties(core.getCoreContainer().getZkController().getZkClient());
              Map<String,String> collectionProperties = cp.getCollectionProperties(core.getCoreDescriptor().getCollectionName());
             for (ConfigProperty configKey : KafkaCrossDcConf.CONFIG_PROPERTIES) {
@@ -165,10 +148,6 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
                     this.enabled = false;
                 }
             }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.error("Interrupted looking for CrossDC configuration in Zookeeper", e);
-            throw new SolrException(SolrException.ErrorCode.SERVICE_UNAVAILABLE, e);
         } catch (Exception e) {
             log.error("Exception looking for CrossDC configuration in Zookeeper", e);
             throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "Exception looking for CrossDC configuration in Zookeeper", e);
@@ -176,20 +155,6 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
 
         if (!enabled) {
             return;
-        }
-
-        if (properties.get(BOOTSTRAP_SERVERS) == null) {
-            log.error(
-                "boostrapServers not specified for producer in CrossDC configuration props={} zkProps={}",
-                properties, zkProps);
-           throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "boostrapServers not specified for producer");
-       }
-        
-        if (properties.get(TOPIC_NAME) == null) {
-            log.error(
-                "topicName not specified for producer in CrossDC configuration props={} zkProps={}",
-                properties, zkProps);
-            throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "topicName not specified for producer");
         }
 
         // load the request mirroring sink class and instantiate.
