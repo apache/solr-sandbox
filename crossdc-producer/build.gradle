@@ -36,14 +36,13 @@ sourceSets {
 dependencies {
     implementation project(':crossdc-consumer')
     implementation project(path: ':crossdc-commons', configuration: 'shadow')
-    testImplementation project(path: ':crossdc-commons')
 
     provided  group: 'org.apache.solr', name: 'solr-core', version: '8.11.2'
 
     testImplementation 'org.slf4j:slf4j-api:2.0.5'
     testImplementation 'org.hamcrest:hamcrest:2.2'
     testImplementation 'junit:junit:4.13.2'
-    testImplementation('org.mockito:mockito-inline:5.2.0')
+    testImplementation('org.mockito:mockito-inline:5.1.1')
     testImplementation group: 'org.apache.solr', name: 'solr-core', version: '8.11.2'
     testImplementation group: 'org.apache.solr', name: 'solr-test-framework', version: '8.11.2'
 
