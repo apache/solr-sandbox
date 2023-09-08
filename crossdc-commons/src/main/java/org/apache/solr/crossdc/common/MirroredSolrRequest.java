@@ -19,16 +19,22 @@ package org.apache.solr.crossdc.common;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
+import org.apache.solr.client.solrj.request.ConfigSetAdminRequest;
 import org.apache.solr.client.solrj.request.UpdateRequest;
 import org.apache.solr.client.solrj.response.CollectionAdminResponse;
+import org.apache.solr.client.solrj.response.ConfigSetAdminResponse;
 import org.apache.solr.common.params.CollectionParams;
 import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.ContentStream;
+import org.apache.solr.common.util.ContentStreamBase;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * Class to encapsulate a mirrored Solr request.
@@ -39,6 +45,7 @@ public class MirroredSolrRequest {
     public enum Type {
         UPDATE,
         ADMIN,
+        CONFIGSET,
         UNKNOWN;
 
         public static final Type get(String s) {
@@ -69,6 +76,85 @@ public class MirroredSolrRequest {
         @Override
         protected CollectionAdminResponse createResponse(SolrClient client) {
             return new CollectionAdminResponse();
+        }
+    }
+
+    public static class MirroredConfigSetRequest extends ConfigSetAdminRequest<MirroredConfigSetRequest, ConfigSetAdminResponse> {
+        private Collection<ContentStream> contentStreams;
+        private ModifiableSolrParams params;
+
+        public MirroredConfigSetRequest(METHOD method, SolrParams params, Collection<ContentStream> contentStreams) {
+            this.setMethod(method);
+            this.params = ModifiableSolrParams.of(params);
+            this.contentStreams = contentStreams;
+            if (method == METHOD.POST && (contentStreams == null || contentStreams.isEmpty())) {
+                throw new RuntimeException("Invalid request - POST requires at least 1 content stream");
+            }
+        }
+
+        @Override
+        protected MirroredConfigSetRequest getThis() {
+            return this;
+        }
+
+        @Override
+        public SolrParams getParams() {
+            return params;
+        }
+
+        public void setParams(ModifiableSolrParams params) {
+            this.params = params;
+        }
+
+        @Override
+        public Collection<ContentStream> getContentStreams() {
+            return contentStreams;
+        }
+
+        @Override
+        protected ConfigSetAdminResponse createResponse(SolrClient client) {
+            return new ConfigSetAdminResponse();
+        }
+    }
+
+    public static class ExposedByteArrayContentStream extends ContentStreamBase {
+        private final byte[] bytes;
+
+        public ExposedByteArrayContentStream(byte[] bytes, String source, String contentType) {
+            this.bytes = bytes;
+
+            this.contentType = contentType;
+            name = source;
+            size = (long) bytes.length;
+            sourceInfo = source;
+        }
+
+        public byte[] byteArray() {
+            return bytes;
+        }
+
+        @Override
+        public InputStream getStream() throws IOException {
+            return new ByteArrayInputStream(bytes);
+        }
+
+        @Override
+        public String toString() {
+            return "contentType=" + contentType +
+                ", name=" + name +
+                ", sourceInfo=" + sourceInfo +
+                ", size=" + size;
+        }
+
+        public static ExposedByteArrayContentStream of(ContentStream cs) throws IOException {
+            if (cs instanceof ExposedByteArrayContentStream) {
+                return (ExposedByteArrayContentStream) cs;
+            }
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            cs.getStream().transferTo(baos);
+            ExposedByteArrayContentStream res = new ExposedByteArrayContentStream(baos.toByteArray(), cs.getSourceInfo(), cs.getContentType());
+            res.setName(cs.getName());
+            return res;
         }
     }
 
