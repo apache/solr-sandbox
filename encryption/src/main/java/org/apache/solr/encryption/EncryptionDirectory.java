@@ -16,12 +16,9 @@
  */
 package org.apache.solr.encryption;
 
-import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.index.IndexFileNames;
 import org.apache.lucene.index.SegmentCommitInfo;
 import org.apache.lucene.index.SegmentInfos;
-import org.apache.lucene.store.DataInput;
-import org.apache.lucene.store.DataOutput;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FilterDirectory;
 import org.apache.lucene.store.IOContext;
@@ -48,6 +45,8 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static org.apache.lucene.codecs.CodecUtil.readBEInt;
+import static org.apache.lucene.codecs.CodecUtil.writeBEInt;
 import static org.apache.solr.encryption.EncryptionUtil.*;
 
 /**
@@ -76,7 +75,8 @@ public class EncryptionDirectory extends FilterDirectory {
 
   /**
    * Constant to identify the start of an encrypted file.
-   * It is different from {@link CodecUtil#CODEC_MAGIC} to detect when a file is encrypted.
+   * It is different from {@link org.apache.lucene.codecs.CodecUtil#CODEC_MAGIC} to detect when a file
+   * is encrypted.
    */
   public static final int ENCRYPTION_MAGIC = 0x2E5BF271; // 777777777 in decimal
 
@@ -111,6 +111,16 @@ public class EncryptionDirectory extends FilterDirectory {
     // is cleartext, so we can skip fast any encryption check. This flag becomes true indefinitely if we
     // detect an encryption key when opening a file for writing.
     shouldCheckEncryptionWhenReading = hasKeyIdInCommit(commitUserData.data);
+  }
+
+  /** Gets the {@link AesCtrEncrypterFactory} used. */
+  public AesCtrEncrypterFactory getEncrypterFactory() {
+    return encrypterFactory;
+  }
+
+  /** Gets the {@link KeySupplier} used. */
+  public KeySupplier getKeySupplier() {
+    return keySupplier;
   }
 
   @Override
@@ -177,14 +187,6 @@ public class EncryptionDirectory extends FilterDirectory {
     writeBEInt(indexOutput, ENCRYPTION_MAGIC);
     writeBEInt(indexOutput, Integer.parseInt(keyRef));
     return keyRef;
-  }
-
-  /** Write int value on header / footer with big endian order. See readBEInt. */
-  private static void writeBEInt(DataOutput out, int i) throws IOException {
-    out.writeByte((byte) (i >> 24));
-    out.writeByte((byte) (i >> 16));
-    out.writeByte((byte) (i >> 8));
-    out.writeByte((byte) i);
   }
 
   /**
@@ -292,9 +294,10 @@ public class EncryptionDirectory extends FilterDirectory {
   /**
    * Gets the key reference number for reading an index input.
    * <p>
-   * If the file is ciphered, it starts with the {@link #ENCRYPTION_MAGIC} header, followed by the reference
-   * number as a 4B big-endian int.
-   * If the file is cleartext, it starts with the {@link CodecUtil#CODEC_MAGIC} header.
+   * If the file is ciphered, it starts with the {@link #ENCRYPTION_MAGIC} header, followed
+   * by the reference number as a 4B big-endian int.
+   * If the file is cleartext, it starts with the
+   * {@link org.apache.lucene.codecs.CodecUtil#CODEC_MAGIC} header.
    *
    * @return the key reference number; or null if none.
    */
@@ -311,17 +314,6 @@ public class EncryptionDirectory extends FilterDirectory {
       indexInput.seek(filePointer);
       return null;
     }
-  }
-
-  /**
-   * Read int value from header / footer with big endian order.
-   * We force big endian order when reading a codec. See CodecUtil.readBEInt in Lucene 9.0 or above.
-   */
-  private static int readBEInt(DataInput in) throws IOException {
-    return ((in.readByte() & 0xFF) << 24)
-      | ((in.readByte() & 0xFF) << 16)
-      | ((in.readByte() & 0xFF) << 8)
-      | (in.readByte() & 0xFF);
   }
 
   /**

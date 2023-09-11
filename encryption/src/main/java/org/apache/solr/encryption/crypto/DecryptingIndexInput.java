@@ -40,9 +40,9 @@ public class DecryptingIndexInput extends IndexInput {
    * Must be a multiple of {@link AesCtrUtil#AES_BLOCK_SIZE}.
    * Benchmarks showed that 6 x {@link AesCtrUtil#AES_BLOCK_SIZE} is a good buffer size.
    */
-  private static final int BUFFER_CAPACITY = 6 * AES_BLOCK_SIZE; // 96 B
+  static final int BUFFER_CAPACITY = 6 * AES_BLOCK_SIZE; // 96 B
 
-  private static final long AES_BLOCK_SIZE_MOD_MASK = AES_BLOCK_SIZE - 1;
+  static final long AES_BLOCK_SIZE_MOD_MASK = AES_BLOCK_SIZE - 1;
 
   // Most fields are not final for the clone() method.
   private boolean isClone;
@@ -92,8 +92,8 @@ public class DecryptingIndexInput extends IndexInput {
     this.indexInput = indexInput;
     this.encrypter = encrypter;
     encrypter.init(0);
-    inBuffer = ByteBuffer.allocate(getBufferCapacity());
-    outBuffer = ByteBuffer.allocate(getBufferCapacity() + AES_BLOCK_SIZE);
+    inBuffer = ByteBuffer.allocate(BUFFER_CAPACITY);
+    outBuffer = ByteBuffer.allocate(BUFFER_CAPACITY + AES_BLOCK_SIZE);
     outBuffer.limit(0);
     assert inBuffer.hasArray() && outBuffer.hasArray();
     assert inBuffer.arrayOffset() == 0;
@@ -111,13 +111,6 @@ public class DecryptingIndexInput extends IndexInput {
     byte[] iv = new byte[IV_LENGTH];
     indexInput.readBytes(iv, 0, iv.length, false);
     return factory.create(key, iv);
-  }
-
-  /**
-   * Gets the buffer capacity. It must be a multiple of {@link AesCtrUtil#AES_BLOCK_SIZE}.
-   */
-  protected int getBufferCapacity() {
-    return BUFFER_CAPACITY;
   }
 
   @Override
@@ -264,8 +257,8 @@ public class DecryptingIndexInput extends IndexInput {
     clone.indexInput = indexInput.clone();
     assert clone.indexInput.getFilePointer() == indexInput.getFilePointer();
     clone.encrypter = encrypter.clone();
-    clone.inBuffer = ByteBuffer.allocate(getBufferCapacity());
-    clone.outBuffer = ByteBuffer.allocate(getBufferCapacity() + AES_BLOCK_SIZE);
+    clone.inBuffer = ByteBuffer.allocate(BUFFER_CAPACITY);
+    clone.outBuffer = ByteBuffer.allocate(BUFFER_CAPACITY + AES_BLOCK_SIZE);
     clone.inArray = clone.inBuffer.array();
     clone.oneByteBuf = new byte[1];
     // The clone must be initialized.
