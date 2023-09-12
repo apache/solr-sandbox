@@ -102,7 +102,7 @@ public class DecryptingInputStream extends InputStream {
   @Override
   public int read() throws IOException {
     int n = read(oneByteBuf, 0, 1);
-    return n == -1 ? -1 : oneByteBuf[0];
+    return n == -1 ? -1 : oneByteBuf[0] & 0xFF;
   }
 
   @Override
