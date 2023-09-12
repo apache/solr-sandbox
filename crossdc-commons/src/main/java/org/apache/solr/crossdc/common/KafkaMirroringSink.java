@@ -38,24 +38,26 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
 
     private final KafkaCrossDcConf conf;
     private final Producer<String, MirroredSolrRequest> producer;
+    private final String mainTopic;
     private final String dlqTopic;
 
     public KafkaMirroringSink(final KafkaCrossDcConf conf) {
         // Create Kafka Mirroring Sink
         this.conf = conf;
         this.producer = initProducer();
+        this.mainTopic = conf.get(KafkaCrossDcConf.TOPIC_NAME).split(",")[0];
         this.dlqTopic = conf.get(KafkaCrossDcConf.DLQ_TOPIC_NAME);
     }
 
     @Override
     public void submit(MirroredSolrRequest request) throws MirroringException {
-        this.submitRequest(request, conf.get(KafkaCrossDcConf.TOPIC_NAME).split(",")[0]);
+        this.submitRequest(request, mainTopic);
     }
 
     @Override
     public void submitToDlq(MirroredSolrRequest request) throws MirroringException {
         if (dlqTopic != null) {
-            this.submitRequest(request, conf.get(KafkaCrossDcConf.DLQ_TOPIC_NAME));
+            this.submitRequest(request, dlqTopic);
         } else {
             if (log.isDebugEnabled()) {
                 log.debug("- no DLQ, dropping failed {}", request);
