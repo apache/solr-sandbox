@@ -26,4 +26,6 @@ public interface RequestMirroringSink {
      * @throws MirroringException Implementations may throw an exception
      */
     void submit(final MirroredSolrRequest request) throws MirroringException;
+
+    void submitToDlq(final MirroredSolrRequest request) throws MirroringException;
 }

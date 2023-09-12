@@ -44,6 +44,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
   private final static int KAFKA_CONSUMER_POLL_TIMEOUT_MS = 5000;
   private final String[] topicNames;
+  private final int maxAttempts;
   private final SolrMessageProcessor messageProcessor;
 
   private final CloudSolrClient solrClient;
@@ -68,6 +69,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
   public KafkaCrossDcConsumer(KafkaCrossDcConf conf, CountDownLatch startLatch) {
 
     this.topicNames = conf.get(KafkaCrossDcConf.TOPIC_NAME).split(",");
+    this.maxAttempts = conf.getInt(KafkaCrossDcConf.MAX_ATTEMPTS);
     this.startLatch = startLatch;
     final Properties kafkaConsumerProps = new Properties();
 
@@ -329,7 +331,13 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
           log.trace("result=failed-resubmit");
         }
         metrics.counter("failed-resubmit").inc();
-        kafkaMirroringSink.submit(record.value());
+        final int attempt = record.value().getAttempt();
+        if (attempt > this.maxAttempts) {
+          log.info("Sending message to dead letter queue because of max attempts limit with current value = {}", attempt);
+          kafkaMirroringSink.submitToDlq(record.value());
+        } else {
+          kafkaMirroringSink.submit(record.value());
+        }
         break;
       case HANDLED:
         // no-op

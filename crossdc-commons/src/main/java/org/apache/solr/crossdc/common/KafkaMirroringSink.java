@@ -38,15 +38,32 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
 
     private final KafkaCrossDcConf conf;
     private final Producer<String, MirroredSolrRequest> producer;
+    private final String dlqTopic;
 
     public KafkaMirroringSink(final KafkaCrossDcConf conf) {
         // Create Kafka Mirroring Sink
         this.conf = conf;
         this.producer = initProducer();
+        this.dlqTopic = conf.get(KafkaCrossDcConf.DLQ_TOPIC_NAME);
     }
 
     @Override
     public void submit(MirroredSolrRequest request) throws MirroringException {
+        this.submitRequest(request, conf.get(KafkaCrossDcConf.TOPIC_NAME).split(",")[0]);
+    }
+
+    @Override
+    public void submitToDlq(MirroredSolrRequest request) throws MirroringException {
+        if (dlqTopic != null) {
+            this.submitRequest(request, conf.get(KafkaCrossDcConf.DLQ_TOPIC_NAME));
+        } else {
+            if (log.isDebugEnabled()) {
+                log.debug("- no DLQ, dropping failed {}", request);
+            }
+        }
+    }
+
+    private void submitRequest(MirroredSolrRequest request, String topicName) throws MirroringException {
         if (log.isDebugEnabled()) {
             log.debug("About to submit a MirroredSolrRequest");
         }
@@ -56,7 +73,7 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
         // Create Producer record
         try {
 
-            producer.send(new ProducerRecord<>(conf.get(KafkaCrossDcConf.TOPIC_NAME).split(",")[0], request), (metadata, exception) -> {
+            producer.send(new ProducerRecord<>(topicName, request), (metadata, exception) -> {
                 if (exception != null) {
                     log.error("Failed adding update to CrossDC queue! request=" + request.getSolrRequest(), exception);
                 }
@@ -73,7 +90,7 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
         } catch (Exception e) {
             // We are intentionally catching all exceptions, the expected exception form this function is {@link MirroringException}
             String message = "Unable to enqueue request " + request + ", configured retries is" + conf.getInt(KafkaCrossDcConf.NUM_RETRIES) +
-                " and configured max delivery timeout in ms is " + conf.getInt(KafkaCrossDcConf.DELIVERY_TIMEOUT_MS);
+                    " and configured max delivery timeout in ms is " + conf.getInt(KafkaCrossDcConf.DELIVERY_TIMEOUT_MS);
             log.error(message, e);
             throw new MirroringException(message, e);
         }

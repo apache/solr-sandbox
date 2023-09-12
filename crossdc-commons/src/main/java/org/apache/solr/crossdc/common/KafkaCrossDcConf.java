@@ -62,6 +62,10 @@ public class KafkaCrossDcConf extends CrossDcConf {
 
   public static final String TOPIC_NAME = "topicName";
 
+  public static final String DLQ_TOPIC_NAME = "dlqTopicName";
+
+  public static final String MAX_ATTEMPTS = "maxAttempts";
+
   public static final String BOOTSTRAP_SERVERS = "bootstrapServers";
 
   public static final String BATCH_SIZE_BYTES = "batchSizeBytes";
@@ -124,7 +128,10 @@ public class KafkaCrossDcConf extends CrossDcConf {
 
   static {
     List<ConfigProperty> configProperties = new ArrayList<>(
-        List.of(new ConfigProperty(TOPIC_NAME), new ConfigProperty(BOOTSTRAP_SERVERS),
+        List.of(new ConfigProperty(TOPIC_NAME),
+            new ConfigProperty(DLQ_TOPIC_NAME),
+            new ConfigProperty(MAX_ATTEMPTS, "3"),
+            new ConfigProperty(BOOTSTRAP_SERVERS),
             new ConfigProperty(BATCH_SIZE_BYTES, DEFAULT_BATCH_SIZE_BYTES),
             new ConfigProperty(BUFFER_MEMORY_BYTES, DEFAULT_BUFFER_MEMORY_BYTES),
             new ConfigProperty(LINGER_MS, DEFAULT_LINGER_MS),
