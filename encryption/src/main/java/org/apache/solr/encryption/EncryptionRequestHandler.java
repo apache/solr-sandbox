@@ -155,7 +155,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
 
   @Override
   public Name getPermissionName(AuthorizationContext request) {
-    return PermissionNameProvider.Name.UPDATE_PERM;
+    return PermissionNameProvider.Name.CORE_EDIT_PERM;
   }
 
   @Override
