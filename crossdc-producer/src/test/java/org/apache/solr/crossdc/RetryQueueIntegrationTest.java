@@ -183,7 +183,8 @@ import java.util.Properties;
   public void testRetryQueue() throws Exception {
     Path zkDir = zkTestServer2.getZkDir();
     int zkPort = zkTestServer2.getPort();
-    zkTestServer2.shutdown();
+    solrCluster2.getJettySolrRunner(0).stop();
+    //zkTestServer2.shutdown();
 
     CloudSolrClient client = solrCluster1.getSolrClient();
     SolrInputDocument doc = new SolrInputDocument();
@@ -208,10 +209,12 @@ import java.util.Properties;
 
     System.out.println("Sent producer record");
 
-    Thread.sleep(5000);
+    Thread.sleep(30000);
 
-    zkTestServer2 = new ZkTestServer(zkDir, zkPort);
-    zkTestServer2.run(false);
+    //zkTestServer2 = new ZkTestServer(zkDir, zkPort);
+    //zkTestServer2.run(false);
+    solrCluster2.getJettySolrRunner(0).start();
+    Thread.sleep(10000);
 
     QueryResponse results = null;
     boolean foundUpdates = false;
