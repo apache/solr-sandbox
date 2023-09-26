@@ -52,8 +52,8 @@ public class KafkaRequestMirroringHandler implements RequestMirroringHandler {
         try {
             sink.submit(mirroredRequest);
         } catch (MirroringException exception) {
-            if (log.isDebugEnabled()) {
-                log.debug("Sending message to dead letter queue");
+            if (log.isInfoEnabled()) {
+                log.info("Sending message to dead letter queue");
             }
             sink.submitToDlq(mirroredRequest);
             throw new MirroringException(exception);

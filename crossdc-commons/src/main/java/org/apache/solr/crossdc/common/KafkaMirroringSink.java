@@ -69,8 +69,8 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
         if (dlqTopic != null) {
             this.submitRequest(request, dlqTopic);
         } else {
-            if (log.isDebugEnabled()) {
-                log.debug("- no DLQ, dropping failed {}", request);
+            if (log.isInfoEnabled()) {
+                log.info("- no DLQ, dropping failed {}", request);
             }
         }
     }
