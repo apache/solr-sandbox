@@ -16,10 +16,14 @@
  */
 package org.apache.solr.crossdc.common;
 
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.PartitionInfo;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +31,8 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
@@ -38,6 +44,7 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
 
     private final KafkaCrossDcConf conf;
     private final Producer<String, MirroredSolrRequest> producer;
+    private final KafkaConsumer<String,MirroredSolrRequest> consumer;
     private final String mainTopic;
     private final String dlqTopic;
 
@@ -45,8 +52,11 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
         // Create Kafka Mirroring Sink
         this.conf = conf;
         this.producer = initProducer();
+        this.consumer = initConsumer();
         this.mainTopic = conf.get(KafkaCrossDcConf.TOPIC_NAME).split(",")[0];
         this.dlqTopic = conf.get(KafkaCrossDcConf.DLQ_TOPIC_NAME);
+
+        checkTopicsAvailability();
     }
 
     @Override
@@ -62,6 +72,17 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
             if (log.isDebugEnabled()) {
                 log.debug("- no DLQ, dropping failed {}", request);
             }
+        }
+    }
+
+    private void checkTopicsAvailability() {
+        final Map<String, List<PartitionInfo>> topics = this.consumer.listTopics();
+
+        if (mainTopic != null && !topics.containsKey(mainTopic)) {
+            throw new RuntimeException("Main topic " + mainTopic + " is not available");
+        }
+        if (dlqTopic != null && !topics.containsKey(dlqTopic)) {
+            throw new RuntimeException("DLQ topic " + dlqTopic + " is not available");
         }
     }
 
@@ -147,6 +168,26 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
             Thread.currentThread().setContextClassLoader(originalContextClassLoader);
         }
         return producer;
+    }
+
+    private KafkaConsumer<String, MirroredSolrRequest> initConsumer() {
+        final Properties kafkaConsumerProperties = new Properties();
+
+        kafkaConsumerProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, conf.get(KafkaCrossDcConf.BOOTSTRAP_SERVERS));
+        kafkaConsumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, conf.get(KafkaCrossDcConf.GROUP_ID));
+        kafkaConsumerProperties.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, conf.getInt(KafkaCrossDcConf.MAX_POLL_RECORDS));
+        kafkaConsumerProperties.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, conf.get(KafkaCrossDcConf.MAX_POLL_INTERVAL_MS));
+        kafkaConsumerProperties.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, conf.get(KafkaCrossDcConf.SESSION_TIMEOUT_MS));
+        kafkaConsumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        kafkaConsumerProperties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+        kafkaConsumerProperties.put(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, conf.getInt(KafkaCrossDcConf.FETCH_MIN_BYTES));
+        kafkaConsumerProperties.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, conf.getInt(KafkaCrossDcConf.FETCH_MAX_WAIT_MS));
+        kafkaConsumerProperties.put(ConsumerConfig.FETCH_MAX_BYTES_CONFIG, conf.getInt(KafkaCrossDcConf.FETCH_MAX_BYTES));
+        kafkaConsumerProperties.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, conf.getInt(KafkaCrossDcConf.MAX_PARTITION_FETCH_BYTES));
+        kafkaConsumerProperties.put(ConsumerConfig.REQUEST_TIMEOUT_MS_CONFIG, conf.getInt(KafkaCrossDcConf.REQUEST_TIMEOUT_MS));
+        kafkaConsumerProperties.putAll(conf.getAdditionalProperties());
+
+        return new KafkaConsumer<>(kafkaConsumerProperties, new StringDeserializer(), new MirroredSolrRequestSerializer());
     }
 
     private void slowSubmitAction(Object request, long elapsedTimeMillis) {
