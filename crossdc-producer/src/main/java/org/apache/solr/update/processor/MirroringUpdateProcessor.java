@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import static org.apache.solr.common.SolrException.ErrorCode.SERVER_ERROR;
 
@@ -89,8 +90,8 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
 
   UpdateRequest createMirrorRequest() {
     UpdateRequest mirrorRequest = new UpdateRequest();
-      mirrorRequest.setParams(new ModifiableSolrParams(mirrorParams));
-      return mirrorRequest;
+    mirrorRequest.setParams(new ModifiableSolrParams(mirrorParams));
+    return mirrorRequest;
   }
 
   @Override public void processAdd(final AddUpdateCommand cmd) throws IOException {
@@ -268,10 +269,73 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
     // TODO: We can't/shouldn't support this ?
   }
 
+  private boolean shouldMirrorCommit(SolrQueryRequest req) {
+    CloudDescriptor cd = req.getCore().getCoreDescriptor().getCloudDescriptor();
+    if (cd != null) {
+      String shardId = cd.getShardId();
+      ClusterState clusterState =
+          req.getCore().getCoreContainer().getZkController().getClusterState();
+      DocCollection coll = clusterState.getCollection(cd.getCollectionName());
+      String firstShard = new TreeMap<>(coll.getSlicesMap()).keySet().iterator().next();
+      if (!shardId.equals(firstShard)) {
+        return false;
+      }
+      Replica leaderReplica;
+      try {
+        leaderReplica = req.getCore().getCoreContainer().getZkController().getZkStateReader().getLeaderRetry(cd.getCollectionName(), shardId);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new ZooKeeperException(SolrException.ErrorCode.SERVER_ERROR, "", e);
+      }
+      return leaderReplica.getName().equals(cd.getCoreNodeName());
+    } else {
+      return false;
+    }
+  }
+
   public void processCommit(CommitUpdateCommand cmd) throws IOException {
     log.debug("process commit cmd={}", cmd);
     if (next != null) next.processCommit(cmd);
+    UpdateRequest req = createMirrorRequest();
+    // mirror only once from the first shard leader
+    boolean shouldMirror = shouldMirrorCommit(cmd.getReq());
+    if (doMirroring && shouldMirror) {
+      req.setParam(UpdateParams.COMMIT, "true");
+      // transfer other params
+      if (cmd.optimize) {
+        req.setParam(UpdateParams.OPTIMIZE, "true");
+      }
+      if (cmd.softCommit) {
+        req.setParam(UpdateParams.SOFT_COMMIT, "true");
+      }
+      if (cmd.prepareCommit) {
+        req.setParam(UpdateParams.PREPARE_COMMIT, "true");
+      }
+      if (cmd.waitSearcher) {
+        req.setParam(UpdateParams.WAIT_SEARCHER, "true");
+      }
+      if (cmd.openSearcher) {
+        req.setParam(UpdateParams.OPEN_SEARCHER, "true");
+      }
+      if (cmd.expungeDeletes) {
+        req.setParam(UpdateParams.EXPUNGE_DELETES, "true");
+      }
+      if (cmd.maxOptimizeSegments != 0) {
+        req.setParam(UpdateParams.MAX_OPTIMIZE_SEGMENTS, Integer.toString(cmd.maxOptimizeSegments));
+      }
+      log.debug(" --doMirroring commit req={}", req);
+      try {
+        requestMirroringHandler.mirror(req);
+      } catch (Exception e) {
+        log.error("mirror submit failed", e);
+        throw new SolrException(SERVER_ERROR, "mirror submit failed", e);
+      }
+
+    } else {
+      log.debug(" -- skip commit mirroring, doMirroring={}, shouldMirror={}", doMirroring, shouldMirror);
+    }
   }
+
 
   @Override public final void finish() throws IOException {
     super.finish();
