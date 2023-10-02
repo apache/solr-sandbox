@@ -71,34 +71,12 @@ public class Consumer {
         try (SolrZkClient client = new SolrZkClient(zkConnectString, 15000)) {
             // update properties, potentially also from ZK
             ConfUtil.fillProperties(client, properties);
-
-            try {
-                if (client.exists(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH,
-                    CrossDcConf.CROSSDC_PROPERTIES), true)) {
-                    byte[] data = client.getData(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH,
-                        CrossDcConf.CROSSDC_PROPERTIES), null, null, true);
-                    Properties zkProps = new Properties();
-                    zkProps.load(new ByteArrayInputStream(data));
-
-                    KafkaCrossDcConf.readZkProps(properties, zkProps);
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new SolrException(SolrException.ErrorCode.SERVICE_UNAVAILABLE, e);
-            } catch (Exception e) {
-                throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, e);
-            }
         }
+
+        ConfUtil.verifyProperties(properties);
 
         String bootstrapServers = (String) properties.get(KafkaCrossDcConf.BOOTSTRAP_SERVERS);
-        if (bootstrapServers == null) {
-            throw new IllegalArgumentException("bootstrapServers not specified for Consumer");
-        }
-
         String topicName = (String) properties.get(TOPIC_NAME);
-        if (topicName == null) {
-            throw new IllegalArgumentException("topicName not specified for Consumer");
-        }
 
         //server = new Server();
         //ServerConnector connector = new ServerConnector(server);

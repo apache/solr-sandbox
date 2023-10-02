@@ -83,19 +83,21 @@ public class ConfUtil {
         throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "Exception looking for CrossDC configuration in Zookeeper", e);
       }
     }
+  }
 
+  public static void verifyProperties(Map<String, Object> properties) {
     if (properties.get(BOOTSTRAP_SERVERS) == null) {
       log.error(
-          "bootstrapServers not specified for producer in CrossDC configuration props={}, zkProps={}",
-          properties, zkProps);
-      throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "bootstrapServers not specified for producer");
+          "bootstrapServers not specified for producer in CrossDC configuration props={}",
+          properties);
+      throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "bootstrapServers not specified in configuration");
     }
 
     if (properties.get(TOPIC_NAME) == null) {
       log.error(
-          "topicName not specified for producer in CrossDC configuration props={}, zkProps={}",
-          properties, zkProps);
-      throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "topicName not specified for producer");
+          "topicName not specified for producer in CrossDC configuration props={}",
+          properties);
+      throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "topicName not specified in configuration");
     }
   }
 }

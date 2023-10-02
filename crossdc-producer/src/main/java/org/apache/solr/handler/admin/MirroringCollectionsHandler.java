@@ -61,6 +61,7 @@ public class MirroringCollectionsHandler extends CollectionsHandler {
     try {
       SolrZkClient solrClient = coreContainer.getZkController() != null ? coreContainer.getZkController().getZkClient() : null;
       ConfUtil.fillProperties(solrClient, properties);
+      ConfUtil.verifyProperties(properties);
       KafkaCrossDcConf conf = new KafkaCrossDcConf(properties);
       String mirrorCollections = conf.get(KafkaCrossDcConf.MIRROR_COLLECTIONS);
       if (mirrorCollections != null && !mirrorCollections.isBlank()) {

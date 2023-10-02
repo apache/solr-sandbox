@@ -74,15 +74,20 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
 
     private final Map<String,Object> properties = new HashMap<>();
 
+    private NamedList args;
+
     @Override
     public void init(final NamedList args) {
         super.init(args);
 
+        this.args = args;
+    }
+
+    private void applyArgsOverrides() {
         Boolean enabled = args.getBooleanArg("enabled");
         if (enabled != null && !enabled) {
             this.enabled = false;
         }
-
         for (ConfigProperty configKey : KafkaCrossDcConf.CONFIG_PROPERTIES) {
             String val = args._getStr(configKey.getKey(), null);
             if (val != null && !val.isBlank()) {
@@ -133,6 +138,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         try {
             SolrZkClient solrZkClient = core.getCoreContainer().getZkController().getZkClient();
             ConfUtil.fillProperties(solrZkClient, properties);
+            applyArgsOverrides();
             CollectionProperties cp = new CollectionProperties(solrZkClient);
              Map<String,String> collectionProperties = cp.getCollectionProperties(core.getCoreDescriptor().getCollectionName());
             for (ConfigProperty configKey : KafkaCrossDcConf.CONFIG_PROPERTIES) {
@@ -157,6 +163,8 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         if (!enabled) {
             return;
         }
+
+        ConfUtil.verifyProperties(properties);
 
         // load the request mirroring sink class and instantiate.
        // mirroringHandler = core.getResourceLoader().newInstance(RequestMirroringHandler.class.getName(), KafkaRequestMirroringHandler.class);
