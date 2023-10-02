@@ -14,10 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.solr.update.processor;
+package org.apache.solr.crossdc.common;
 
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.cloud.SolrZkClient;
+import org.apache.solr.crossdc.common.ConfigProperty;
 import org.apache.solr.crossdc.common.CrossDcConf;
 import org.apache.solr.crossdc.common.KafkaCrossDcConf;
 import org.slf4j.Logger;
@@ -25,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.lang.invoke.MethodHandles;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 
@@ -35,31 +37,51 @@ public class ConfUtil {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   public static void fillProperties(SolrZkClient solrClient, Map<String, Object> properties) {
-    Properties zkProps = null;
-    try {
-      if (solrClient.exists(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH,
-              CrossDcConf.CROSSDC_PROPERTIES), true)) {
-        byte[] data = solrClient.getData(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH,
-            CrossDcConf.CROSSDC_PROPERTIES), null, null, true);
-
-        if (data == null) {
-          log.error(CrossDcConf.CROSSDC_PROPERTIES + " file in Zookeeper has no data");
-          throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, CrossDcConf.CROSSDC_PROPERTIES
-              + " file in Zookeeper has no data");
-        }
-
-        zkProps = new Properties();
-        zkProps.load(new ByteArrayInputStream(data));
-
-        KafkaCrossDcConf.readZkProps(properties, zkProps);
+    // fill in from environment
+    Map<String, String> env = System.getenv();
+    for (ConfigProperty configKey : KafkaCrossDcConf.CONFIG_PROPERTIES) {
+      String val = env.get(configKey.getKey());
+      if (val == null) {
+        // try upper-case
+        val = env.get(configKey.getKey().toUpperCase(Locale.ROOT));
       }
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      log.error("Interrupted looking for CrossDC configuration in Zookeeper", e);
-      throw new SolrException(SolrException.ErrorCode.SERVICE_UNAVAILABLE, e);
-    } catch (Exception e) {
-      log.error("Exception looking for CrossDC configuration in Zookeeper", e);
-      throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "Exception looking for CrossDC configuration in Zookeeper", e);
+      if (val != null) {
+        properties.put(configKey.getKey(), val);
+      }
+    }
+    // fill in from system properties
+    for (ConfigProperty configKey : KafkaCrossDcConf.CONFIG_PROPERTIES) {
+      String val = System.getProperty(configKey.getKey());
+      if (val != null) {
+        properties.put(configKey.getKey(), val);
+      }
+    }
+    Properties zkProps = new Properties();
+    if (solrClient != null) {
+      try {
+        if (solrClient.exists(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH,
+            CrossDcConf.CROSSDC_PROPERTIES), true)) {
+          byte[] data = solrClient.getData(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH,
+              CrossDcConf.CROSSDC_PROPERTIES), null, null, true);
+
+          if (data == null) {
+            log.error(CrossDcConf.CROSSDC_PROPERTIES + " file in Zookeeper has no data");
+            throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, CrossDcConf.CROSSDC_PROPERTIES
+                + " file in Zookeeper has no data");
+          }
+
+          zkProps.load(new ByteArrayInputStream(data));
+
+          KafkaCrossDcConf.readZkProps(properties, zkProps);
+        }
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        log.error("Interrupted looking for CrossDC configuration in Zookeeper", e);
+        throw new SolrException(SolrException.ErrorCode.SERVICE_UNAVAILABLE, e);
+      } catch (Exception e) {
+        log.error("Exception looking for CrossDC configuration in Zookeeper", e);
+        throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "Exception looking for CrossDC configuration in Zookeeper", e);
+      }
     }
 
     if (properties.get(BOOTSTRAP_SERVERS) == null) {

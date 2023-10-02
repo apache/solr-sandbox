@@ -18,14 +18,15 @@ package org.apache.solr.update.processor;
 
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.cloud.CollectionProperties;
+import org.apache.solr.common.cloud.SolrZkClient;
 import org.apache.solr.common.params.CommonParams;
 import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.core.CloseHook;
 import org.apache.solr.core.CoreDescriptor;
 import org.apache.solr.core.SolrCore;
+import org.apache.solr.crossdc.common.ConfUtil;
 import org.apache.solr.crossdc.common.ConfigProperty;
-import org.apache.solr.crossdc.common.CrossDcConf;
 import org.apache.solr.crossdc.common.KafkaCrossDcConf;
 import org.apache.solr.crossdc.common.KafkaMirroringSink;
 import org.apache.solr.request.SolrQueryRequest;
@@ -34,7 +35,6 @@ import org.apache.solr.util.plugin.SolrCoreAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.util.*;
@@ -131,8 +131,9 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         log.info("Producer startup config properties before adding additional properties from Zookeeper={}", properties);
 
         try {
-            ConfUtil.fillProperties(core.getCoreContainer().getZkController().getZkClient(), properties);
-            CollectionProperties cp = new CollectionProperties(core.getCoreContainer().getZkController().getZkClient());
+            SolrZkClient solrZkClient = core.getCoreContainer().getZkController().getZkClient();
+            ConfUtil.fillProperties(solrZkClient, properties);
+            CollectionProperties cp = new CollectionProperties(solrZkClient);
              Map<String,String> collectionProperties = cp.getCollectionProperties(core.getCoreDescriptor().getCollectionName());
             for (ConfigProperty configKey : KafkaCrossDcConf.CONFIG_PROPERTIES) {
                 String val = collectionProperties.get("crossdc." + configKey.getKey());

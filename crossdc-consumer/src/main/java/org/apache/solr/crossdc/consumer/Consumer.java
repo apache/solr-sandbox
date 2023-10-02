@@ -18,6 +18,7 @@ package org.apache.solr.crossdc.consumer;
 
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.cloud.SolrZkClient;
+import org.apache.solr.crossdc.common.ConfUtil;
 import org.apache.solr.crossdc.common.ConfigProperty;
 import org.apache.solr.crossdc.common.CrossDcConf;
 import org.apache.solr.crossdc.common.KafkaCrossDcConf;
@@ -57,12 +58,7 @@ public class Consumer {
 
     public void start(Map<String,Object> properties ) {
 
-        for (ConfigProperty configKey : KafkaCrossDcConf.CONFIG_PROPERTIES) {
-            String val = System.getProperty(configKey.getKey());
-            if (val != null) {
-                properties.put(configKey.getKey(), val);
-            }
-        }
+        ConfUtil.fillProperties(null, properties);
 
         log.info("Consumer startup config properties before adding additional properties from Zookeeper={}",
                 SensitivePropRedactionUtils.flattenAndRedactForLogging(properties));
@@ -73,6 +69,8 @@ public class Consumer {
         }
 
         try (SolrZkClient client = new SolrZkClient(zkConnectString, 15000)) {
+            // update properties, potentially also from ZK
+            ConfUtil.fillProperties(client, properties);
 
             try {
                 if (client.exists(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH,
