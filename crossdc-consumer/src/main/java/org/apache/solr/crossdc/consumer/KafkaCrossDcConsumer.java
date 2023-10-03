@@ -329,7 +329,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
           log.trace("result=failed-resubmit");
         }
         metrics.counter("failed-resubmit").inc();
-        kafkaMirroringSink.submit(record.value());
+        kafkaMirroringSink.submit(result.newItem());
         break;
       case HANDLED:
         // no-op
