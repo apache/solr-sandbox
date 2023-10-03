@@ -180,7 +180,57 @@ import java.util.Properties;
   }
 
   @Test
-  public void testRetryQueue() throws Exception {
+  public void testRetryQueueSolrDown() throws Exception {
+    solrCluster2.getJettySolrRunner(0).stop();
+
+    CloudSolrClient client = solrCluster1.getSolrClient();
+    SolrInputDocument doc = new SolrInputDocument();
+    doc.addField("id", String.valueOf(System.nanoTime()));
+    doc.addField("text", "some test");
+
+    client.add(doc);
+
+    SolrInputDocument doc2 = new SolrInputDocument();
+    doc2.addField("id", String.valueOf(System.nanoTime()));
+    doc2.addField("text", "some test");
+
+    client.add(doc2);
+
+    SolrInputDocument doc3 = new SolrInputDocument();
+    doc3.addField("id", String.valueOf(System.nanoTime()));
+    doc3.addField("text", "some test");
+
+    client.add(doc3);
+
+    client.commit(COLLECTION);
+
+    System.out.println("Sent producer record");
+
+    Thread.sleep(15000);
+
+    solrCluster2.getJettySolrRunner(0).start();
+    Thread.sleep(10000);
+
+    QueryResponse results = null;
+    boolean foundUpdates = false;
+    for (int i = 0; i < 200; i++) {
+      solrCluster2.getSolrClient().commit(COLLECTION);
+      solrCluster1.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
+      results = solrCluster2.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
+      if (results.getResults().getNumFound() == 3) {
+        foundUpdates = true;
+      } else {
+        Thread.sleep(100);
+      }
+    }
+
+    assertTrue("results=" + results, foundUpdates);
+    System.out.println("Rest: " + results);
+
+  }
+
+    @Test
+  public void testRetryQueueZKDown() throws Exception {
     Path zkDir = zkTestServer2.getZkDir();
     int zkPort = zkTestServer2.getPort();
     zkTestServer2.shutdown();
@@ -208,14 +258,16 @@ import java.util.Properties;
 
     System.out.println("Sent producer record");
 
-    Thread.sleep(5000);
+    Thread.sleep(15000);
 
     zkTestServer2 = new ZkTestServer(zkDir, zkPort);
     zkTestServer2.run(false);
 
+    Thread.sleep(10000);
+
     QueryResponse results = null;
     boolean foundUpdates = false;
-    for (int i = 0; i < 200; i++) {
+    for (int i = 0; i < 15; i++) {
       solrCluster2.getSolrClient().commit(COLLECTION);
       solrCluster1.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
       results = solrCluster2.getSolrClient().query(COLLECTION, new SolrQuery("*:*"));
@@ -225,8 +277,6 @@ import java.util.Properties;
         Thread.sleep(100);
       }
     }
-
-    System.out.println("Closed producer");
 
     assertTrue("results=" + results, foundUpdates);
     System.out.println("Rest: " + results);
