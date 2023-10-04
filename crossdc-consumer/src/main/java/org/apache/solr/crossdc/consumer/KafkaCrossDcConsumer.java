@@ -334,9 +334,9 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
         final int attempt = record.value().getAttempt();
         if (attempt > this.maxAttempts) {
           log.info("Sending message to dead letter queue because of max attempts limit with current value = {}", attempt);
-          kafkaMirroringSink.submitToDlq(record.value());
+          kafkaMirroringSink.submitToDlq(result.newItem());
         } else {
-          kafkaMirroringSink.submit(record.value());
+          kafkaMirroringSink.submit(result.newItem());
         }
         break;
       case HANDLED:
