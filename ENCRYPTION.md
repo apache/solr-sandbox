@@ -153,5 +153,5 @@ This requires a code change. See `org.apache.lucene.util.fst.FSTStore` implement
 
 The `org.apache.solr.encryption.crypto` package contains utility classes to stream encryption/decryption with the
 `AES/CTR/NoPadding` transformation.
-The `CharStreamEncrypter` can encrypt a character stream to a base 64 encoding compatible with JSON, with small
-buffer size.
+`CharStreamEncrypter` can encrypt a character stream to a base 64 encoding compatible with JSON, with a small
+buffer.
