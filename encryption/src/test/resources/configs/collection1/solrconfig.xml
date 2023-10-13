@@ -38,7 +38,7 @@
     <commitWithin>
       <softCommit>${solr.commitwithin.softcommit:true}</softCommit>
     </commitWithin>
-    <updateLog class="org.apache.solr.encryption.EncryptionUpdateLog" enable="${enable.update.log:true}">
+    <updateLog class="org.apache.solr.encryption.TestingEncryptionUpdateLog">
       <str name="dir">${solr.ulog.dir:}</str>
     </updateLog>
   </updateHandler>

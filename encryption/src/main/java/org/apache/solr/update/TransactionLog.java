@@ -232,7 +232,7 @@ public class TransactionLog implements Closeable {
                 StandardOpenOption.READ,
                 StandardOpenOption.WRITE,
                 StandardOpenOption.CREATE_NEW);
-        os = Channels.newOutputStream(channel);
+        os = outputStreamOpener.open(channel, 0);
         fos = new FastOutputStream(os, new byte[65536], 0);
 
         addGlobalStrings(globalStrings);
@@ -461,7 +461,7 @@ public class TransactionLog implements Closeable {
 
         out.writeAll(fos);
         endRecord(pos);
-        // fos.flushBuffer();  // flush later
+        // fos.flush();  // flush later
         return pos;
       }
 
@@ -491,7 +491,7 @@ public class TransactionLog implements Closeable {
         assert pos != 0;
         out.writeAll(fos);
         endRecord(pos);
-        // fos.flushBuffer();  // flush later
+        // fos.flush();  // flush later
         return pos;
       }
 
@@ -516,7 +516,7 @@ public class TransactionLog implements Closeable {
         long pos = fos.size(); // if we had flushed, this should be equal to channel.position()
         out.writeAll(fos);
         endRecord(pos);
-        // fos.flushBuffer();  // flush later
+        // fos.flush();  // flush later
         return pos;
       }
     } catch (IOException e) {
@@ -563,11 +563,11 @@ public class TransactionLog implements Closeable {
       // make sure any unflushed buffer has been flushed
       synchronized (this) {
         // TODO: optimize this by keeping track of what we have flushed up to
-        fos.flushBuffer();
+        fos.flush();
         /*
-        System.out.println("###flushBuffer to " + fos.size() + " raf.length()=" + raf.length() + " pos="+pos);
+        System.out.println("###flush to " + fos.size() + " raf.length()=" + raf.length() + " pos="+pos);
         if (fos.size() != raf.length() || pos >= fos.size() ) {
-          throw new RuntimeException("ERROR" + "###flushBuffer to " + fos.size() + " raf.length()=" + raf.length() + " pos="+pos);
+          throw new RuntimeException("ERROR" + "###flush to " + fos.size() + " raf.length()=" + raf.length() + " pos="+pos);
         }
         */
       }
@@ -616,7 +616,7 @@ public class TransactionLog implements Closeable {
     if (syncLevel == UpdateLog.SyncLevel.NONE) return;
     try {
       synchronized (this) {
-        fos.flushBuffer();
+        fos.flush();
       }
 
       if (syncLevel == UpdateLog.SyncLevel.FSYNC) {
@@ -744,7 +744,7 @@ public class TransactionLog implements Closeable {
           return null;
         }
 
-        fos.flushBuffer();
+        fos.flush();
       }
 
       if (pos == 0) {
@@ -885,7 +885,7 @@ public class TransactionLog implements Closeable {
 
       long sz;
       synchronized (TransactionLog.this) {
-        fos.flushBuffer();
+        fos.flush();
         sz = fos.size();
         assert sz == getLogFileSize();
       }

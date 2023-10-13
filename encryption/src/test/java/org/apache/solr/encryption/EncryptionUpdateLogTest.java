@@ -26,7 +26,9 @@ import org.apache.solr.cloud.AbstractDistribZkTestBase;
 import org.apache.solr.cloud.SolrCloudTestCase;
 import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.util.NamedList;
+import org.apache.solr.common.util.RetryUtil;
 import org.apache.solr.embedded.JettySolrRunner;
+import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -37,14 +39,13 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static org.apache.solr.encryption.EncryptionRequestHandler.ENCRYPTION_STATE;
-import static org.apache.solr.encryption.EncryptionRequestHandler.PARAM_KEY_ID;
-import static org.apache.solr.encryption.EncryptionRequestHandler.STATE_COMPLETE;
-import static org.apache.solr.encryption.EncryptionRequestHandler.STATUS;
-import static org.apache.solr.encryption.EncryptionRequestHandler.STATUS_SUCCESS;
-import static org.apache.solr.encryption.TestingKeySupplier.KEY_ID_1;
+import static org.apache.solr.encryption.EncryptionRequestHandler.*;
+import static org.apache.solr.encryption.TestingEncryptionUpdateLog.reencryptionCallCount;
+import static org.apache.solr.encryption.TestingKeySupplier.*;
+import static org.hamcrest.Matchers.*;
 
 /**
  * Tests {@link EncryptionUpdateLog} and {@link EncryptionTransactionLog}.
@@ -56,33 +57,26 @@ public class EncryptionUpdateLogTest extends SolrCloudTestCase {
   private static final long TIMEOUT = DEFAULT_TIMEOUT;
 
   private String collectionName;
+  private List<SolrClient> solrClients;
+  private int nonLeaderIndex;
 
   @BeforeClass
-  public static void setupCluster() throws Exception {
+  public static void setupClass() throws Exception {
     configureCluster(NUM_SHARDS * NUM_REPLICAS)
       .addConfig("config", TestUtil.getConfigPath("collection1"))
       .configure();
   }
 
   @Before
-  public void createCollection() throws Exception {
+  public void setupTest() throws Exception {
     collectionName = "collection" + UUID.randomUUID();
     CollectionAdminRequest.createCollection(collectionName, "config", NUM_SHARDS, NUM_REPLICAS)
       .processAndWait(cluster.getSolrClient(), TIMEOUT);
     AbstractDistribZkTestBase.waitForRecoveriesToFinish(
       collectionName, cluster.getZkStateReader(), false, true, TIMEOUT);
-  }
 
-  @After
-  public void deleteCollection() throws Exception {
-    CollectionAdminRequest.deleteCollection(collectionName).process(cluster.getSolrClient());
-  }
-
-  @Test
-  public void testUpdateLogVersionsWithEncryption() throws Exception {
-
-    List<SolrClient> solrClients = new ArrayList<>();
-    int nonLeaderIndex = 0;
+    solrClients = new ArrayList<>();
+    nonLeaderIndex = 0;
     for (JettySolrRunner jettySolrRunner : cluster.getJettySolrRunners()) {
       if (!jettySolrRunner
         .getBaseUrl()
@@ -92,8 +86,40 @@ public class EncryptionUpdateLogTest extends SolrCloudTestCase {
       }
       solrClients.add(jettySolrRunner.newClient());
     }
+  }
 
-    EncryptionStatus encryptionStatus = encrypt(KEY_ID_1, solrClients);
+  @After
+  public void tearDownTest() throws Exception {
+    try {
+      if (solrClients != null) {
+        for (SolrClient solrClient : solrClients) {
+          solrClient.close();
+        }
+      }
+    } finally {
+      CollectionAdminRequest.deleteCollection(collectionName).process(cluster.getSolrClient());
+    }
+  }
+
+  @Test
+  public void testEncryptionFromNoKeysToOneKey() throws Exception {
+    checkEncryptionFromNoKeysToOneKey(KEY_ID_1);
+  }
+
+  @Test
+  public void testEncryptionFromOneKeyToAnotherKey() throws Exception {
+    checkEncryptionFromOneKeyToAnotherKey(KEY_ID_1, KEY_ID_2);
+  }
+
+  @Test
+  public void testEncryptionFromOneKeyToNoKeys() throws Exception {
+    checkEncryptionFromOneKeyToAnotherKey(KEY_ID_1, NO_KEY_ID);
+  }
+
+  private void checkEncryptionFromNoKeysToOneKey(String keyId) throws Exception {
+
+    reencryptionCallCount.set(0);
+    EncryptionStatus encryptionStatus = encrypt(keyId);
     assertTrue(encryptionStatus.statusSuccess);
     assertTrue(encryptionStatus.stateComplete);
 
@@ -123,12 +149,46 @@ public class EncryptionUpdateLogTest extends SolrCloudTestCase {
       checkNumUpdates(solrClient, 4);
     }
 
-    for (SolrClient solrClient : solrClients) {
-      solrClient.close();
-    }
+    assertEquals(0, reencryptionCallCount.get());
   }
 
-  private EncryptionStatus encrypt(String keyId, List<SolrClient> solrClients) throws Exception {
+  private void checkEncryptionFromOneKeyToAnotherKey(String fromKeyId, String toKeyId) throws Exception {
+    checkEncryptionFromNoKeysToOneKey(fromKeyId);
+
+    reencryptionCallCount.set(0);
+    encrypt(fromKeyId);
+    waitUntilEncryptionIsComplete(toKeyId);
+
+    new UpdateRequest()
+      .add(sdoc("id", "2", "text", "four"))
+      .commit(cluster.getSolrClient(), collectionName);
+
+    for (SolrClient solrClient : solrClients) {
+      checkNumUpdates(solrClient, 5);
+    }
+
+    cluster.getJettySolrRunner(nonLeaderIndex).stop();
+    AbstractDistribZkTestBase.waitForRecoveriesToFinish(
+      collectionName, cluster.getZkStateReader(), false, true, TIMEOUT);
+
+    new UpdateRequest()
+      .add(sdoc("id", "3", "text", "five"))
+      .deleteById("6")
+      .deleteByQuery("text:seven")
+      .commit(cluster.getSolrClient(), collectionName);
+
+    cluster.getJettySolrRunner(nonLeaderIndex).start();
+    AbstractDistribZkTestBase.waitForRecoveriesToFinish(
+      collectionName, cluster.getZkStateReader(), false, true, TIMEOUT);
+
+    for (SolrClient solrClient : solrClients) {
+      checkNumUpdates(solrClient, 8);
+    }
+
+    MatcherAssert.assertThat(reencryptionCallCount.get(), greaterThanOrEqualTo(1));
+  }
+
+  private EncryptionStatus encrypt(String keyId) throws Exception {
     ModifiableSolrParams params = new ModifiableSolrParams();
     params.set(PARAM_KEY_ID, keyId);
 
@@ -141,6 +201,23 @@ public class EncryptionUpdateLogTest extends SolrCloudTestCase {
       stateComplete &= STATE_COMPLETE.equals(response.get(ENCRYPTION_STATE));
     }
     return new EncryptionStatus(statusSuccess, stateComplete);
+  }
+
+  private void waitUntilEncryptionIsComplete(String keyId) throws InterruptedException {
+    RetryUtil.retryUntil("Timeout waiting for encryption completion",
+                         50,
+                         100,
+                         TimeUnit.MILLISECONDS,
+                         () -> {
+                           EncryptionStatus encryptionStatus;
+                           try {
+                             encryptionStatus = encrypt(keyId);
+                           } catch (Exception e) {
+                             throw new RuntimeException(e);
+                           }
+                           assertTrue(encryptionStatus.statusSuccess);
+                           return encryptionStatus.stateComplete;
+                         });
   }
 
   @SuppressWarnings("unchecked")
@@ -159,7 +236,7 @@ public class EncryptionUpdateLogTest extends SolrCloudTestCase {
     final Long minVersion = absVersions.getFirst();
     final Long maxVersion = absVersions.getLast();
 
-    for (boolean skipDbq : new boolean[] {false, true}) {
+    for (boolean skipDbq : new boolean[]{false, true}) {
       final QueryRequest reqU =
         new QueryRequest(
           params(

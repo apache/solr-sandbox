@@ -84,7 +84,7 @@ public class EncryptionUpdateLog extends UpdateLog {
     return new EncryptionTransactionLog(tlogFile, globalStrings, openExisting, directorySupplier);
   }
 
-  private void reencryptOldLogFileIfRequired(Path tlog) throws IOException {
+  protected void reencryptOldLogFileIfRequired(Path tlog) throws IOException {
     if (Files.size(tlog) > 0) {
       EncryptionDirectory directory = directorySupplier.get();
       try {
@@ -109,7 +109,7 @@ public class EncryptionUpdateLog extends UpdateLog {
     }
   }
 
-  private void reencrypt(FileChannel inputChannel,
+  protected void reencrypt(FileChannel inputChannel,
                          String inputKeyRef,
                          OutputStream outputStream,
                          String activeKeyRef,
