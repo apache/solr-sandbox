@@ -82,6 +82,7 @@ public class MirroringUpdateProcessorTest extends SolrTestCaseJ4 {
                         next,
                         true,
                         true,
+                        true,
                         1000L,
                         new ModifiableSolrParams(),
                         DistributedUpdateProcessor.DistribPhase.NONE,
@@ -212,6 +213,7 @@ public class MirroringUpdateProcessorTest extends SolrTestCaseJ4 {
                     next,
                     true,
                     true,
+                    true,
                     1000L,
                     new ModifiableSolrParams(),
                     DistributedUpdateProcessor.DistribPhase.NONE,
@@ -231,6 +233,29 @@ public class MirroringUpdateProcessorTest extends SolrTestCaseJ4 {
             assertEquals("true", params.get(UpdateParams.OPEN_SEARCHER));
             assertEquals("true", params.get(UpdateParams.EXPUNGE_DELETES));
             assertEquals("10", params.get(UpdateParams.MAX_OPTIMIZE_SEGMENTS));
+        } catch (Exception e) {
+            fail("Exception should not be thrown: " + e);
+        }
+    }
+
+    @Test
+    public void processCommitNoMirroring() {
+        try {
+            Mockito.when(cloudDesc.getCoreNodeName()).thenReturn("replica1");
+            // don't override createMirrorRequest, call actual method
+            processor =
+                new MirroringUpdateProcessor(
+                    next,
+                    true,
+                    true,
+                    false,
+                    1000L,
+                    new ModifiableSolrParams(),
+                    DistributedUpdateProcessor.DistribPhase.NONE,
+                    requestMirroringHandler);
+            processor.processCommit(commitUpdateCommand);
+            Mockito.verify(next).processCommit(commitUpdateCommand);
+            Mockito.verify(requestMirroringHandler, Mockito.times(0)).mirror(requestMock);
         } catch (Exception e) {
             fail("Exception should not be thrown: " + e);
         }
@@ -267,7 +292,7 @@ public class MirroringUpdateProcessorTest extends SolrTestCaseJ4 {
 
         SolrParams mirrorParams = new ModifiableSolrParams();
         MirroringUpdateProcessor mirroringUpdateProcessorWithLimit = new MirroringUpdateProcessor(nextProcessor, true, false, // indexUnmirrorableDocs set to false
-                50000, mirrorParams, DistributedUpdateProcessor.DistribPhase.NONE, requestMirroringHandler);
+                true, 50000, mirrorParams, DistributedUpdateProcessor.DistribPhase.NONE, requestMirroringHandler);
 
         assertThrows(SolrException.class, () -> mirroringUpdateProcessorWithLimit.processAdd(addUpdateCommand));
     }

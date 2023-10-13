@@ -57,6 +57,11 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
    */
   private final boolean indexUnmirrorableDocs;
 
+  /**
+   * If true then commit commands are mirrored, otherwise they are processed only locally.
+   */
+  private final boolean mirrorCommits;
+
   private final long maxMirroringDocSizeBytes;
 
 
@@ -72,6 +77,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
 
   public MirroringUpdateProcessor(final UpdateRequestProcessor next, boolean doMirroring,
       final boolean indexUnmirrorableDocs,
+      final boolean mirrorCommits,
       final long maxMirroringBatchSizeBytes,
       final SolrParams mirroredReqParams,
       final DistributedUpdateProcessor.DistribPhase distribPhase,
@@ -79,6 +85,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
     super(next);
     this.doMirroring = doMirroring;
     this.indexUnmirrorableDocs = indexUnmirrorableDocs;
+    this.mirrorCommits = mirrorCommits;
     this.maxMirroringDocSizeBytes = maxMirroringBatchSizeBytes;
     this.mirrorParams = mirroredReqParams;
     this.distribPhase = distribPhase;
@@ -296,6 +303,9 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
   public void processCommit(CommitUpdateCommand cmd) throws IOException {
     log.debug("process commit cmd={}", cmd);
     if (next != null) next.processCommit(cmd);
+    if (!mirrorCommits) {
+      return;
+    }
     UpdateRequest req = createMirrorRequest();
     // mirror only once from the first shard leader
     boolean shouldMirror = shouldMirrorCommit(cmd.getReq());
