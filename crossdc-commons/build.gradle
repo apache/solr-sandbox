@@ -40,6 +40,22 @@ dependencies {
     }
     implementation 'org.apache.kafka:kafka-clients:2.8.1'
     implementation 'com.google.guava:guava:14.0'
+    testImplementation 'org.slf4j:slf4j-api:2.0.5'
+    testImplementation 'org.hamcrest:hamcrest:2.2'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation('org.mockito:mockito-inline:5.2.0')
+
+    testImplementation group: 'org.apache.solr', name: 'solr-core', version: '8.11.2', {
+        exclude group: "org.apache.logging.log4j", module: "*"
+        exclude group: "org.slf4j", module: "*"
+        exclude group: "org.eclipse.jetty", module: "jetty-http"
+        exclude group: "org.eclipse.jetty", module: "jetty-server"
+        exclude group: "org.eclipse.jetty", module: "jetty-servlet"
+    }
+    testImplementation group: 'org.apache.solr', name: 'solr-test-framework', version: '8.11.2', {
+        exclude group: "org.apache.logging.log4j", module: "*"
+        exclude group: "org.slf4j", module: "*"
+    }
 }
 
 jar.enabled = false

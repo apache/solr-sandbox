@@ -18,15 +18,16 @@ package org.apache.solr.encryption.crypto;
 
 import java.nio.ByteBuffer;
 
-import org.apache.lucene.tests.util.LuceneTestCase;
+import com.carrotsearch.randomizedtesting.RandomizedTest;
 import org.junit.Test;
 
+import static junit.framework.TestCase.assertEquals;
 import static org.apache.solr.encryption.crypto.AesCtrUtil.*;
 
 /**
  * Tests {@link AesCtrEncrypter} implementations.
  */
-public class AesCtrEncrypterTest extends LuceneTestCase {
+public class AesCtrEncrypterTest extends RandomizedTest {
 
   /**
    * Verifies that {@link AesCtrEncrypter} implementations encrypt and decrypt data exactly the
@@ -35,8 +36,8 @@ public class AesCtrEncrypterTest extends LuceneTestCase {
   @Test
   public void testEncryptionDecryption() {
     for (int i = 0; i < 100; i++) {
-      ByteBuffer clearData = generateRandomData(10000);
-      byte[] key = generateRandomBytes(AES_BLOCK_SIZE);
+      ByteBuffer clearData = generateRandomData(randomIntBetween(5000, 10000));
+      byte[] key = randomBytesOfLength(randomIntBetween(2, 4) * 8);
       byte[] iv = generateRandomAesCtrIv(SecureRandomProvider.get());
       AesCtrEncrypter encrypter1 = encrypterFactory().create(key, iv);
       AesCtrEncrypter encrypter2 = encrypterFactory().create(key, iv);
@@ -54,7 +55,7 @@ public class AesCtrEncrypterTest extends LuceneTestCase {
 
   private AesCtrEncrypterFactory encrypterFactory() {
     if (LightAesCtrEncrypter.isSupported()) {
-      return random().nextBoolean() ? CipherAesCtrEncrypter.FACTORY : LightAesCtrEncrypter.FACTORY;
+      return randomBoolean() ? CipherAesCtrEncrypter.FACTORY : LightAesCtrEncrypter.FACTORY;
     }
     return CipherAesCtrEncrypter.FACTORY;
   }
@@ -62,20 +63,10 @@ public class AesCtrEncrypterTest extends LuceneTestCase {
   private static ByteBuffer generateRandomData(int numBytes) {
     ByteBuffer buffer = ByteBuffer.allocate(numBytes);
     for (int i = 0; i < numBytes; i++) {
-      buffer.put((byte) random().nextInt());
+      buffer.put((byte) randomInt());
     }
     buffer.position(0);
     return buffer;
-  }
-
-  private static byte[] generateRandomBytes(int numBytes) {
-    byte[] b = new byte[numBytes];
-    // Random.nextBytes(byte[]) does not produce good enough randomness here,
-    // it has a bias to produce 0 and -1 bytes.
-    for (int i = 0; i < numBytes; i++) {
-      b[i] = (byte) random().nextInt();
-    }
-    return b;
   }
 
   private ByteBuffer crypt(ByteBuffer inputBuffer, AesCtrEncrypter encrypter) {
@@ -84,7 +75,7 @@ public class AesCtrEncrypterTest extends LuceneTestCase {
     int inputInitialPosition = inputBuffer.position();
     ByteBuffer outputBuffer = ByteBuffer.allocate(inputBuffer.capacity());
     while (inputBuffer.remaining() > 0) {
-      int length = Math.min(random().nextInt(51) + 1, inputBuffer.remaining());
+      int length = Math.min(randomIntBetween(0, 50) + 1, inputBuffer.remaining());
       ByteBuffer inputSlice = inputBuffer.slice();
       inputSlice.limit(inputSlice.position() + length);
       encrypter.process(inputSlice, outputBuffer);
@@ -96,6 +87,6 @@ public class AesCtrEncrypterTest extends LuceneTestCase {
   }
 
   private static AesCtrEncrypter randomClone(AesCtrEncrypter encrypter) {
-    return random().nextBoolean() ? encrypter.clone() : encrypter;
+    return randomBoolean() ? encrypter.clone() : encrypter;
   }
 }
