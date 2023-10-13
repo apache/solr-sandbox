@@ -314,14 +314,6 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
         // We don't really know what to do here
         log.error("Mirroring exception occurred while resubmitting to Kafka. We are going to stop the consumer thread now.", e);
         throw new RuntimeException(e);
-      } finally {
-        offsetCheckExecutor.submit(() -> {
-          try {
-            partitionManager.checkForOffsetUpdates(workUnit.partition);
-          } catch (Throwable e) {
-            // already logging in checkForOffsetUpdates
-          }
-        });
       }
 
     });
@@ -337,7 +329,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
           log.trace("result=failed-resubmit");
         }
         metrics.counter("failed-resubmit").inc();
-        kafkaMirroringSink.submit(record.value());
+        kafkaMirroringSink.submit(result.newItem());
         break;
       case HANDLED:
         // no-op
@@ -386,6 +378,8 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
       log.warn("Interrupted while waiting for executor to shutdown");
     } catch (Exception e) {
       log.warn("Exception closing Solr client on shutdown", e);
+    } finally {
+      Util.logMetrics(metrics);
     }
   }
 

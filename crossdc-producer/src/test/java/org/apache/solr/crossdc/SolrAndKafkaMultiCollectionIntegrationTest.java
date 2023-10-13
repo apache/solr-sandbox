@@ -18,6 +18,7 @@ import org.apache.solr.common.cloud.CollectionProperties;
 import org.apache.solr.common.util.ObjectReleaseTracker;
 import org.apache.solr.crossdc.common.KafkaCrossDcConf;
 import org.apache.solr.crossdc.consumer.Consumer;
+import org.apache.solr.crossdc.consumer.Util;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -26,9 +27,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.List;
+import java.util.ArrayList;
 
 import static org.apache.solr.crossdc.common.KafkaCrossDcConf.DEFAULT_MAX_REQUEST_SIZE;
 import static org.apache.solr.crossdc.common.KafkaCrossDcConf.INDEX_UNMIRRORABLE_DOCS;
@@ -124,6 +134,8 @@ import static org.apache.solr.crossdc.common.KafkaCrossDcConf.INDEX_UNMIRRORABLE
   @After
   public void afterSolrAndKafkaIntegrationTest() throws Exception {
     ObjectReleaseTracker.clear();
+
+    Util.printKafkaInfo(kafkaCluster.bootstrapServers(), "SolrCrossDCConsumer");
 
     if (solrCluster1 != null) {
       solrCluster1.getZkServer().getZkClient().printLayoutToStdOut();
@@ -223,18 +235,107 @@ import static org.apache.solr.crossdc.common.KafkaCrossDcConf.INDEX_UNMIRRORABLE
       solrCluster2.getSolrClient().request(delete);
     }
   }
+@Test
+public void testParallelUpdatesToMultiCollections() throws Exception {
+  CollectionAdminRequest.Create create =
+          CollectionAdminRequest.createCollection(ALT_COLLECTION, "conf", 1, 1);
+
+  try {
+    solrCluster1.getSolrClient().request(create);
+    solrCluster1.waitForActiveCollection(ALT_COLLECTION, 1, 1);
+
+    solrCluster2.getSolrClient().request(create);
+    solrCluster2.waitForActiveCollection(ALT_COLLECTION, 1, 1);
+
+    // Update the collection property "enabled" to true
+    CollectionProperties cp = new CollectionProperties(solrCluster1.getZkClient());
+    cp.setCollectionProperty(ALT_COLLECTION, "crossdc.enabled", "true");
+    cp.setCollectionProperty(ALT_COLLECTION, "crossdc.topicName", TOPIC);
+    // Reloading the collection
+    CollectionAdminRequest.Reload reloadRequest = CollectionAdminRequest.reloadCollection(ALT_COLLECTION);
+    reloadRequest.process(solrCluster1.getSolrClient());
+
+    ExecutorService executorService = Executors.newFixedThreadPool(24);
+    List<Future<Boolean>> futures = new ArrayList<>();
+
+    CloudSolrClient client1 = solrCluster1.getSolrClient();
+
+    // Prepare and send N updates to COLLECTION and N updates to ALT_COLLECTION in parallel
+    int updates = 25000;
+    for (int i = 0; i < updates; i++) {
+      final int docIdForCollection = i;
+      final int docIdForAltCollection = i + updates;
+
+      Future<Boolean> futureForCollection = executorService.submit(() -> {
+        try {
+          SolrInputDocument doc = new SolrInputDocument();
+          doc.addField("id", String.valueOf(docIdForCollection));
+          doc.addField("text", "parallel test for COLLECTION");
+          client1.add(COLLECTION, doc);
+          return true;
+        } catch (Exception e) {
+          e.printStackTrace();
+          log.error("Exception while adding doc to COLLECTION", e);
+          return false;
+        }
+      });
+
+      Future<Boolean> futureForAltCollection = executorService.submit(() -> {
+        try {
+          SolrInputDocument doc = new SolrInputDocument();
+          doc.addField("id", String.valueOf(docIdForAltCollection));
+          doc.addField("text", "parallel test for ALT_COLLECTION");
+          client1.add(ALT_COLLECTION, doc);
+          return true;
+        } catch (Exception e) {
+          e.printStackTrace();
+          log.error("Exception while adding doc to ALT_COLLECTION", e);
+          return false;
+        }
+      });
+
+      futures.add(futureForCollection);
+      futures.add(futureForAltCollection);
+    }
+
+    // Wait for all updates to complete
+    executorService.shutdown();
+    if (!executorService.awaitTermination(1600, TimeUnit.SECONDS)) {
+      executorService.shutdownNow();
+    }
+
+    // Check if all updates were successful
+    for (Future<Boolean> future : futures) {
+      assertTrue(future.get());
+    }
+
+    client1.commit(COLLECTION);
+    client1.commit(ALT_COLLECTION);
+
+    // Check if these documents are correctly reflected in the second cluster
+    assertCluster2EventuallyHasDocs(ALT_COLLECTION, "*:*", updates);
+    assertCluster2EventuallyHasDocs(COLLECTION, "*:*", updates);
+
+  } finally {
+    CollectionAdminRequest.Delete delete =
+            CollectionAdminRequest.deleteCollection(ALT_COLLECTION);
+    solrCluster1.getSolrClient().request(delete);
+    solrCluster2.getSolrClient().request(delete);
+  }
+}
 
 
-  private void assertClusterEventuallyHasDocs(SolrClient client, String collection, String query, int expectedNumDocs) throws Exception {
+  private void assertClusterEventuallyHasDocs (SolrClient client, String collection, String query,int expectedNumDocs) throws
+  Exception {
     QueryResponse results = null;
     boolean foundUpdates = false;
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 1500; i++) {
       client.commit(collection);
       results = client.query(collection, new SolrQuery(query));
       if (results.getResults().getNumFound() == expectedNumDocs) {
         foundUpdates = true;
       } else {
-        Thread.sleep(200);
+        Thread.sleep(500);
       }
     }
 
