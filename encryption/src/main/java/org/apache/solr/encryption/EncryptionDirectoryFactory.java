@@ -27,6 +27,7 @@ import org.apache.solr.encryption.crypto.AesCtrEncrypterFactory;
 import org.apache.solr.encryption.crypto.CipherAesCtrEncrypter;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 
 /**
  * Creates an {@link EncryptionDirectory} delegating to a {@link org.apache.lucene.store.MMapDirectory}.
@@ -78,7 +79,11 @@ public class EncryptionDirectoryFactory extends MMapDirectoryFactory {
     KeySupplier.Factory keySupplierFactory = coreContainer.getResourceLoader().newInstance(keySupplierFactoryClass,
                                                                                           KeySupplier.Factory.class);
     keySupplierFactory.init(args);
-    keySupplier = keySupplierFactory.create();
+    try {
+      keySupplier = keySupplierFactory.create();
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
 
     String encrypterFactoryClass = args._getStr(PARAM_ENCRYPTER_FACTORY, CipherAesCtrEncrypter.Factory.class.getName());
     encrypterFactory = coreContainer.getResourceLoader().newInstance(encrypterFactoryClass,
@@ -115,13 +120,12 @@ public class EncryptionDirectoryFactory extends MMapDirectoryFactory {
     return keySupplier;
   }
 
-  public static EncryptionDirectoryFactory getFactory(SolrCore core, Object caller) {
+  public static EncryptionDirectoryFactory getFactory(SolrCore core) {
     if (!(core.getDirectoryFactory() instanceof EncryptionDirectoryFactory)) {
       throw new SolrException(SolrException.ErrorCode.SERVICE_UNAVAILABLE,
                               DirectoryFactory.class.getSimpleName()
                                 + " must be configured with an "
-                                + EncryptionDirectoryFactory.class.getSimpleName()
-                                + " to use " + caller.getClass().getSimpleName());
+                                + EncryptionDirectoryFactory.class.getSimpleName());
     }
     return (EncryptionDirectoryFactory) core.getDirectoryFactory();
   }

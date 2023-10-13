@@ -137,6 +137,29 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     }
   });
 
+  /**
+   * Builds the key cookie based on the request.
+   * After this method returns, the returned key cookie parameters will be stored in the index metadata along with the
+   * key id. Later the key cookie will be passed to
+   * {@link KeySupplier#getKeySecret(String, java.util.function.Function)} to get the key secret.
+   * <p>
+   * The default behavior is to call {@link KeySupplier#getKeyCookie(String, Map)} with no parameters.
+   * Override this method to provide specific parameters to the {@link KeySupplier}.
+   * <p>
+   * If a required param is missing, this method should throw a {@link SolrException} with
+   * {@link SolrException.ErrorCode#BAD_REQUEST} and should set the response status to {@link #STATUS_FAILURE}.
+   *
+   * @return the cookie parameters. The returned map is considered immutable and is never modified. This method may
+   * return null or an empty map if no parameters.
+   */
+  @Nullable
+  protected Map<String, String> buildKeyCookie(String keyId,
+                                               SolrQueryRequest req,
+                                               SolrQueryResponse rsp) throws IOException {
+    KeySupplier keySupplier = EncryptionDirectoryFactory.getFactory(req.getCore()).getKeySupplier();
+    return keySupplier.getKeyCookie(keyId, null);
+  }
+
   @Override
   public void close() throws IOException {
     try {
@@ -169,7 +192,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     } else if (keyId.equals(NO_KEY_ID)) {
       keyId = null;
     }
-    EncryptionDirectoryFactory.getFactory(req.getCore(), this);
+    EncryptionDirectoryFactory.getFactory(req.getCore());
     log.debug("{} encrypt request for keyId={}", ENCRYPTION_LOG_PREFIX, keyId);
     boolean success = false;
     String encryptionState = STATE_PENDING;
@@ -261,22 +284,9 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
       removeActiveKeyRefFromCommit(commitCmd.commitData);
       ensureNonEmptyCommitDataForEmptyCommit(commitCmd.commitData);
     } else {
-      KeySupplier keySupplier = EncryptionDirectoryFactory.getFactory(commitCmd.getReq().getCore(), this).getKeySupplier();
-      Map<String, String> keyCookie = keySupplier.getKeyCookie(keyId, buildGetCookieParams(commitCmd.getReq(), rsp));
+      Map<String, String> keyCookie = buildKeyCookie(keyId, commitCmd.getReq(), rsp);
       EncryptionUtil.setNewActiveKeyIdInCommit(keyId, keyCookie, commitCmd.commitData);
     }
-  }
-
-  /**
-   * Build cookie parameters based on the request.
-   * If a required param is missing, it throws a {@link SolrException} with {@link SolrException.ErrorCode#BAD_REQUEST}
-   * and sets the response status to failure.
-   *
-   * @return the parameters to get the key cookie, this map is considered immutable; or null if none.
-   */
-  @Nullable
-  protected Map<String, String> buildGetCookieParams(SolrQueryRequest req, SolrQueryResponse rsp) {
-    return null;
   }
 
   private void commitEncryptionComplete(String keyId,

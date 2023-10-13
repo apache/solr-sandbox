@@ -147,7 +147,7 @@ public class EncryptionUpdateLog extends UpdateLog {
     @Override
     public EncryptionDirectory get() {
       try {
-        return (EncryptionDirectory) EncryptionDirectoryFactory.getFactory(core, this)
+        return (EncryptionDirectory) EncryptionDirectoryFactory.getFactory(core)
           .get(core.getIndexDir(),
                DirectoryFactory.DirContext.DEFAULT,
                core.getSolrConfig().indexConfig.lockType);
