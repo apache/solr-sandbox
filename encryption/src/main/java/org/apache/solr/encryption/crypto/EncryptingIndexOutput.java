@@ -42,7 +42,7 @@ public class EncryptingIndexOutput extends IndexOutput {
   /**
    * Must be a multiple of {@link AesCtrUtil#AES_BLOCK_SIZE}.
    */
-  private static final int BUFFER_CAPACITY = 64 * AES_BLOCK_SIZE; // 1024
+  static final int BUFFER_CAPACITY = 64 * AES_BLOCK_SIZE; // 1024
 
   private final IndexOutput indexOutput;
   private final AesCtrEncrypter encrypter;

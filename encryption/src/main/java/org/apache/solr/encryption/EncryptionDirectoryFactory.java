@@ -18,8 +18,11 @@ package org.apache.solr.encryption;
 
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.LockFactory;
+import org.apache.solr.common.SolrException;
 import org.apache.solr.common.util.NamedList;
+import org.apache.solr.core.DirectoryFactory;
 import org.apache.solr.core.MMapDirectoryFactory;
+import org.apache.solr.core.SolrCore;
 import org.apache.solr.encryption.crypto.AesCtrEncrypterFactory;
 import org.apache.solr.encryption.crypto.CipherAesCtrEncrypter;
 
@@ -102,14 +105,30 @@ public class EncryptionDirectoryFactory extends MMapDirectoryFactory {
     }
   }
 
+  /** Gets the {@link AesCtrEncrypterFactory} used by this factory and all the encryption directories it creates. */
+  public AesCtrEncrypterFactory getEncrypterFactory() {
+    return encrypterFactory;
+  }
+
   /** Gets the {@link KeySupplier} used by this factory and all the encryption directories it creates. */
   public KeySupplier getKeySupplier() {
     return keySupplier;
   }
 
+  public static EncryptionDirectoryFactory getFactory(SolrCore core, Object caller) {
+    if (!(core.getDirectoryFactory() instanceof EncryptionDirectoryFactory)) {
+      throw new SolrException(SolrException.ErrorCode.SERVICE_UNAVAILABLE,
+                              DirectoryFactory.class.getSimpleName()
+                                + " must be configured with an "
+                                + EncryptionDirectoryFactory.class.getSimpleName()
+                                + " to use " + caller.getClass().getSimpleName());
+    }
+    return (EncryptionDirectoryFactory) core.getDirectoryFactory();
+  }
+
   @Override
   protected Directory create(String path, LockFactory lockFactory, DirContext dirContext) throws IOException {
-    return innerFactory.create(super.create(path, lockFactory, dirContext), encrypterFactory, getKeySupplier());
+    return innerFactory.create(super.create(path, lockFactory, dirContext), getEncrypterFactory(), getKeySupplier());
   }
 
   /**

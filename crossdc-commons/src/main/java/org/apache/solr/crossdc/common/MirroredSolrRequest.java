@@ -16,16 +16,64 @@
  */
 package org.apache.solr.crossdc.common;
 
+import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrRequest;
+import org.apache.solr.client.solrj.request.CollectionAdminRequest;
+import org.apache.solr.client.solrj.request.UpdateRequest;
+import org.apache.solr.client.solrj.response.CollectionAdminResponse;
+import org.apache.solr.common.params.CollectionParams;
+import org.apache.solr.common.params.ModifiableSolrParams;
+import org.apache.solr.common.params.SolrParams;
+import org.apache.solr.common.util.ContentStream;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Class to encapsulate a mirrored Solr request.
- * This adds a timestamp and #attempts to the request for tracking purpopse.
+ * This adds a timestamp and #attempts to the request for tracking purpose.
  */
 public class MirroredSolrRequest {
+
+    public enum Type {
+        UPDATE,
+        ADMIN,
+        UNKNOWN;
+
+        public static final Type get(String s) {
+            if (s == null) {
+                return UNKNOWN;
+            } else {
+                return Type.valueOf(s.toUpperCase(Locale.ROOT));
+            }
+        }
+    }
+
+    public static class MirroredAdminRequest extends CollectionAdminRequest<CollectionAdminResponse> {
+        private ModifiableSolrParams params;
+        public MirroredAdminRequest(CollectionParams.CollectionAction action, ModifiableSolrParams params) {
+            super(action);
+            this.params = params;
+        }
+
+        @Override
+        public SolrParams getParams() {
+            return params;
+        }
+
+        public void setParams(ModifiableSolrParams params) {
+            this.params = params;
+        }
+
+        @Override
+        protected CollectionAdminResponse createResponse(SolrClient client) {
+            return new CollectionAdminResponse();
+        }
+    }
+
     private final SolrRequest solrRequest;
+    private final Type type;
 
     // Attempts counter for processing the request
     private int attempt = 1;
@@ -34,13 +82,18 @@ public class MirroredSolrRequest {
     private long submitTimeNanos = 0;
 
     public MirroredSolrRequest(final SolrRequest solrRequest) {
-        this(1, solrRequest, 0);
+        this(Type.UPDATE, 1, solrRequest, TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis()));
     }
 
-    public MirroredSolrRequest(final int attempt, final SolrRequest solrRequest, final long submitTimeNanos) {
+    public MirroredSolrRequest(final Type type, final SolrRequest solrRequest) {
+        this(type, 1, solrRequest, TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis()));
+    }
+
+    public MirroredSolrRequest(final Type type, final int attempt, final SolrRequest solrRequest, final long submitTimeNanos) {
         if (solrRequest == null) {
             throw new NullPointerException("solrRequest cannot be null");
         }
+        this.type = type;
         this.attempt = attempt;
         this.solrRequest = solrRequest;
         this.submitTimeNanos = submitTimeNanos;
@@ -48,6 +101,7 @@ public class MirroredSolrRequest {
 
     public MirroredSolrRequest(final int attempt,
                                final long submitTimeNanos) {
+        this.type = Type.UPDATE;
         this.attempt = attempt;
         this.submitTimeNanos = submitTimeNanos;
         solrRequest = null;
@@ -73,6 +127,10 @@ public class MirroredSolrRequest {
         this.submitTimeNanos = submitTimeNanos;
     }
 
+    public Type getType() {
+        return type;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
@@ -83,6 +141,16 @@ public class MirroredSolrRequest {
         return Objects.equals(solrRequest, that.solrRequest);
     }
 
+    public static void setParams(SolrRequest request, ModifiableSolrParams params) {
+        if (request instanceof MirroredAdminRequest) {
+            ((MirroredAdminRequest) request).setParams(params);
+        } else if (request instanceof UpdateRequest) {
+            ((UpdateRequest) request).setParams(params);
+        } else {
+            throw new UnsupportedOperationException("Can't setParams on request " + request);
+        }
+    }
+
     @Override
     public int hashCode() {
         return solrRequest.hashCode();
@@ -90,10 +158,19 @@ public class MirroredSolrRequest {
 
     @Override
     public String toString() {
-        return "MirroredSolrRequest{" +
-               "solrRequest=" + solrRequest +
-               ", attempt=" + attempt +
-               ", submitTimeNanos=" + submitTimeNanos +
-               '}';
+        final StringBuilder sb = new StringBuilder(getClass().getSimpleName() + "{type=");
+        sb.append(type.toString());
+        sb.append(", method=" + solrRequest.getMethod());
+        sb.append(", params=" + solrRequest.getParams());
+        if (solrRequest instanceof UpdateRequest) {
+            UpdateRequest req = (UpdateRequest) solrRequest;
+            sb.append(", add=" + (req.getDocuments() != null ? req.getDocuments().size() : "0"));
+            sb.append(", del=" + (req.getDeleteByIdMap() != null ? req.getDeleteByIdMap().size() : "0"));
+            sb.append(", dbq=" + (req.getDeleteQuery() != null ? req.getDeleteQuery().size() : "0"));
+        }
+        sb.append(", attempt=" + attempt);
+        sb.append(", submitTimeNanos=" + submitTimeNanos);
+        sb.append('}');
+        return sb.toString();
     }
 }

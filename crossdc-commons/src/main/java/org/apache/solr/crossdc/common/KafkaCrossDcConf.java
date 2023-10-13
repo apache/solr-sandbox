@@ -59,6 +59,7 @@ public class KafkaCrossDcConf extends CrossDcConf {
 
   private static final String DEFAULT_GROUP_ID = "SolrCrossDCConsumer";
 
+  private static final String DEFAULT_MIRROR_COLLECTIONS = "";
 
   public static final String TOPIC_NAME = "topicName";
 
@@ -112,6 +113,8 @@ public class KafkaCrossDcConf extends CrossDcConf {
 
   public static final String ZK_CONNECT_STRING = "zkConnectString";
 
+  public static final String MIRROR_COLLECTIONS = "mirror.collections";
+
 
   public static final List<ConfigProperty> CONFIG_PROPERTIES;
   private static final Map<String, ConfigProperty> CONFIG_PROPERTIES_MAP;
@@ -146,6 +149,7 @@ public class KafkaCrossDcConf extends CrossDcConf {
             new ConfigProperty(MAX_POLL_INTERVAL_MS, DEFAULT_MAX_POLL_INTERVAL_MS),
             new ConfigProperty(SESSION_TIMEOUT_MS, DEFAULT_SESSION_TIMEOUT_MS),
 
+            new ConfigProperty(MIRROR_COLLECTIONS, DEFAULT_MIRROR_COLLECTIONS),
 
             new ConfigProperty(MAX_PARTITION_FETCH_BYTES, DEFAULT_MAX_PARTITION_FETCH_BYTES),
             new ConfigProperty(MAX_POLL_RECORDS, DEFAULT_MAX_POLL_RECORDS),
