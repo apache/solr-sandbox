@@ -1,6 +1,10 @@
 package org.apache.solr.handler.admin;
 
 import org.apache.commons.io.IOUtils;
+import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
+import org.apache.commons.io.IOUtils;
+import org.apache.lucene.util.QuickPatchThreadsFilter;
+import org.apache.solr.SolrIgnoredThreadsFilter;
 import org.apache.solr.SolrTestCaseJ4;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
@@ -11,6 +15,8 @@ import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.core.CoreContainer;
 import org.apache.solr.core.SolrXmlConfig;
 import org.apache.solr.crossdc.common.CrossDcConf;
+import org.apache.solr.crossdc.SolrKafkaTestsIgnoredThreadsFilter;
+import org.apache.solr.crossdc.common.KafkaCrossDcConf;
 import org.apache.solr.crossdc.common.KafkaMirroringSink;
 import org.apache.solr.crossdc.common.MirroredSolrRequest;
 import org.apache.solr.request.LocalSolrQueryRequest;
@@ -26,6 +32,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
 
+@ThreadLeakFilters(defaultFilters = true, filters = { SolrIgnoredThreadsFilter.class,
+    QuickPatchThreadsFilter.class, SolrKafkaTestsIgnoredThreadsFilter.class })
 public class MirroringCollectionsHandlerTest extends SolrTestCaseJ4 {
 
     private KafkaMirroringSink sink = Mockito.mock(KafkaMirroringSink.class);
@@ -43,11 +51,16 @@ public class MirroringCollectionsHandlerTest extends SolrTestCaseJ4 {
         Mockito.doAnswer(inv -> null).when(solrZkClient).getData(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.anyBoolean());
         captor = ArgumentCaptor.forClass(MirroredSolrRequest.class);
         Mockito.doNothing().when(sink).submit(captor.capture());
+        // make ConfUtil happy
+        System.setProperty(KafkaCrossDcConf.BOOTSTRAP_SERVERS, "foo");
+        System.setProperty(KafkaCrossDcConf.TOPIC_NAME, "foo");
     }
 
     @After
     public void teardown() throws Exception {
-        System.clearProperty(CrossDcConf.MIRROR_COLLECTIONS);
+        System.clearProperty(KafkaCrossDcConf.MIRROR_COLLECTIONS);
+        System.clearProperty(KafkaCrossDcConf.BOOTSTRAP_SERVERS);
+        System.clearProperty(KafkaCrossDcConf.TOPIC_NAME);
         super.tearDown();
     }
 
@@ -62,7 +75,7 @@ public class MirroringCollectionsHandlerTest extends SolrTestCaseJ4 {
 
     @Test
     public void testSomeCollections() throws Exception {
-        System.setProperty(CrossDcConf.MIRROR_COLLECTIONS, "test1,test2");
+        System.setProperty(KafkaCrossDcConf.MIRROR_COLLECTIONS, "test1,test2");
         for (String collection : List.of("test1", "test2", "test3")) {
             CollectionAdminRequest.Create create = CollectionAdminRequest.createCollection(collection, "_default", 2, 1, 1, 1);
             SolrParams params = create.getParams();

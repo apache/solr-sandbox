@@ -18,6 +18,7 @@ package org.apache.solr.handler.admin;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.solr.client.solrj.SolrRequest;
+import org.apache.solr.common.cloud.SolrZkClient;
 import org.apache.solr.common.params.CollectionAdminParams;
 import org.apache.solr.common.params.CollectionParams;
 import org.apache.solr.common.params.CommonParams;
@@ -25,14 +26,13 @@ import org.apache.solr.common.params.CoreAdminParams;
 import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.util.StrUtils;
 import org.apache.solr.core.CoreContainer;
-import org.apache.solr.crossdc.common.CrossDcConf;
 import org.apache.solr.crossdc.common.CrossDcConstants;
 import org.apache.solr.crossdc.common.KafkaCrossDcConf;
 import org.apache.solr.crossdc.common.KafkaMirroringSink;
 import org.apache.solr.crossdc.common.MirroredSolrRequest;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.response.SolrQueryResponse;
-import org.apache.solr.update.processor.ConfUtil;
+import org.apache.solr.crossdc.common.ConfUtil;
 import org.apache.solr.update.processor.DistributedUpdateProcessorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,24 +57,25 @@ public class MirroringCollectionsHandler extends CollectionsHandler {
   public MirroringCollectionsHandler(CoreContainer coreContainer, KafkaMirroringSink sink) {
     super(coreContainer);
     log.info("Using MirroringCollectionsHandler.");
-    if (System.getProperty(CrossDcConf.MIRROR_COLLECTIONS) != null) {
-      List<String> list = StrUtils.splitSmart(System.getProperty(CrossDcConf.MIRROR_COLLECTIONS), ',');
-      collections.addAll(list);
-    }
-    if (sink == null) {
-      Map<String, Object> properties = new HashMap<>();
-      try {
-        if (coreContainer.getZkController() != null) {
-          ConfUtil.fillProperties(coreContainer.getZkController().getZkClient(), properties);
-        }
-        KafkaCrossDcConf conf = new KafkaCrossDcConf(properties);
-        this.sink = new KafkaMirroringSink(conf);
-      } catch (Exception e) {
-        log.error("Exception configuring Kafka sink - mirroring disabled!", e);
-        this.sink = null;
+    Map<String, Object> properties = new HashMap<>();
+    try {
+      SolrZkClient solrClient = coreContainer.getZkController() != null ? coreContainer.getZkController().getZkClient() : null;
+      ConfUtil.fillProperties(solrClient, properties);
+      ConfUtil.verifyProperties(properties);
+      KafkaCrossDcConf conf = new KafkaCrossDcConf(properties);
+      String mirrorCollections = conf.get(KafkaCrossDcConf.MIRROR_COLLECTIONS);
+      if (mirrorCollections != null && !mirrorCollections.isBlank()) {
+        List<String> list = StrUtils.splitSmart(mirrorCollections, ',');
+        collections.addAll(list);
       }
-    } else {
-      this.sink = sink;
+      if (sink == null) {
+        this.sink = new KafkaMirroringSink(conf);
+      } else {
+        this.sink = sink;
+      }
+    } catch (Exception e) {
+      log.error("Exception configuring Kafka sink - mirroring disabled!", e);
+      this.sink = null;
     }
   }
 
