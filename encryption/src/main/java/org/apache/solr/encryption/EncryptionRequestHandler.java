@@ -169,13 +169,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     } else if (keyId.equals(NO_KEY_ID)) {
       keyId = null;
     }
-    if (!(req.getCore().getDirectoryFactory() instanceof EncryptionDirectoryFactory)) {
-      throw new SolrException(SolrException.ErrorCode.SERVICE_UNAVAILABLE,
-                              DirectoryFactory.class.getSimpleName()
-                                + " must be configured with an "
-                                + EncryptionDirectoryFactory.class.getSimpleName()
-                                + " to use " + getClass().getSimpleName());
-    }
+    EncryptionDirectoryFactory.getFactory(req.getCore(), this);
     log.debug("{} encrypt request for keyId={}", ENCRYPTION_LOG_PREFIX, keyId);
     boolean success = false;
     String encryptionState = STATE_PENDING;
@@ -267,7 +261,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
       removeActiveKeyRefFromCommit(commitCmd.commitData);
       ensureNonEmptyCommitDataForEmptyCommit(commitCmd.commitData);
     } else {
-      KeySupplier keySupplier = ((EncryptionDirectoryFactory) commitCmd.getReq().getCore().getDirectoryFactory()).getKeySupplier();
+      KeySupplier keySupplier = EncryptionDirectoryFactory.getFactory(commitCmd.getReq().getCore(), this).getKeySupplier();
       Map<String, String> keyCookie = keySupplier.getKeyCookie(keyId, buildGetCookieParams(commitCmd.getReq(), rsp));
       EncryptionUtil.setNewActiveKeyIdInCommit(keyId, keyCookie, commitCmd.commitData);
     }

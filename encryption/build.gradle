@@ -47,5 +47,6 @@ dependencies {
 }
 
 test {
+//    systemProperty "tests.seed", "163ABAE7C30E5FCB"
     jvmArgs '-Djava.security.egd=file:/dev/./urandom'
 }

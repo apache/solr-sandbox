@@ -12,6 +12,11 @@ This module also provides an EncryptionRequestHandler so that a client can trigg
 the (re)encryption of a Solr Core index. The (re)encryption is done concurrently
 while the Solr Core can continue to serve update and query requests.
 
+In addition, the Solr update logs are also encrypted when the Solr Core index is
+encrypted. When the active encryption key changes for the Solr Core, the
+re-encryption of the update logs is done synchronously when an old log file is
+opened for addition. This re-encryption is nearly as fast as a file copy.
+
 Comparing with an OS-level encryption:
 
 - OS-level encryption [1][2] is more performant and more adapted to let Lucene
@@ -27,11 +32,6 @@ on performance: expect -20% on most queries, -60% on multi-term queries.
 [1] https://wiki.archlinux.org/title/Fscrypt
 
 [2] https://www.kernel.org/doc/html/latest/filesystems/fscrypt.html
-
-## Limitations and Work In Progress
-
-- Currently, this encryption module does not encrypt TLogs.
-That means the update requests data that are stored in these logs are cleartext.
 
 ## Installing and Configuring the Encryption Plug-In
 
@@ -61,7 +61,11 @@ the Encryption plug-in jar file into the specified folder.
         <str name="encrypterFactory">org.apache.solr.encryption.crypto.CipherAesCtrEncrypter$Factory</str>
     </directoryFactory>
 
-    <updateHandler class="org.apache.solr.encryption.EncryptionUpdateHandler"/>
+    <updateHandler class="org.apache.solr.encryption.EncryptionUpdateHandler">
+        <updateLog class="org.apache.solr.encryption.EncryptionUpdateLog">
+            <str name="dir">${solr.ulog.dir:}</str>
+        </updateLog>
+    </updateHandler>
 
     <requestHandler name="/admin/encrypt" class="org.apache.solr.encryption.EncryptionRequestHandler"/>
 
@@ -85,6 +89,9 @@ constructor which logs a JDK warning (Illegal reflective access).
 
 `EncryptionUpdateHandler` replaces the standard `DirectUpdateHandler2` (which it extends) to store persistently the
 encryption key id in the commit metadata. It supports all the configuration parameters of `DirectUpdateHandler2`.
+
+`EncryptionUpdateLog` replaces the standard `UpdateLog` (which it extends) to support the encryption of the update
+logs.
 
 `EncryptionRequestHandler` receives (re)encryption requests. See its dedicated section below for its usage.
 
@@ -141,3 +148,10 @@ solrconfig.xml configuration section above.
 - You can make the Lucene Codec store its FST on heap and expect +15% perf, at the price of more Java heap usage.
 This requires a code change. See `org.apache.lucene.util.fst.FSTStore` implementations and usage in
 `org.apache.lucene.codecs.lucene90.blocktree.FieldReader`.
+
+## Encryption tools
+
+The `org.apache.solr.encryption.crypto` package contains utility classes to stream encryption/decryption with the
+`AES/CTR/NoPadding` transformation.
+`CharStreamEncrypter` can encrypt a character stream to a base 64 encoding compatible with JSON, with a small
+buffer.
