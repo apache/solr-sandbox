@@ -19,7 +19,6 @@ package org.apache.solr.update.processor;
 import org.apache.solr.client.solrj.request.UpdateRequest;
 import org.apache.solr.crossdc.common.KafkaMirroringSink;
 import org.apache.solr.crossdc.common.MirroringException;
-import org.apache.solr.crossdc.common.KafkaCrossDcConf;
 import org.apache.solr.crossdc.common.MirroredSolrRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +48,15 @@ public class KafkaRequestMirroringHandler implements RequestMirroringHandler {
             log.trace("submit update to sink docs={}, deletes={}, params={}", request.getDocuments(), request.getDeleteById(), request.getParams());
         }
         // TODO: Enforce external version constraint for consistent update replication (cross-cluster)
-        sink.submit(new MirroredSolrRequest(MirroredSolrRequest.Type.UPDATE, 1, request, TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis())));
+        final MirroredSolrRequest mirroredRequest = new MirroredSolrRequest(MirroredSolrRequest.Type.UPDATE, 1, request, TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis()));
+        try {
+            sink.submit(mirroredRequest);
+        } catch (MirroringException exception) {
+            if (log.isInfoEnabled()) {
+                log.info("Sending message to dead letter queue");
+            }
+            sink.submitToDlq(mirroredRequest);
+            throw new MirroringException(exception);
+        }
     }
 }
