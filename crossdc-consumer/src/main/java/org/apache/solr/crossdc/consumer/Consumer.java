@@ -75,13 +75,6 @@ public class Consumer {
 
         ConfUtil.verifyProperties(properties);
 
-        String bootstrapServers = (String) properties.get(KafkaCrossDcConf.BOOTSTRAP_SERVERS);
-        String topicName = (String) properties.get(TOPIC_NAME);
-
-        //server = new Server();
-        //ServerConnector connector = new ServerConnector(server);
-        //connector.setPort(port);
-        //server.setConnectors(new Connector[] {connector})
         KafkaCrossDcConf conf = new KafkaCrossDcConf(properties);
         crossDcConsumer = getCrossDcConsumer(conf, startLatch);
 

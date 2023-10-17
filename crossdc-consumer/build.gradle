@@ -82,7 +82,7 @@ tasks.withType(Zip){
 
 jib {
     container {
-        mainClass = 'org.apache.solr.crossdc.consumer.ConsumerEnvWrapper'
+        mainClass = 'org.apache.solr.crossdc.consumer.Consumer'
         creationTime = 'USE_CURRENT_TIMESTAMP'
     }
     extraDirectories {
