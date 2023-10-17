@@ -24,6 +24,7 @@ import org.apache.solr.common.params.CollectionParams;
 import org.apache.solr.common.params.CoreAdminParams;
 import org.apache.solr.common.params.MapSolrParams;
 import org.apache.solr.common.params.ModifiableSolrParams;
+import org.apache.solr.common.util.ContentStream;
 import org.apache.solr.common.util.JavaBinCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +33,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -114,6 +116,27 @@ public class MirroredSolrRequestSerializer implements Serializer<MirroredSolrReq
             }
             request = new MirroredSolrRequest.MirroredAdminRequest(action, params);
             log.debug("-- admin req={}", ((MirroredSolrRequest.MirroredAdminRequest) request).jsonStr());
+        } else if (type == MirroredSolrRequest.Type.CONFIGSET) {
+            List<ContentStream> contentStreams = null;
+            String m = (String) requestMap.get("method");
+            SolrRequest.METHOD method = SolrRequest.METHOD.valueOf(m);
+            List<String> csNames = new ArrayList<>();
+            List<Map<String, Object>> streamsList = (List<Map<String, Object>>) requestMap.get("contentStreams");
+            if (streamsList != null) {
+                contentStreams = new ArrayList<>();
+                for (Map<String, Object> streamMap : streamsList) {
+                    String contentType = (String) streamMap.get("contentType");
+                    String name = (String) streamMap.get("name");
+                    csNames.add(name);
+                    String sourceInfo = (String) streamMap.get("sourceInfo");
+                    byte[] content = (byte[]) streamMap.get("content");
+                    MirroredSolrRequest.ExposedByteArrayContentStream ecs = new MirroredSolrRequest.ExposedByteArrayContentStream(content, sourceInfo, contentType);
+                    ecs.setName(name);
+                    contentStreams.add(ecs);
+                }
+            }
+            request = new MirroredSolrRequest.MirroredConfigSetRequest(method, params, contentStreams);
+            log.debug("-- configSet method={}, req={}, streams={}", request.getMethod(), request.getParams(), csNames);
         } else {
             throw new RuntimeException("Unknown request type: " + requestMap);
         }
@@ -150,6 +173,22 @@ public class MirroredSolrRequestSerializer implements Serializer<MirroredSolrReq
                 map.put("docs", update.getDocuments());
                 map.put("deletes", update.getDeleteById());
                 map.put("deleteQuery", update.getDeleteQuery());
+            } else if (solrRequest instanceof MirroredSolrRequest.MirroredConfigSetRequest) {
+                MirroredSolrRequest.MirroredConfigSetRequest config = (MirroredSolrRequest.MirroredConfigSetRequest) solrRequest;
+                map.put("method", config.getMethod().toString());
+                if (config.getContentStreams() != null) {
+                    List<Map<String, Object>> streamsList = new ArrayList<>();
+                    for (ContentStream cs : config.getContentStreams()) {
+                        Map<String, Object> streamMap = new HashMap<>();
+                        streamMap.put("name", cs.getName());
+                        streamMap.put("contentType", cs.getContentType());
+                        streamMap.put("sourceInfo", cs.getSourceInfo());
+                        MirroredSolrRequest.ExposedByteArrayContentStream ecs = MirroredSolrRequest.ExposedByteArrayContentStream.of(cs);
+                        streamMap.put("content", ecs.byteArray());
+                        streamsList.add(streamMap);
+                    }
+                    map.put("contentStreams", streamsList);
+                }
             }
 
             codec.marshal(map, baos);

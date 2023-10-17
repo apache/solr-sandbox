@@ -17,6 +17,7 @@
 -->
 <solr>
     <str name="collectionsHandler">org.apache.solr.handler.admin.MirroringCollectionsHandler</str>
+    <str name="configSetsHandler">org.apache.solr.handler.admin.MirroringConfigSetsHandler</str>
     <solrcloud>
         <str name="host">${host:}</str>
         <int name="hostPort">${hostPort:0}</int>

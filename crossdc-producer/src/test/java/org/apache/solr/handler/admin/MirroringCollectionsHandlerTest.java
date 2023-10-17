@@ -1,5 +1,6 @@
 package org.apache.solr.handler.admin;
 
+import org.apache.commons.io.IOUtils;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import org.apache.commons.io.IOUtils;
 import org.apache.lucene.util.QuickPatchThreadsFilter;
@@ -13,6 +14,7 @@ import org.apache.solr.common.cloud.SolrZkClient;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.core.CoreContainer;
 import org.apache.solr.core.SolrXmlConfig;
+import org.apache.solr.crossdc.common.CrossDcConf;
 import org.apache.solr.crossdc.SolrKafkaTestsIgnoredThreadsFilter;
 import org.apache.solr.crossdc.common.KafkaCrossDcConf;
 import org.apache.solr.crossdc.common.KafkaMirroringSink;
