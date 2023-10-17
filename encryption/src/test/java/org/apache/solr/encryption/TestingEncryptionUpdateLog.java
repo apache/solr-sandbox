@@ -16,25 +16,22 @@
  */
 package org.apache.solr.encryption;
 
-import org.apache.solr.request.SolrQueryRequest;
-import org.apache.solr.response.SolrQueryResponse;
-
 import java.io.IOException;
-import java.util.Map;
+import java.io.OutputStream;
+import java.nio.channels.FileChannel;
+import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * {@link EncryptionRequestHandler} for tests. Builds a mock key cookie.
- */
-public class TestingEncryptionRequestHandler extends EncryptionRequestHandler {
+public class TestingEncryptionUpdateLog extends EncryptionUpdateLog {
 
-  public static final Map<String, String> MOCK_COOKIE_PARAMS = Map.of("testParam", "testValue");
+  public static AtomicInteger reencryptionCallCount = new AtomicInteger();
 
-  @Override
-  protected Map<String, String> buildKeyCookie(String keyId,
-                                               SolrQueryRequest req,
-                                               SolrQueryResponse rsp)
+  protected void reencrypt(FileChannel inputChannel,
+                           String inputKeyRef,
+                           OutputStream outputStream,
+                           String activeKeyRef,
+                           EncryptionDirectory directory)
     throws IOException {
-    KeySupplier keySupplier = EncryptionDirectoryFactory.getFactory(req.getCore()).getKeySupplier();
-    return keySupplier.getKeyCookie(keyId, MOCK_COOKIE_PARAMS);
+    super.reencrypt(inputChannel, inputKeyRef, outputStream, activeKeyRef, directory);
+    reencryptionCallCount.incrementAndGet();
   }
 }

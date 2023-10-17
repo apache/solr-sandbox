@@ -187,7 +187,7 @@ import java.util.Properties;
       if (results.getResults().getNumFound() == 1) {
         foundUpdates = true;
       } else {
-        Thread.sleep(500);
+        Thread.sleep(1000);
       }
     }
 

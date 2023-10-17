@@ -17,7 +17,6 @@
 package org.apache.solr.encryption;
 
 import org.apache.lucene.index.IndexFileNames;
-import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.util.plugin.NamedListInitializedPlugin;
 
@@ -76,6 +75,6 @@ public interface KeySupplier {
     void init(NamedList<?> args);
 
     /** Creates a {@link KeySupplier}. */
-    KeySupplier create();
+    KeySupplier create() throws IOException;
   }
 }

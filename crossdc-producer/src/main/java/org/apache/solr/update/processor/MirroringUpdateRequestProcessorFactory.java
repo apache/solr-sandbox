@@ -18,14 +18,15 @@ package org.apache.solr.update.processor;
 
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.cloud.CollectionProperties;
+import org.apache.solr.common.cloud.SolrZkClient;
 import org.apache.solr.common.params.CommonParams;
 import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.core.CloseHook;
 import org.apache.solr.core.CoreDescriptor;
 import org.apache.solr.core.SolrCore;
+import org.apache.solr.crossdc.common.ConfUtil;
 import org.apache.solr.crossdc.common.ConfigProperty;
-import org.apache.solr.crossdc.common.CrossDcConf;
 import org.apache.solr.crossdc.common.KafkaCrossDcConf;
 import org.apache.solr.crossdc.common.KafkaMirroringSink;
 import org.apache.solr.request.SolrQueryRequest;
@@ -34,7 +35,6 @@ import org.apache.solr.util.plugin.SolrCoreAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.util.*;
@@ -74,15 +74,20 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
 
     private final Map<String,Object> properties = new HashMap<>();
 
+    private NamedList args;
+
     @Override
     public void init(final NamedList args) {
         super.init(args);
 
+        this.args = args;
+    }
+
+    private void applyArgsOverrides() {
         Boolean enabled = args.getBooleanArg("enabled");
         if (enabled != null && !enabled) {
             this.enabled = false;
         }
-
         for (ConfigProperty configKey : KafkaCrossDcConf.CONFIG_PROPERTIES) {
             String val = args._getStr(configKey.getKey(), null);
             if (val != null && !val.isBlank()) {
@@ -130,26 +135,11 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
 
         log.info("Producer startup config properties before adding additional properties from Zookeeper={}", properties);
 
-        Properties zkProps = null;
         try {
-            if (core.getCoreContainer().getZkController()
-                .getZkClient().exists(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH,
-                    CrossDcConf.CROSSDC_PROPERTIES), true)) {
-                byte[] data = core.getCoreContainer().getZkController().getZkClient().getData(System.getProperty(CrossDcConf.ZK_CROSSDC_PROPS_PATH,
-                    CrossDcConf.CROSSDC_PROPERTIES), null, null, true);
-
-                if (data == null) {
-                    log.error(CrossDcConf.CROSSDC_PROPERTIES + " file in Zookeeper has no data");
-                    throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, CrossDcConf.CROSSDC_PROPERTIES
-                        + " file in Zookeeper has no data");
-                }
-
-                zkProps = new Properties();
-                zkProps.load(new ByteArrayInputStream(data));
-
-                KafkaCrossDcConf.readZkProps(properties, zkProps);
-            }
-            CollectionProperties cp = new CollectionProperties(core.getCoreContainer().getZkController().getZkClient());
+            SolrZkClient solrZkClient = core.getCoreContainer().getZkController().getZkClient();
+            ConfUtil.fillProperties(solrZkClient, properties);
+            applyArgsOverrides();
+            CollectionProperties cp = new CollectionProperties(solrZkClient);
              Map<String,String> collectionProperties = cp.getCollectionProperties(core.getCoreDescriptor().getCollectionName());
             for (ConfigProperty configKey : KafkaCrossDcConf.CONFIG_PROPERTIES) {
                 String val = collectionProperties.get("crossdc." + configKey.getKey());
@@ -165,10 +155,6 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
                     this.enabled = false;
                 }
             }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.error("Interrupted looking for CrossDC configuration in Zookeeper", e);
-            throw new SolrException(SolrException.ErrorCode.SERVICE_UNAVAILABLE, e);
         } catch (Exception e) {
             log.error("Exception looking for CrossDC configuration in Zookeeper", e);
             throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "Exception looking for CrossDC configuration in Zookeeper", e);
@@ -178,19 +164,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
             return;
         }
 
-        if (properties.get(BOOTSTRAP_SERVERS) == null) {
-            log.error(
-                "boostrapServers not specified for producer in CrossDC configuration props={} zkProps={}",
-                properties, zkProps);
-           throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "boostrapServers not specified for producer");
-       }
-        
-        if (properties.get(TOPIC_NAME) == null) {
-            log.error(
-                "topicName not specified for producer in CrossDC configuration props={} zkProps={}",
-                properties, zkProps);
-            throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "topicName not specified for producer");
-        }
+        ConfUtil.verifyProperties(properties);
 
         // load the request mirroring sink class and instantiate.
        // mirroringHandler = core.getResourceLoader().newInstance(RequestMirroringHandler.class.getName(), KafkaRequestMirroringHandler.class);
@@ -229,6 +203,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
 
         // Check if mirroring is disabled in request params, defaults to true
         boolean doMirroring = req.getParams().getBool(SERVER_SHOULD_MIRROR, true);
+        boolean mirrorCommits = conf.getBool(MIRROR_COMMITS);
         final long maxMirroringBatchSizeBytes = conf.getInt(MAX_REQUEST_SIZE_BYTES);
         Boolean indexUnmirrorableDocs = conf.getBool(INDEX_UNMIRRORABLE_DOCS);
 
@@ -261,7 +236,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
             log.trace("Create MirroringUpdateProcessor with mirroredParams={}", mirroredParams);
         }
 
-        return new MirroringUpdateProcessor(next, doMirroring, indexUnmirrorableDocs, maxMirroringBatchSizeBytes, mirroredParams,
+        return new MirroringUpdateProcessor(next, doMirroring, indexUnmirrorableDocs, mirrorCommits, maxMirroringBatchSizeBytes, mirroredParams,
                 DistribPhase.parseParam(req.getParams().get(DISTRIB_UPDATE_PARAM)), doMirroring ? mirroringHandler : null);
     }
 

@@ -48,7 +48,7 @@ public class KafkaRequestMirroringHandler implements RequestMirroringHandler {
             log.trace("submit update to sink docs={}, deletes={}, params={}", request.getDocuments(), request.getDeleteById(), request.getParams());
         }
         // TODO: Enforce external version constraint for consistent update replication (cross-cluster)
-        final MirroredSolrRequest mirroredRequest = new MirroredSolrRequest(1, request, TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis()));
+        final MirroredSolrRequest mirroredRequest = new MirroredSolrRequest(MirroredSolrRequest.Type.UPDATE, 1, request, TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis()));
         try {
             sink.submit(mirroredRequest);
         } catch (MirroringException exception) {

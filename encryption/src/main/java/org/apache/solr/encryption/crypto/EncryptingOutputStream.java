@@ -22,6 +22,7 @@ import java.nio.ByteBuffer;
 
 import static org.apache.solr.encryption.crypto.AesCtrUtil.AES_BLOCK_SIZE;
 import static org.apache.solr.encryption.crypto.AesCtrUtil.generateRandomAesCtrIv;
+import static org.apache.solr.encryption.crypto.EncryptingIndexOutput.BUFFER_CAPACITY;
 
 /**
  * {@link OutputStream} that encrypts data and writes to a delegate {@link OutputStream} on the fly.
@@ -36,17 +37,14 @@ import static org.apache.solr.encryption.crypto.AesCtrUtil.generateRandomAesCtrI
  */
 public class EncryptingOutputStream extends OutputStream {
 
-  /**
-   * Must be a multiple of {@link AesCtrUtil#AES_BLOCK_SIZE}.
-   */
-  private static final int BUFFER_CAPACITY = 64 * AES_BLOCK_SIZE; // 1024
-
   private final OutputStream outputStream;
+  private final byte[] iv;
   private final AesCtrEncrypter encrypter;
   private final ByteBuffer inBuffer;
   private final ByteBuffer outBuffer;
   private final byte[] outArray;
   private final byte[] oneByteBuf;
+  private int padding;
   private boolean closed;
 
   /**
@@ -57,20 +55,53 @@ public class EncryptingOutputStream extends OutputStream {
    */
   public EncryptingOutputStream(OutputStream outputStream, byte[] key, AesCtrEncrypterFactory factory)
     throws IOException {
+    this(outputStream, 0L, null, key, factory);
+  }
+
+  /**
+   * @param outputStream The delegate {@link OutputStream} to write encrypted data to.
+   * @param position     The position in the output stream. A non-zero position means the
+   *                     output is reopened to append more data, in this case the iv should
+   *                     be provided and not null.
+   * @param iv           The IV to use (not written) if the position is greater than zero;
+   *                     or null to generate a random one and write it at the beginning of
+   *                     the output.
+   * @param key          The encryption key secret. It is cloned internally, its content
+   *                     is not modified, and no reference to it is kept.
+   * @param factory      The factory to use to create one instance of {@link AesCtrEncrypter}.
+   */
+  public EncryptingOutputStream(OutputStream outputStream,
+                                long position,
+                                byte[] iv,
+                                byte[] key,
+                                AesCtrEncrypterFactory factory)
+    throws IOException {
+    if (position < 0) {
+      throw new IllegalArgumentException("Invalid position " + position);
+    }
     this.outputStream = outputStream;
-
-    byte[] iv = generateRandomIv();
-    encrypter = factory.create(key, iv);
-    encrypter.init(0);
-    // IV is written at the beginning of the output stream. It's public.
-    outputStream.write(iv, 0, iv.length);
-
-    inBuffer = ByteBuffer.allocate(getBufferCapacity());
-    outBuffer = ByteBuffer.allocate(getBufferCapacity() + AES_BLOCK_SIZE);
+    inBuffer = ByteBuffer.allocate(BUFFER_CAPACITY);
+    outBuffer = ByteBuffer.allocate(BUFFER_CAPACITY + AES_BLOCK_SIZE);
     assert inBuffer.hasArray() && outBuffer.hasArray();
     assert outBuffer.arrayOffset() == 0;
     outArray = outBuffer.array();
     oneByteBuf = new byte[1];
+    long counter;
+    if (position == 0) {
+      iv = generateRandomIv();
+      // Write the IV at the beginning of the output stream. It's public.
+      outputStream.write(iv, 0, iv.length);
+      counter = 0;
+    } else if (iv == null) {
+      throw new IllegalArgumentException("IV must be provided when position is not zero");
+    } else {
+      counter = position / AES_BLOCK_SIZE;
+      padding = (int) (position & (AES_BLOCK_SIZE - 1));
+      inBuffer.position(padding);
+    }
+    this.iv = iv;
+    encrypter = factory.create(key, iv);
+    encrypter.init(counter);
   }
 
   /**
@@ -81,10 +112,17 @@ public class EncryptingOutputStream extends OutputStream {
   }
 
   /**
-   * Gets the buffer capacity. It must be a multiple of {@link AesCtrUtil#AES_BLOCK_SIZE}.
+   * Gets the IV written at the beginning of the output stream.
    */
-  protected int getBufferCapacity() {
-    return BUFFER_CAPACITY;
+  public byte[] getIv() {
+    return iv;
+  }
+
+  @Override
+  public void flush() throws IOException {
+    if (inBuffer.position() > padding) {
+      encryptBufferAndWrite();
+    }
   }
 
   @Override
@@ -92,9 +130,7 @@ public class EncryptingOutputStream extends OutputStream {
     if (!closed) {
       closed = true;
       try {
-        if (inBuffer.position() != 0) {
-          encryptBufferAndWrite();
-        }
+        flush();
       } finally {
         outputStream.close();
       }
@@ -110,7 +146,9 @@ public class EncryptingOutputStream extends OutputStream {
   @Override
   public void write(byte[] b, int offset, int length) throws IOException {
     if (offset < 0 || length < 0 || offset + length > b.length) {
-      throw new IllegalArgumentException("Invalid write buffer parameters (offset=" + offset + ", length=" + length + ", arrayLength=" + b.length + ")");
+      throw new IllegalArgumentException("Invalid write buffer parameters (offset=" + offset
+                                           + ", length=" + length
+                                           + ", arrayLength=" + b.length + ")");
     }
     while (length > 0) {
       int remaining = inBuffer.remaining();
@@ -127,12 +165,13 @@ public class EncryptingOutputStream extends OutputStream {
   }
 
   private void encryptBufferAndWrite() throws IOException {
-    assert inBuffer.position() != 0;
+    assert inBuffer.position() > padding : "position=" + inBuffer.position() + ", padding=" + padding;
     inBuffer.flip();
     outBuffer.clear();
     encrypter.process(inBuffer, outBuffer);
     inBuffer.clear();
     outBuffer.flip();
-    outputStream.write(outArray, 0, outBuffer.limit());
+    outputStream.write(outArray, padding, outBuffer.limit() - padding);
+    padding = 0;
   }
 }
