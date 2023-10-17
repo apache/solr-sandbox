@@ -19,14 +19,22 @@ package org.apache.solr.encryption;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.response.SolrQueryResponse;
 
+import java.io.IOException;
 import java.util.Map;
 
+/**
+ * {@link EncryptionRequestHandler} for tests. Builds a mock key cookie.
+ */
 public class TestingEncryptionRequestHandler extends EncryptionRequestHandler {
 
   public static final Map<String, String> MOCK_COOKIE_PARAMS = Map.of("testParam", "testValue");
 
   @Override
-  protected Map<String, String> buildGetCookieParams(SolrQueryRequest req, SolrQueryResponse rsp) {
-    return MOCK_COOKIE_PARAMS;
+  protected Map<String, String> buildKeyCookie(String keyId,
+                                               SolrQueryRequest req,
+                                               SolrQueryResponse rsp)
+    throws IOException {
+    KeySupplier keySupplier = EncryptionDirectoryFactory.getFactory(req.getCore()).getKeySupplier();
+    return keySupplier.getKeyCookie(keyId, MOCK_COOKIE_PARAMS);
   }
 }

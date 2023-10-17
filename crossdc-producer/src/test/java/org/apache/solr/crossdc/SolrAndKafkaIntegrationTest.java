@@ -283,13 +283,13 @@ import static org.mockito.Mockito.spy;
 
     @Test
   public void testParallelUpdatesToCluster2() throws Exception {
-    ExecutorService executorService = Executors.newFixedThreadPool(50);
+    ExecutorService executorService = Executors.newFixedThreadPool(12);
     List<Future<Boolean>> futures = new ArrayList<>();
 
     CloudSolrClient client1 = solrCluster1.getSolrClient();
 
     // Prepare and send 500 updates in parallel
-    for (int i = 0; i < 500; i++) {
+    for (int i = 0; i < 5000; i++) {
       final int docId = i;
       Future<Boolean> future = executorService.submit(() -> {
         try {
@@ -297,7 +297,6 @@ import static org.mockito.Mockito.spy;
           doc.addField("id", String.valueOf(docId));
           doc.addField("text", "parallel test");
           client1.add(doc);
-          client1.commit(COLLECTION);
           return true;
         } catch (Exception e) {
           log.error("Exception while adding doc", e);
@@ -309,7 +308,7 @@ import static org.mockito.Mockito.spy;
 
     // Wait for all updates to complete
     executorService.shutdown();
-    if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
+    if (!executorService.awaitTermination(600, TimeUnit.SECONDS)) {
       executorService.shutdownNow();
     }
 
@@ -318,8 +317,10 @@ import static org.mockito.Mockito.spy;
       assertTrue(future.get());
     }
 
+    client1.commit(COLLECTION);
+
     // Check if these documents are correctly reflected in the second cluster
-    assertCluster2EventuallyHasDocs(COLLECTION, "*:*", 500);
+    assertCluster2EventuallyHasDocs(COLLECTION, "*:*", 5000);
   }
 
   private void assertCluster2EventuallyHasDocs(String collection, String query, int expectedNumDocs) throws Exception {

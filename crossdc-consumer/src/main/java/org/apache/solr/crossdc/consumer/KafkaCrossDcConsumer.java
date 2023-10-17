@@ -44,6 +44,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
   private final static int KAFKA_CONSUMER_POLL_TIMEOUT_MS = 5000;
   private final String[] topicNames;
+  private final int maxAttempts;
   private final SolrMessageProcessor messageProcessor;
 
   private final CloudSolrClient solrClient;
@@ -68,6 +69,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
   public KafkaCrossDcConsumer(KafkaCrossDcConf conf, CountDownLatch startLatch) {
 
     this.topicNames = conf.get(KafkaCrossDcConf.TOPIC_NAME).split(",");
+    this.maxAttempts = conf.getInt(KafkaCrossDcConf.MAX_ATTEMPTS);
     this.startLatch = startLatch;
     final Properties kafkaConsumerProps = new Properties();
 
@@ -314,14 +316,6 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
         // We don't really know what to do here
         log.error("Mirroring exception occurred while resubmitting to Kafka. We are going to stop the consumer thread now.", e);
         throw new RuntimeException(e);
-      } finally {
-        offsetCheckExecutor.submit(() -> {
-          try {
-            partitionManager.checkForOffsetUpdates(workUnit.partition);
-          } catch (Throwable e) {
-            // already logging in checkForOffsetUpdates
-          }
-        });
       }
 
     });
@@ -337,7 +331,13 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
           log.trace("result=failed-resubmit");
         }
         metrics.counter("failed-resubmit").inc();
-        kafkaMirroringSink.submit(record.value());
+        final int attempt = record.value().getAttempt();
+        if (attempt > this.maxAttempts) {
+          log.info("Sending message to dead letter queue because of max attempts limit with current value = {}", attempt);
+          kafkaMirroringSink.submitToDlq(result.newItem());
+        } else {
+          kafkaMirroringSink.submit(result.newItem());
+        }
         break;
       case HANDLED:
         // no-op
@@ -386,6 +386,8 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
       log.warn("Interrupted while waiting for executor to shutdown");
     } catch (Exception e) {
       log.warn("Exception closing Solr client on shutdown", e);
+    } finally {
+      Util.logMetrics(metrics);
     }
   }
 

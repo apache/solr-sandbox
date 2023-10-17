@@ -17,7 +17,6 @@
 package org.apache.solr.encryption;
 
 import org.apache.lucene.index.IndexFileNames;
-import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
 
 import java.nio.charset.StandardCharsets;
@@ -37,16 +36,20 @@ public class TestingKeySupplier implements KeySupplier {
   public static final String KEY_ID_1 = "mock1";
   public static final String KEY_ID_2 = "mock2";
   public static final String KEY_ID_3 = "mock3";
-  public static final byte[] KEY_COOKIE_1 = "ABCDE".getBytes(StandardCharsets.UTF_8);
-  public static final byte[] KEY_COOKIE_2 = "BCDEF".getBytes(StandardCharsets.UTF_8);
-  public static final byte[] KEY_COOKIE_3 = "CDEFG".getBytes(StandardCharsets.UTF_8);
-  private static final Map<String, byte[]> MOCK_COOKIES = Map.of(KEY_ID_1, KEY_COOKIE_1, KEY_ID_2, KEY_COOKIE_2, KEY_ID_3, KEY_COOKIE_3);
+  public static final byte[] KEY_BLOB_1 = "ABCDE".getBytes(StandardCharsets.UTF_8);
+  public static final byte[] KEY_BLOB_2 = "BCDEF".getBytes(StandardCharsets.UTF_8);
+  public static final byte[] KEY_BLOB_3 = "CDEFG".getBytes(StandardCharsets.UTF_8);
+  private static final Map<String, byte[]> KEY_BLOBS = Map.of(KEY_ID_1, KEY_BLOB_1,
+                                                              KEY_ID_2, KEY_BLOB_2,
+                                                              KEY_ID_3, KEY_BLOB_3);
   public static final byte[] KEY_SECRET_1 = "12345678901234567890123456789012".getBytes(StandardCharsets.UTF_8);
   public static final byte[] KEY_SECRET_2 = "34567890123456789012345678901234".getBytes(StandardCharsets.UTF_8);
   public static final byte[] KEY_SECRET_3 = "78901234567890123456789012345678".getBytes(StandardCharsets.UTF_8);
-  private static final Map<String, byte[]> MOCK_KEYS = Map.of(KEY_ID_1, KEY_SECRET_1, KEY_ID_2, KEY_SECRET_2, KEY_ID_3, KEY_SECRET_3);
+  private static final Map<String, byte[]> KEY_SECRETS = Map.of(KEY_ID_1, KEY_SECRET_1,
+                                                                KEY_ID_2, KEY_SECRET_2,
+                                                                KEY_ID_3, KEY_SECRET_3);
 
-  private static final String WRAPPED_KEY_SECRET_KEY = "wrappedKeySecret";
+  private static final String KEY_BLOB_PARAM = "keyBlob";
 
   /**
    * File name extensions/suffixes that do NOT need to be encrypted because it lacks user/external data.
@@ -72,8 +75,6 @@ public class TestingKeySupplier implements KeySupplier {
   // tmd    - BlockTree metadata (contains first and last term)
   // fdt    - Stored fields data
   // dvd    - Doc values data
-  // ustd   - UniformSplit index (FST)
-  // ustb   - UniformSplit terms (including metadata)
   // cfs    - Compound file (contains all the above files data)
 
   // Cleartext temporary files:
@@ -116,9 +117,13 @@ public class TestingKeySupplier implements KeySupplier {
 
   @Override
   public Map<String, String> getKeyCookie(String keyId, Map<String, String> params) {
-    byte[] wrappedKeySecret = MOCK_COOKIES.get(keyId);
+    // Simulate a call to a Key Management System, passing the params
+    // (e.g. tenant id, key id, etc) and getting a key 'blob' which would
+    // be a wrapped form (encrypted) of the key secret.
+
+    byte[] keyBlob = KEY_BLOBS.get(keyId);
     // Verify the key id is known.
-    if (wrappedKeySecret == null) {
+    if (keyBlob == null) {
       throw new NoSuchElementException("No key defined for " + keyId);
     }
     // Verify the cookie params.
@@ -126,30 +131,35 @@ public class TestingKeySupplier implements KeySupplier {
       throw new IllegalStateException("Wrong cookie params provided = " + params);
     }
     Map<String, String> cookie = new HashMap<>(params);
-    cookie.put(WRAPPED_KEY_SECRET_KEY, Base64.getEncoder().encodeToString(wrappedKeySecret));
+    cookie.put(KEY_BLOB_PARAM, Base64.getEncoder().encodeToString(keyBlob));
     return cookie;
   }
 
   @Override
   public byte[] getKeySecret(String keyId, Function<String, Map<String, String>> cookieSupplier) {
-    byte[] secret = MOCK_KEYS.get(keyId);
+    // Simulate a call to a Key Management System, passing the key cookie
+    // (e.g. tenant id, key id, key blob, etc) and getting the cleartext key secret.
+    // This key secret could be stored in a short-lived cache with a dedicated thread
+    // for automatic key wiping and removal.
+
+    byte[] secret = KEY_SECRETS.get(keyId);
     // Verify the key id is known.
     if (secret == null) {
       throw new NoSuchElementException("No key defined for " + keyId);
     }
     Map<String, String> cookie = cookieSupplier.apply(keyId);
     // Verify the key secret is equal to the expected one.
-    String wrappedKeySecretAsString = cookie == null ? null : cookie.get(WRAPPED_KEY_SECRET_KEY);
-    byte[] wrappedKeySecret = wrappedKeySecretAsString == null ?
-      null : Base64.getDecoder().decode(wrappedKeySecretAsString);
-    byte[] expectedWrappedKeySecret = MOCK_COOKIES.get(keyId);
-    if (wrappedKeySecret != null && expectedWrappedKeySecret != null && !Arrays.equals(wrappedKeySecret, expectedWrappedKeySecret)
-      || (wrappedKeySecret == null || expectedWrappedKeySecret == null) && wrappedKeySecret != expectedWrappedKeySecret) {
+    String keyBlobString = cookie == null ? null : cookie.get(KEY_BLOB_PARAM);
+    byte[] keyBlobBytes = keyBlobString == null ?
+      null : Base64.getDecoder().decode(keyBlobString);
+    byte[] expectedKeyBlob = KEY_BLOBS.get(keyId);
+    if (keyBlobBytes != null && expectedKeyBlob != null && !Arrays.equals(keyBlobBytes, expectedKeyBlob)
+      || (keyBlobBytes == null || expectedKeyBlob == null) && keyBlobBytes != expectedKeyBlob) {
       throw new IllegalStateException("Wrong cookie provided = " + cookie);
     }
     // Verify the other cookie params.
     Map<String, String> otherParams = new HashMap<>(cookie);
-    otherParams.remove(WRAPPED_KEY_SECRET_KEY);
+    otherParams.remove(KEY_BLOB_PARAM);
     if (!TestingEncryptionRequestHandler.MOCK_COOKIE_PARAMS.equals(otherParams)) {
       throw new IllegalStateException("Wrong cookie params provided = " + cookie);
     }

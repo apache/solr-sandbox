@@ -17,29 +17,15 @@
  limitations under the License.
 -->
 
-<!-- Minimal solrconfig.xml with /select, /admin and /update only -->
+<!-- Minimal solrconfig.xml to enable the index and update log encryption. -->
 
 <config>
 
   <dataDir>${solr.data.dir:}</dataDir>
 
-  <directoryFactory name="DirectoryFactory"
-                    class="org.apache.solr.encryption.EncryptionDirectoryFactory">
-    <str name="keySupplierFactory">org.apache.solr.encryption.TestingKeySupplier$Factory</str>
-    <str name="encrypterFactory">org.apache.solr.encryption.crypto.LightAesCtrEncrypter$Factory</str>
-  </directoryFactory>
-
   <schemaFactory class="ClassicIndexSchemaFactory"/>
 
   <luceneMatchVersion>${tests.luceneMatchVersion:LATEST}</luceneMatchVersion>
-
-  <!-- EncryptionUpdateHandler transfers the encryption key ids from a commit to the next. -->
-  <updateHandler class="org.apache.solr.encryption.EncryptionUpdateHandler">
-    <commitWithin>
-      <softCommit>${solr.commitwithin.softcommit:true}</softCommit>
-    </commitWithin>
-    <updateLog class="${solr.ulog:solr.UpdateLog}"></updateLog>
-  </updateHandler>
 
   <requestHandler name="/select" class="solr.SearchHandler">
     <lst name="defaults">
@@ -49,7 +35,22 @@
     </lst>
   </requestHandler>
 
-  <!-- Encryption handler -->
+  <!-- EncryptionDirectoryFactory opens index files with EncryptionDirectory. -->
+  <directoryFactory name="DirectoryFactory"
+                    class="org.apache.solr.encryption.EncryptionDirectoryFactory">
+    <!-- KeySupplier provides encryption keys. -->
+    <str name="keySupplierFactory">org.apache.solr.encryption.TestingKeySupplier$Factory</str>
+    <!-- AesCtrEncrypter implements the encryption transformation AES/CTR/NoPadding. -->
+    <str name="encrypterFactory">org.apache.solr.encryption.crypto.LightAesCtrEncrypter$Factory</str>
+  </directoryFactory>
+
+  <!-- EncryptionUpdateHandler transfers the encryption key ids from a commit to the next. -->
+  <updateHandler class="org.apache.solr.encryption.EncryptionUpdateHandler">
+    <!-- EncryptionUpdateLog encrypts transaction logs if the index is encrypted. -->
+    <updateLog class="org.apache.solr.encryption.TestingEncryptionUpdateLog"/>
+  </updateHandler>
+
+  <!-- Encryption handler can be called to trigger the encryption of the index and update log. -->
   <requestHandler name="/admin/encrypt" class="org.apache.solr.encryption.TestingEncryptionRequestHandler"/>
 
   <indexConfig>
@@ -57,14 +58,14 @@
 
     <!-- Chain of MergePolicy factories:
          - EncryptionMergePolicy detects when a force-merge is triggered with a special max
-           number of segments equal to Integer.MAX_VALUE, in this case it merges (rewrites) individually
-           each segment which is not encrypted with the latest active key id.
+           number of segments equal to Integer.MAX_VALUE, in this case it merges (rewrites)
+           individually each segment which is not encrypted with the latest active key id.
          - TieredMergePolicy is the standard merge policy.
     -->
     <mergePolicyFactory class="org.apache.solr.encryption.EncryptionMergePolicyFactory">
       <str name="wrapped.prefix">delegate</str>
       <str name="delegate.class">org.apache.solr.index.TieredMergePolicyFactory</str>
     </mergePolicyFactory>
-
   </indexConfig>
+
 </config>
