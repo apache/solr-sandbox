@@ -96,6 +96,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         }
     }
 
+
     private static class MyCloseHook extends CloseHook {
         private final Closer closer;
 
@@ -129,10 +130,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
 
     }
 
-    @Override
-    public void inform(SolrCore core) {
-        log.info("KafkaRequestMirroringHandler inform enabled={}", this.enabled);
-
+    private void lookupPropertyOverridesInZk(SolrCore core) {
         log.info("Producer startup config properties before adding additional properties from Zookeeper={}", properties);
 
         try {
@@ -140,7 +138,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
             ConfUtil.fillProperties(solrZkClient, properties);
             applyArgsOverrides();
             CollectionProperties cp = new CollectionProperties(solrZkClient);
-             Map<String,String> collectionProperties = cp.getCollectionProperties(core.getCoreDescriptor().getCollectionName());
+            Map<String,String> collectionProperties = cp.getCollectionProperties(core.getCoreDescriptor().getCollectionName());
             for (ConfigProperty configKey : KafkaCrossDcConf.CONFIG_PROPERTIES) {
                 String val = collectionProperties.get("crossdc." + configKey.getKey());
                 if (val != null && !val.isBlank()) {
@@ -158,6 +156,21 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         } catch (Exception e) {
             log.error("Exception looking for CrossDC configuration in Zookeeper", e);
             throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "Exception looking for CrossDC configuration in Zookeeper", e);
+        }
+    }
+
+    @Override
+    public void inform(SolrCore core) {
+        log.info("KafkaRequestMirroringHandler inform enabled={}", this.enabled);
+
+        if (core.getCoreContainer().isZooKeeperAware()) {
+            lookupPropertyOverridesInZk(core);
+        } else {
+            applyArgsOverrides();
+            if (enabled) {
+                throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, getClass().getSimpleName() + " only supported in SolrCloud mode; please disable or remove from solrconfig.xml");
+            }
+            log.warn("Core '{}' was configured to use a disabled {}, but {} is only supported in SolrCloud deployments.  A NoOp processor will be used instead", core.getName(), this.getClass().getSimpleName(), this.getClass().getSimpleName());
         }
 
         if (!enabled) {
@@ -240,7 +253,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
                 DistribPhase.parseParam(req.getParams().get(DISTRIB_UPDATE_PARAM)), doMirroring ? mirroringHandler : null);
     }
 
-    private static class NoOpUpdateRequestProcessor extends UpdateRequestProcessor {
+    public static class NoOpUpdateRequestProcessor extends UpdateRequestProcessor {
         NoOpUpdateRequestProcessor(UpdateRequestProcessor next) {
             super(next);
         }
