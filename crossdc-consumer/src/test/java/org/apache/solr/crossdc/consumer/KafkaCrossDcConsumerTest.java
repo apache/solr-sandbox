@@ -177,22 +177,7 @@ public class KafkaCrossDcConsumerTest {
     public void testHandleFailedResubmit() throws Exception {
         // Set up the KafkaCrossDcConsumer
         KafkaConsumer<String, MirroredSolrRequest> mockConsumer = mock(KafkaConsumer.class);
-        KafkaCrossDcConsumer consumer = spy(new KafkaCrossDcConsumer(conf, new CountDownLatch(1)) {
-            @Override
-            public KafkaConsumer<String, MirroredSolrRequest> createKafkaConsumer(Properties properties) {
-                return mockConsumer;
-            }
-
-            @Override
-            public SolrMessageProcessor createSolrMessageProcessor() {
-                return messageProcessorMock;
-            }
-
-            @Override
-            protected KafkaMirroringSink createKafkaMirroringSink(KafkaCrossDcConf conf) {
-                return kafkaMirroringSinkMock;
-            }
-        });
+        KafkaCrossDcConsumer consumer = createCrossDcConsumerSpy(mockConsumer);
 
         doNothing().when(consumer).sendBatch(any(UpdateRequest.class), any(ConsumerRecord.class), any(PartitionManager.WorkUnit.class));
 
@@ -219,44 +204,15 @@ public class KafkaCrossDcConsumerTest {
     @Test
     public void testCreateKafkaCrossDcConsumer() {
         KafkaConsumer<String, MirroredSolrRequest> mockConsumer = mock(KafkaConsumer.class);
-        KafkaCrossDcConsumer consumer = spy(new KafkaCrossDcConsumer(conf, new CountDownLatch(1)) {
-            @Override
-            public KafkaConsumer<String, MirroredSolrRequest> createKafkaConsumer(Properties properties) {
-                return mockConsumer;
-            }
+        KafkaCrossDcConsumer consumer = createCrossDcConsumerSpy(mockConsumer);
 
-            @Override
-            public SolrMessageProcessor createSolrMessageProcessor() {
-                return messageProcessorMock;
-            }
-
-            @Override
-            protected KafkaMirroringSink createKafkaMirroringSink(KafkaCrossDcConf conf) {
-                return kafkaMirroringSinkMock;
-            }
-        });
         assertNotNull(consumer);
     }
 
     @Test
     public void testHandleValidMirroredSolrRequest() {
         KafkaConsumer<String, MirroredSolrRequest> mockConsumer = mock(KafkaConsumer.class);
-        KafkaCrossDcConsumer spyConsumer = spy(new KafkaCrossDcConsumer(conf, new CountDownLatch(1)) {
-            @Override
-            public KafkaConsumer<String, MirroredSolrRequest> createKafkaConsumer(Properties properties) {
-                return mockConsumer;
-            }
-
-            @Override
-            public SolrMessageProcessor createSolrMessageProcessor() {
-                return messageProcessorMock;
-            }
-
-            @Override
-            protected KafkaMirroringSink createKafkaMirroringSink(KafkaCrossDcConf conf) {
-                return kafkaMirroringSinkMock;
-            }
-        });
+        KafkaCrossDcConsumer spyConsumer = createCrossDcConsumerSpy(mockConsumer);
 
         SolrInputDocument doc = new SolrInputDocument();
         doc.addField("id", "1");
@@ -323,22 +279,7 @@ public class KafkaCrossDcConsumerTest {
     @Test
     public void testHandleWakeupException() {
         KafkaConsumer<String, MirroredSolrRequest> mockConsumer = mock(KafkaConsumer.class);
-        KafkaCrossDcConsumer spyConsumer = spy(new KafkaCrossDcConsumer(conf, new CountDownLatch(1)) {
-            @Override
-            public KafkaConsumer<String, MirroredSolrRequest> createKafkaConsumer(Properties properties) {
-                return mockConsumer;
-            }
-
-            @Override
-            public SolrMessageProcessor createSolrMessageProcessor() {
-                return messageProcessorMock;
-            }
-
-            @Override
-            protected KafkaMirroringSink createKafkaMirroringSink(KafkaCrossDcConf conf) {
-                return kafkaMirroringSinkMock;
-            }
-        });
+        KafkaCrossDcConsumer spyConsumer = createCrossDcConsumerSpy(mockConsumer);
 
         when(mockConsumer.poll(any())).thenThrow(new WakeupException());
 
@@ -370,7 +311,15 @@ public class KafkaCrossDcConsumerTest {
     @Test
     public void testShutdown() {
         KafkaConsumer<String, MirroredSolrRequest> mockConsumer = mock(KafkaConsumer.class);
-        KafkaCrossDcConsumer spyConsumer = spy(new KafkaCrossDcConsumer(conf, new CountDownLatch(1)) {
+        KafkaCrossDcConsumer spyConsumer = createCrossDcConsumerSpy(mockConsumer);
+
+        spyConsumer.shutdown();
+
+        verify(mockConsumer, times(1)).wakeup();
+    }
+
+    private KafkaCrossDcConsumer createCrossDcConsumerSpy(KafkaConsumer<String, MirroredSolrRequest> mockConsumer) {
+        return spy(new KafkaCrossDcConsumer(conf, new CountDownLatch(1)) {
             @Override
             public KafkaConsumer<String, MirroredSolrRequest> createKafkaConsumer(Properties properties) {
                 return mockConsumer;
@@ -386,10 +335,5 @@ public class KafkaCrossDcConsumerTest {
                 return kafkaMirroringSinkMock;
             }
         });
-
-
-        spyConsumer.shutdown();
-
-        verify(mockConsumer, times(1)).wakeup();
     }
 }
