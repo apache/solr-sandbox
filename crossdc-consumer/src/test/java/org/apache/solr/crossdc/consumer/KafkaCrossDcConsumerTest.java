@@ -114,10 +114,24 @@ public class KafkaCrossDcConsumerTest {
      */
     @Test
     public void kafkaCrossDcConsumerCreationWithConfigurationAndStartLatch() {
-        KafkaCrossDcConf conf = testCrossDCConf();
         CountDownLatch startLatch = new CountDownLatch(1);
+        KafkaConsumer<String, MirroredSolrRequest> mockConsumer = mock(KafkaConsumer.class);
+        KafkaCrossDcConsumer kafkaCrossDcConsumer = spy(new KafkaCrossDcConsumer(conf, startLatch) {
+            @Override
+            public KafkaConsumer<String, MirroredSolrRequest> createKafkaConsumer(Properties properties) {
+                return mockConsumer;
+            }
 
-        KafkaCrossDcConsumer kafkaCrossDcConsumer = new KafkaCrossDcConsumer(conf, startLatch);
+            @Override
+            public SolrMessageProcessor createSolrMessageProcessor() {
+                return messageProcessorMock;
+            }
+
+            @Override
+            protected KafkaMirroringSink createKafkaMirroringSink(KafkaCrossDcConf conf) {
+                return kafkaMirroringSinkMock;
+            }
+        });
 
         assertNotNull(kafkaCrossDcConsumer);
         assertEquals(1, startLatch.getCount());
@@ -162,8 +176,24 @@ public class KafkaCrossDcConsumerTest {
     @Test
     public void testHandleFailedResubmit() throws Exception {
         // Set up the KafkaCrossDcConsumer
-        KafkaCrossDcConf testConf = testCrossDCConf();
-        KafkaCrossDcConsumer consumer = spy(new KafkaCrossDcConsumer(testConf, new CountDownLatch(0)));
+        KafkaConsumer<String, MirroredSolrRequest> mockConsumer = mock(KafkaConsumer.class);
+        KafkaCrossDcConsumer consumer = spy(new KafkaCrossDcConsumer(conf, new CountDownLatch(1)) {
+            @Override
+            public KafkaConsumer<String, MirroredSolrRequest> createKafkaConsumer(Properties properties) {
+                return mockConsumer;
+            }
+
+            @Override
+            public SolrMessageProcessor createSolrMessageProcessor() {
+                return messageProcessorMock;
+            }
+
+            @Override
+            protected KafkaMirroringSink createKafkaMirroringSink(KafkaCrossDcConf conf) {
+                return kafkaMirroringSinkMock;
+            }
+        });
+
         doNothing().when(consumer).sendBatch(any(UpdateRequest.class), any(ConsumerRecord.class), any(PartitionManager.WorkUnit.class));
 
         // Set up the SolrMessageProcessor mock
@@ -188,7 +218,23 @@ public class KafkaCrossDcConsumerTest {
 
     @Test
     public void testCreateKafkaCrossDcConsumer() {
-        KafkaCrossDcConsumer consumer = new KafkaCrossDcConsumer(conf, new CountDownLatch(1));
+        KafkaConsumer<String, MirroredSolrRequest> mockConsumer = mock(KafkaConsumer.class);
+        KafkaCrossDcConsumer consumer = spy(new KafkaCrossDcConsumer(conf, new CountDownLatch(1)) {
+            @Override
+            public KafkaConsumer<String, MirroredSolrRequest> createKafkaConsumer(Properties properties) {
+                return mockConsumer;
+            }
+
+            @Override
+            public SolrMessageProcessor createSolrMessageProcessor() {
+                return messageProcessorMock;
+            }
+
+            @Override
+            protected KafkaMirroringSink createKafkaMirroringSink(KafkaCrossDcConf conf) {
+                return kafkaMirroringSinkMock;
+            }
+        });
         assertNotNull(consumer);
     }
 
