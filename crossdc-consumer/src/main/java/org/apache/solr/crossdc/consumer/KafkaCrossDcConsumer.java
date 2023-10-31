@@ -7,6 +7,7 @@ import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.request.UpdateRequest;
 import org.apache.solr.common.SolrInputDocument;
@@ -191,7 +192,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
         log.trace("poll return {} records", records.count());
       }
 
-      UpdateRequest solrReqBatch = null;
+      UpdateRequest updateReqBatch = null;
 
       ConsumerRecord<String,MirroredSolrRequest> lastRecord = null;
 
@@ -203,9 +204,8 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
         workUnit.nextOffset = PartitionManager.getOffsetForPartition(partitionRecords);
         partitionWork.partitionQueue.add(workUnit);
         try {
-          ModifiableSolrParams lastParams = null;
-          NamedList lastParamsAsNamedList = null;
-          solrReqBatch = new UpdateRequest();
+          ModifiableSolrParams lastUpdateParams = null;
+          NamedList lastUpdateParamsAsNamedList = null;
           for (ConsumerRecord<String,MirroredSolrRequest> requestRecord : partitionRecords) {
             if (log.isTraceEnabled()) {
               log.trace("Fetched record from topic={} partition={} key={} value={}", requestRecord.topic(), requestRecord.partition(), requestRecord.key(),
@@ -214,48 +214,62 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
             lastRecord = requestRecord;
             MirroredSolrRequest req = requestRecord.value();
-            UpdateRequest solrReq = (UpdateRequest) req.getSolrRequest();
-            ModifiableSolrParams params = solrReq.getParams();
+            SolrRequest solrReq = req.getSolrRequest();
+            MirroredSolrRequest.Type type = req.getType();
+            ModifiableSolrParams params = new ModifiableSolrParams(solrReq.getParams());
             if (log.isTraceEnabled()) {
-              log.trace("params={}", params);
+              log.trace("-- picked type={}, params={}", req.getType(), params);
             }
 
-            if (lastParams != null && !lastParams.toNamedList().equals(params.toNamedList())) {
+            // it's an update but with different params
+            if (type == MirroredSolrRequest.Type.UPDATE && lastUpdateParams != null && !lastUpdateParams.toNamedList().equals(params.toNamedList())) {
               if (log.isTraceEnabled()) {
                 log.trace("SolrParams have changed, starting new UpdateRequest, params={}", params);
               }
-              lastParamsAsNamedList = null;
-              sendBatch(solrReqBatch, lastRecord, workUnit);
-              solrReqBatch = new UpdateRequest();
+              // send previous batch, if any
+              sendBatch(updateReqBatch, type, lastRecord, workUnit);
+              updateReqBatch = new UpdateRequest();
+              lastUpdateParamsAsNamedList = null;
               workUnit = new PartitionManager.WorkUnit(partition);
               workUnit.nextOffset = PartitionManager.getOffsetForPartition(partitionRecords);
               partitionWork.partitionQueue.add(workUnit);
             }
 
-            lastParams = solrReq.getParams();
-            solrReqBatch.setParams(params);
-            if (lastParamsAsNamedList == null) {
-              lastParamsAsNamedList = lastParams.toNamedList();
-            }
-
-            List<SolrInputDocument> docs = solrReq.getDocuments();
-            if (docs != null) {
-              solrReqBatch.add(docs);
-            }
-            List<String> deletes = solrReq.getDeleteById();
-            if (deletes != null) {
-              solrReqBatch.deleteById(deletes);
-            }
-            List<String> deleteByQuery = solrReq.getDeleteQuery();
-            if (deleteByQuery != null) {
-              for (String delByQuery : deleteByQuery) {
-                solrReqBatch.deleteByQuery(delByQuery);
+            lastUpdateParams = params;
+            if (type == MirroredSolrRequest.Type.UPDATE) {
+              if (updateReqBatch == null) {
+                // just initialize
+                updateReqBatch = new UpdateRequest();
               }
+              UpdateRequest update = (UpdateRequest) solrReq;
+              MirroredSolrRequest.setParams(updateReqBatch, params);
+              if (lastUpdateParamsAsNamedList == null) {
+                lastUpdateParamsAsNamedList = lastUpdateParams.toNamedList();
+              }
+              // merge
+              List<SolrInputDocument> docs = update.getDocuments();
+              if (docs != null) {
+                updateReqBatch.add(docs);
+              }
+              List<String> deletes = update.getDeleteById();
+              if (deletes != null) {
+                updateReqBatch.deleteById(deletes);
+              }
+              List<String> deleteByQuery = update.getDeleteQuery();
+              if (deleteByQuery != null) {
+                for (String delByQuery : deleteByQuery) {
+                  updateReqBatch.deleteByQuery(delByQuery);
+                }
+              }
+            } else {
+              // non-update requests should be sent immediately
+              sendBatch(req.getSolrRequest(), type, lastRecord, workUnit);
             }
-
           }
 
-          sendBatch(solrReqBatch, lastRecord, workUnit);
+          if (updateReqBatch != null) {
+            sendBatch(updateReqBatch, MirroredSolrRequest.Type.UPDATE, lastRecord, workUnit);
+          }
           try {
             partitionManager.checkForOffsetUpdates(partition);
           } catch (Throwable e) {
@@ -305,11 +319,12 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
     return true;
   }
 
-  public void sendBatch(UpdateRequest solrReqBatch, ConsumerRecord<String,MirroredSolrRequest> lastRecord, PartitionManager.WorkUnit workUnit) {
-    UpdateRequest finalSolrReqBatch = solrReqBatch;
+  public void sendBatch(SolrRequest solrReqBatch, MirroredSolrRequest.Type type, ConsumerRecord<String, MirroredSolrRequest> lastRecord, PartitionManager.WorkUnit workUnit) {
+    SolrRequest finalSolrReqBatch = solrReqBatch;
+    // Kafka client is not thread-safe !!!
     Future<?> future = executor.submit(() -> {
       try {
-        IQueueHandler.Result<MirroredSolrRequest> result = messageProcessor.handleItem(new MirroredSolrRequest(finalSolrReqBatch));
+        IQueueHandler.Result<MirroredSolrRequest> result = messageProcessor.handleItem(new MirroredSolrRequest(type, finalSolrReqBatch));
 
         processResult(lastRecord, result);
       } catch (MirroringException e) {
