@@ -324,9 +324,10 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
     // Kafka client is not thread-safe !!!
     Future<?> future = executor.submit(() -> {
       try {
-        IQueueHandler.Result<MirroredSolrRequest> result = messageProcessor.handleItem(new MirroredSolrRequest(type, finalSolrReqBatch));
+        final MirroredSolrRequest mirroredSolrRequest = new MirroredSolrRequest(type, lastRecord.value().getAttempt(), finalSolrReqBatch);
+        final IQueueHandler.Result<MirroredSolrRequest> result = messageProcessor.handleItem(mirroredSolrRequest);
 
-        processResult(lastRecord, result);
+        processResult(result);
       } catch (MirroringException e) {
         // We don't really know what to do here
         log.error("Mirroring exception occurred while resubmitting to Kafka. We are going to stop the consumer thread now.", e);
@@ -339,14 +340,14 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
 
 
-  void processResult(ConsumerRecord<String,MirroredSolrRequest> record, IQueueHandler.Result<MirroredSolrRequest> result) throws MirroringException {
+  void processResult(IQueueHandler.Result<MirroredSolrRequest> result) throws MirroringException {
     switch (result.status()) {
       case FAILED_RESUBMIT:
         if (log.isTraceEnabled()) {
           log.trace("result=failed-resubmit");
         }
         metrics.counter("failed-resubmit").inc();
-        final int attempt = record.value().getAttempt();
+        final int attempt = result.newItem().getAttempt();
         if (attempt > this.maxAttempts) {
           log.info("Sending message to dead letter queue because of max attempts limit with current value = {}", attempt);
           kafkaMirroringSink.submitToDlq(result.newItem());
