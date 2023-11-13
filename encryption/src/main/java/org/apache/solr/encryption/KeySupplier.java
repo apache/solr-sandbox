@@ -21,6 +21,7 @@ import org.apache.solr.common.util.NamedList;
 import org.apache.solr.util.plugin.NamedListInitializedPlugin;
 
 import javax.annotation.Nullable;
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.Map;
 import java.util.function.Function;
@@ -28,7 +29,7 @@ import java.util.function.Function;
 /**
  * Provides encryption key secrets corresponding to provided key ids and defines which index files to encrypt.
  */
-public interface KeySupplier {
+public interface KeySupplier extends Closeable {
 
   /**
    * Indicates whether the provided file should be encrypted based on its name.

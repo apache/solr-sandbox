@@ -135,6 +135,12 @@ public class EncryptionDirectoryFactory extends MMapDirectoryFactory {
     return innerFactory.create(super.create(path, lockFactory, dirContext), getEncrypterFactory(), getKeySupplier());
   }
 
+  @Override
+  public void close() throws IOException {
+    keySupplier.close();
+    super.close();
+  }
+
   /**
    * Visible for tests only - Inner factory that creates {@link EncryptionDirectory} instances.
    */
