@@ -44,7 +44,9 @@ public class DecryptingChannelInputStream extends TransactionLog.ChannelFastInpu
   private final byte[] iv;
   private final AesCtrEncrypter encrypter;
   private final ByteBuffer inBuffer;
-  private final ByteBuffer outBuffer;
+  private final byte[] outBuffer;
+  private int outPos;
+  private int outSize;
   private int padding;
   private long filePointer;
 
@@ -66,6 +68,29 @@ public class DecryptingChannelInputStream extends TransactionLog.ChannelFastInpu
                                       byte[] key,
                                       AesCtrEncrypterFactory factory)
     throws IOException {
+    this(channel, offset, position, key, factory, BUFFER_CAPACITY);
+  }
+
+  /**
+   * @param channel  The delegate {@link FileChannel} to read and decrypt data from.
+   * @param offset   Base offset in the {@link FileChannel}. The IV at the beginning of
+   *                 the file starts at this offset. {@link #seek(long)} positions are
+   *                 relative to this base offset + {@link AesCtrUtil#IV_LENGTH}.
+   * @param position Initial read position, relative to the base offset. Setting a positive
+   *                 position is equivalent to setting a zero position and then calling
+   *                 {@link #setPosition(long)}.
+   * @param key      The encryption key secret. It is cloned internally, its content
+   *                 is not modified, and no reference to it is kept.
+   * @param factory  The factory to use to create one instance of {@link AesCtrEncrypter}.
+   * @param bufferCapacity The encryption buffer capacity. It must be a multiple of {@link AesCtrUtil#AES_BLOCK_SIZE}.
+   */
+  public DecryptingChannelInputStream(FileChannel channel,
+                                      long offset,
+                                      long position,
+                                      byte[] key,
+                                      AesCtrEncrypterFactory factory,
+                                      int bufferCapacity)
+    throws IOException {
     super(channel, position);
     assert offset >= 0;
     assert position >= 0;
@@ -73,11 +98,9 @@ public class DecryptingChannelInputStream extends TransactionLog.ChannelFastInpu
     iv = new byte[IV_LENGTH];
     channel.read(ByteBuffer.wrap(iv, 0, iv.length), offset);
     encrypter = factory.create(key, iv);
-    inBuffer = ByteBuffer.allocate(BUFFER_CAPACITY);
-    outBuffer = ByteBuffer.allocate(BUFFER_CAPACITY + AES_BLOCK_SIZE);
-    outBuffer.limit(0);
-    assert inBuffer.hasArray() && outBuffer.hasArray();
-    assert inBuffer.arrayOffset() == 0;
+    assert bufferCapacity % AES_BLOCK_SIZE == 0;
+    inBuffer = ByteBuffer.allocate(bufferCapacity);
+    outBuffer = new byte[bufferCapacity + AES_BLOCK_SIZE];
     setPosition(position);
   }
 
@@ -95,20 +118,20 @@ public class DecryptingChannelInputStream extends TransactionLog.ChannelFastInpu
     int numDecrypted = 0;
     while (length > 0) {
       // Transfer decrypted bytes from outBuffer.
-      int outRemaining = outBuffer.remaining();
+      int outRemaining = outSize - outPos;
       if (outRemaining > 0) {
         if (length <= outRemaining) {
-          outBuffer.get(target, offset, length);
+          System.arraycopy(outBuffer, outPos, target, offset, length);
+          outPos += length;
           numDecrypted += length;
           return numDecrypted;
         }
-        outBuffer.get(target, offset, outRemaining);
+        System.arraycopy(outBuffer, outPos, target, offset, outRemaining);
+        outPos += outRemaining;
         numDecrypted += outRemaining;
-        assert outBuffer.remaining() == 0;
         offset += outRemaining;
         length -= outRemaining;
       }
-
       if (!readToFillBuffer(length)) {
         return numDecrypted == 0 ? -1 : numDecrypted;
       }
@@ -138,16 +161,13 @@ public class DecryptingChannelInputStream extends TransactionLog.ChannelFastInpu
   }
 
   private void decryptBuffer() {
-    assert inBuffer.position() > padding : "position=" + inBuffer.position() + ", padding=" + padding;
-    inBuffer.flip();
-    outBuffer.clear();
-    encrypter.process(inBuffer, outBuffer);
-    inBuffer.clear();
-    outBuffer.flip();
-    if (padding > 0) {
-      outBuffer.position(padding);
-      padding = 0;
-    }
+    int inPos = inBuffer.position();
+    assert inPos > padding : "inPos=" + inPos + " padding=" + padding;
+    encrypter.process(inBuffer.array(), 0, inPos, outBuffer, 0);
+    outSize = inPos;
+    inBuffer.position(0);
+    outPos = padding;
+    padding = 0;
   }
 
   @Override
@@ -158,11 +178,11 @@ public class DecryptingChannelInputStream extends TransactionLog.ChannelFastInpu
       pos = (int) (position - getBufferPos());
     } else {
       long channelPosition = filePointer - offset - IV_LENGTH;
-      long currentPosition = channelPosition - outBuffer.remaining();
+      long currentPosition = channelPosition - (outSize - outPos);
       if (position >= currentPosition && position <= channelPosition) {
         // The target position is within the buffered output. Just move the output buffer position.
-        outBuffer.position(outBuffer.position() + (int) (position - currentPosition));
-        assert position == channelPosition - outBuffer.remaining();
+        outPos += (int) (position - currentPosition);
+        assert position == channelPosition - (outSize - outPos);
       } else {
         setPosition(position);
       }
@@ -173,9 +193,7 @@ public class DecryptingChannelInputStream extends TransactionLog.ChannelFastInpu
   }
 
   private void setPosition(long position) {
-    inBuffer.clear();
-    outBuffer.clear();
-    outBuffer.limit(0);
+    outPos = outSize = 0;
     // Compute the counter by ignoring the IV and the channel offset, if any.
     long counter = position / AES_BLOCK_SIZE;
     encrypter.init(counter);

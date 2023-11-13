@@ -122,16 +122,17 @@ public class DecryptingIndexInputTest extends RandomizedTest {
       long outputLength = indexOutput.getFilePointer();
       indexOutput.close();
 
-      IndexInput indexInput = createDecryptingIndexInput(dataOutput, offset).slice("Test", prefix.length, outputLength - prefix.length - suffix.length);
+      try (IndexInput indexInput = createDecryptingIndexInput(dataOutput, offset)) {
+        IndexInput sliceInput = indexInput.slice("Test", prefix.length, outputLength - prefix.length - suffix.length);
 
-      assertEquals(0, indexInput.getFilePointer());
-      assertEquals(outputLength - prefix.length - suffix.length, indexInput.length());
-      for (IOConsumer<DataInput> c : reply) {
-        c.accept(indexInput);
+        assertEquals(0, sliceInput.getFilePointer());
+        assertEquals(outputLength - prefix.length - suffix.length, sliceInput.length());
+        for (IOConsumer<DataInput> c : reply) {
+          c.accept(sliceInput);
+        }
+
+        LuceneTestCase.expectThrows(EOFException.class, sliceInput::readByte);
       }
-
-      LuceneTestCase.expectThrows(EOFException.class, indexInput::readByte);
-      indexInput.close();
     }
   }
 
@@ -173,31 +174,32 @@ public class DecryptingIndexInputTest extends RandomizedTest {
       long outputLength = indexOutput.getFilePointer();
       indexOutput.close();
 
-      IndexInput indexInput = createDecryptingIndexInput(dataOutput, offset).slice("Test", prefix.length, outputLength - prefix.length);
+      try (IndexInput indexInput = createDecryptingIndexInput(dataOutput, offset)) {
+        IndexInput sliceInput = indexInput.slice("Test", prefix.length, outputLength - prefix.length);
 
-      indexInput.seek(0);
-      for (IOConsumer<DataInput> c : reply) {
-        c.accept(indexInput);
+        sliceInput.seek(0);
+        for (IOConsumer<DataInput> c : reply) {
+          c.accept(sliceInput);
+        }
+
+        sliceInput.seek(0);
+        for (IOConsumer<DataInput> c : reply) {
+          c.accept(sliceInput);
+        }
+
+        byte[] clearData = clearDataOutput.toArrayCopy();
+        clearData = ArrayUtil.copyOfSubArray(clearData, prefix.length, clearData.length);
+
+        for (int i = 0; i < 1000; i++) {
+          int offs = randomIntBetween(0, clearData.length - 1);
+          sliceInput.seek(offs);
+          assertEquals(offs, sliceInput.getFilePointer());
+          assertEquals("reps=" + reps + " i=" + i + ", offs=" + offs, clearData[offs], sliceInput.readByte());
+        }
+        sliceInput.seek(sliceInput.length());
+        assertEquals(sliceInput.length(), sliceInput.getFilePointer());
+        LuceneTestCase.expectThrows(EOFException.class, sliceInput::readByte);
       }
-
-      indexInput.seek(0);
-      for (IOConsumer<DataInput> c : reply) {
-        c.accept(indexInput);
-      }
-
-      byte[] clearData = clearDataOutput.toArrayCopy();
-      clearData = ArrayUtil.copyOfSubArray(clearData, prefix.length, clearData.length);
-
-      for (int i = 0; i < 1000; i++) {
-        int offs = randomIntBetween(0, clearData.length - 1);
-        indexInput.seek(offs);
-        assertEquals(offs, indexInput.getFilePointer());
-        assertEquals("reps=" + reps + " i=" + i + ", offs=" + offs, clearData[offs], indexInput.readByte());
-      }
-      indexInput.seek(indexInput.length());
-      assertEquals(indexInput.length(), indexInput.getFilePointer());
-      LuceneTestCase.expectThrows(EOFException.class, indexInput::readByte);
-      indexInput.close();
     }
   }
 

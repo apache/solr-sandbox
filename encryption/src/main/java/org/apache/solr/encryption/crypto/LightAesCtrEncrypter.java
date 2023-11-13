@@ -19,7 +19,6 @@ package org.apache.solr.encryption.crypto;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.nio.ByteBuffer;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
@@ -100,8 +99,7 @@ public class LightAesCtrEncrypter implements AesCtrEncrypter {
 
   @Override
   public void init(long counter) {
-    checkCtrCounter(counter);
-    buildAesCtrIv(initialIv, counter, iv);
+    buildAesCtrIv(iv, counter);
     try {
       COUNTER_MODE_IV_FIELD.set(counterMode, iv);
       COUNTER_MODE_RESET_METHOD.invoke(counterMode);
@@ -111,21 +109,13 @@ public class LightAesCtrEncrypter implements AesCtrEncrypter {
   }
 
   @Override
-  public void process(ByteBuffer inBuffer, ByteBuffer outBuffer) {
-    assert inBuffer.array() != outBuffer.array() : "Input and output buffers must not be backed by the same array";
-    int length = inBuffer.remaining();
-    if (length > outBuffer.remaining()) {
-      throw new IllegalArgumentException("Output buffer does not have enough remaining space (needs " + length + " B)");
-    }
-    int outPos = outBuffer.position();
+  public void process(byte[] inBuffer, int inOffset, int length, byte[] outBuffer, int outOffset) {
+    assert outOffset + length <= outBuffer.length;
     try {
-      COUNTER_MODE_CRYPT_METHOD.invoke(counterMode, inBuffer.array(), inBuffer.arrayOffset() + inBuffer.position(),
-        length, outBuffer.array(), outBuffer.arrayOffset() + outPos);
+      COUNTER_MODE_CRYPT_METHOD.invoke(counterMode, inBuffer, inOffset, length, outBuffer, outOffset);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
-    inBuffer.position(inBuffer.limit());
-    outBuffer.position(outPos + length);
   }
 
   @Override

@@ -21,7 +21,6 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.ShortBufferException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -33,8 +32,8 @@ import static org.apache.solr.encryption.crypto.AesCtrUtil.*;
  * {@link AesCtrEncrypter} backed by a {@link javax.crypto.Cipher} with the "AES/CTR/NoPadding" transformation.
  * <p>This encrypter loads the internal {@link javax.crypto.CipherSpi} implementation from the classpath, see
  * {@link Cipher#getInstance(String)}. It is heavy to create, to initialize and to clone, but the
- * {@link #process(ByteBuffer, ByteBuffer) encryption} is extremely fast thanks to {@code HotSpotIntrinsicCandidate}
- * annotation in com.sun.crypto.provider.CounterMode.
+ * {@link #process encryption} is fast thanks to the {@code HotSpotIntrinsicCandidate} annotation in
+ * {@code com.sun.crypto.provider.CounterMode}.
  */
 public class CipherAesCtrEncrypter implements AesCtrEncrypter {
 
@@ -49,7 +48,6 @@ public class CipherAesCtrEncrypter implements AesCtrEncrypter {
   private byte[] iv;
   private ReusableIvParameterSpec ivParameterSpec;
   private Cipher cipher;
-  private long counter;
 
   /**
    * @param key The encryption key. It is cloned internally, its content is not modified, and no reference to it is kept.
@@ -68,11 +66,7 @@ public class CipherAesCtrEncrypter implements AesCtrEncrypter {
 
   @Override
   public void init(long counter) {
-    checkCtrCounter(counter);
-    if (counter != this.counter) {
-      this.counter = counter;
-      buildAesCtrIv(initialIv, counter, iv);
-    }
+    buildAesCtrIv(iv, counter);
     try {
       cipher.init(Cipher.ENCRYPT_MODE, key, ivParameterSpec, SecureRandomProvider.get());
     } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
@@ -81,13 +75,10 @@ public class CipherAesCtrEncrypter implements AesCtrEncrypter {
   }
 
   @Override
-  public void process(ByteBuffer inBuffer, ByteBuffer outBuffer) {
+  public void process(byte[] inBuffer, int inOffset, int length, byte[] outBuffer, int outOffset) {
     try {
-      int inputSize = inBuffer.remaining();
-      int numEncryptedBytes = cipher.update(inBuffer, outBuffer);
-      if (numEncryptedBytes < inputSize) {
-        throw new UnsupportedOperationException(Cipher.class.getSimpleName() + " implementation does not maintain an encryption context; this is not supported");
-      }
+      int numEncryptedBytes = cipher.update(inBuffer, inOffset, length, outBuffer, outOffset);
+      assert numEncryptedBytes == length : Cipher.class.getSimpleName() + " implementation does not maintain an encryption context; this is not supported";
     } catch (ShortBufferException e) {
       throw new RuntimeException(e);
     }
@@ -105,7 +96,6 @@ public class CipherAesCtrEncrypter implements AesCtrEncrypter {
     clone.iv = initialIv.clone();
     clone.ivParameterSpec = new ReusableIvParameterSpec(clone.iv);
     clone.cipher = createAesCtrCipher();
-    clone.counter = 0;
     return clone;
   }
 
