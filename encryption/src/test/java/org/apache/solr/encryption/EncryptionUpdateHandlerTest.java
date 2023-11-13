@@ -37,8 +37,8 @@ public class EncryptionUpdateHandlerTest extends SolrTestCaseJ4 {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    TestUtil.setInstallDirProperty();
-    initCore("solrconfig.xml", "schema.xml", TestUtil.getConfigPath().toString());
+    EncryptionTestUtil.setInstallDirProperty();
+    initCore("solrconfig.xml", "schema.xml", EncryptionTestUtil.getConfigPath().toString());
   }
 
   /**

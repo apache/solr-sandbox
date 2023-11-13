@@ -166,6 +166,9 @@ public class TestingKeySupplier implements KeySupplier {
     return secret;
   }
 
+  @Override
+  public void close() {}
+
   /**
    * Supplies the {@link TestingKeySupplier} singleton.
    */

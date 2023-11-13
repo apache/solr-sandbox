@@ -18,28 +18,35 @@ package org.apache.solr.encryption;
 
 import org.apache.solr.SolrTestCaseJ4;
 import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrRequest;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
+import org.apache.solr.client.solrj.impl.Http2SolrClient;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.SolrInputDocument;
-import org.apache.solr.common.cloud.DocCollection;
+import org.apache.solr.common.cloud.Replica;
 import org.apache.solr.common.cloud.Slice;
+import org.apache.solr.common.params.CoreAdminParams;
+import org.apache.solr.common.util.NamedList;
 import org.junit.Assert;
 
+import java.io.IOException;
 import java.nio.file.Path;
+import java.util.function.Consumer;
 
 /**
  * Utility methods for encryption tests.
  */
-public class TestUtil {
+public class EncryptionTestUtil {
 
-  private final CloudSolrClient solrClient;
+  private final CloudSolrClient cloudSolrClient;
   private final String collectionName;
   private int docId;
 
-  public TestUtil(CloudSolrClient solrClient, String collectionName) {
-    this.solrClient = solrClient;
+  public EncryptionTestUtil(CloudSolrClient cloudSolrClient, String collectionName) {
+    this.cloudSolrClient = cloudSolrClient;
     this.collectionName = collectionName;
   }
 
@@ -72,41 +79,74 @@ public class TestUtil {
       SolrInputDocument doc = new SolrInputDocument();
       doc.addField("id", Integer.toString(docId++));
       doc.addField("text", text);
-      solrClient.add(doc);
+      cloudSolrClient.add(collectionName, doc);
     }
-    solrClient.commit(collectionName);
+    cloudSolrClient.commit(collectionName);
   }
 
   /**
    * Verifies that the provided query returns the expected number of results.
    */
   public void assertQueryReturns(String query, int expectedNumResults) throws Exception {
-    QueryResponse response = solrClient.query(new SolrQuery(query));
+    QueryResponse response = cloudSolrClient.query(collectionName, new SolrQuery(query));
     Assert.assertEquals(expectedNumResults, response.getResults().size());
   }
 
   /**
    * Reloads the leader replica core of the first shard of the collection.
    */
-  public void reloadCore() throws Exception {
+  public void reloadCores() throws Exception {
     try {
-      DocCollection collection = solrClient.getClusterState().getCollection(collectionName);
-      Slice slice = collection.getSlices().iterator().next();
-      CoreAdminRequest.reloadCore(slice.getLeader().core, solrClient);
+      forAllReplicas(replica -> {
+        try {
+          CoreAdminRequest req = new CoreAdminRequest();
+          req.setBasePath(replica.getBaseUrl());
+          req.setCoreName(replica.getCoreName());
+          req.setAction(CoreAdminParams.CoreAdminAction.RELOAD);
+          try (Http2SolrClient httpSolrClient = new Http2SolrClient.Builder(replica.getBaseUrl()).build()) {
+            httpSolrClient.request(req);
+          }
+        } catch (SolrServerException e) {
+          throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, e);
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      });
     } catch (SolrException e) {
       throw new CoreReloadException("The index cannot be reloaded. There is probably an issue with the encryption key ids.", e);
     }
   }
 
   /**
-   * Verifies that {@link #reloadCore()} fails.
+   * Verifies that {@link #reloadCores()} fails.
    */
-  public void assertCannotReloadCore() throws Exception {
+  public void assertCannotReloadCores() throws Exception {
     try {
-      reloadCore();
+      reloadCores();
       Assert.fail("Core reloaded whereas it was not expected to be possible");
     } catch (CoreReloadException e) {
       // Expected.
+    }
+  }
+
+  /** Processes the given {@code action} for all replicas of the collection defined in the constructor. */
+  public void forAllReplicas(Consumer<Replica> action) {
+    for (Slice slice : cloudSolrClient.getClusterState().getCollection(collectionName).getSlices()) {
+      for (Replica replica : slice.getReplicas()) {
+        action.accept(replica);
+      }
+    }
+  }
+
+  /** Sends the given {@link SolrRequest} to a specific replica. */
+  public NamedList<Object> requestCore(SolrRequest<?> request, Replica replica) {
+    request.setBasePath(replica.getCoreUrl());
+    try (Http2SolrClient httpSolrClient = new Http2SolrClient.Builder(replica.getBaseUrl()).build()) {
+      return httpSolrClient.request(request);
+    } catch (SolrServerException e) {
+      throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, e);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
