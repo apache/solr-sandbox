@@ -52,18 +52,19 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
 
   private static final String COLLECTION_PREFIX = EncryptionRequestHandlerTest.class.getSimpleName() + "-collection-";
 
-  private static MockEncryptionDirectory mockDir;
+  private static volatile boolean forceClearText;
+  private static volatile String soleKeyIdAllowed;
 
   private String collectionName;
   private CloudSolrClient solrClient;
-  private TestUtil testUtil;
+  private EncryptionTestUtil testUtil;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
     System.setProperty(PROPERTY_INNER_ENCRYPTION_DIRECTORY_FACTORY, MockFactory.class.getName());
-    TestUtil.setInstallDirProperty();
-    cluster = new MiniSolrCloudCluster.Builder(1, createTempDir())
-      .addConfig("config", TestUtil.getConfigPath("collection1"))
+    EncryptionTestUtil.setInstallDirProperty();
+    cluster = new MiniSolrCloudCluster.Builder(2, createTempDir())
+      .addConfig("config", EncryptionTestUtil.getConfigPath("collection1"))
       .configure();
   }
 
@@ -78,15 +79,14 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     super.setUp();
     collectionName = COLLECTION_PREFIX + UUID.randomUUID();
     solrClient = cluster.getSolrClient();
-    solrClient.setDefaultCollection(collectionName);
-    CollectionAdminRequest.createCollection(collectionName, 1, 1).process(solrClient);
-    cluster.waitForActiveCollection(collectionName, 1, 1);
-    testUtil = new TestUtil(solrClient, collectionName);
+    CollectionAdminRequest.createCollection(collectionName, 2, 2).process(solrClient);
+    cluster.waitForActiveCollection(collectionName, 2, 4);
+    testUtil = new EncryptionTestUtil(solrClient, collectionName);
   }
 
   @Override
   public void tearDown() throws Exception {
-    mockDir.clearMockValues();
+    clearMockValues();
     CollectionAdminRequest.deleteCollection(collectionName).process(solrClient);
     super.tearDown();
   }
@@ -94,39 +94,39 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
   @Test
   public void testEncryptionFromNoKeysToOneKey_NoIndex() throws Exception {
     // Send an encrypt request with a key id on an empty index.
-    NamedList<Object> response = encrypt(KEY_ID_1);
-    assertEquals(STATUS_SUCCESS, response.get(STATUS));
-    assertEquals(STATE_COMPLETE, response.get(ENCRYPTION_STATE));
+    EncryptionStatus encryptionStatus = encrypt(KEY_ID_1);
+    assertTrue(encryptionStatus.success);
+    assertTrue(encryptionStatus.complete);
 
     // Index some documents to create a first segment.
     testUtil.indexDocsAndCommit("weather broadcast");
 
     // Verify that the segment is encrypted.
-    mockDir.forceClearText = true;
-    testUtil.assertCannotReloadCore();
-    mockDir.forceClearText = false;
-    testUtil.reloadCore();
+    forceClearText = true;
+    testUtil.assertCannotReloadCores();
+    forceClearText = false;
+    testUtil.reloadCores();
     testUtil.assertQueryReturns("weather", 1);
   }
 
   @Test
   public void testEncryptionFromNoKeysToOneKeyToNoKeys_NoIndex() throws Exception {
     // Send an encrypt request with a key id on an empty index.
-    NamedList<Object> response = encrypt(KEY_ID_1);
-    assertEquals(STATUS_SUCCESS, response.get(STATUS));
-    assertEquals(STATE_COMPLETE, response.get(ENCRYPTION_STATE));
+    EncryptionStatus encryptionStatus = encrypt(KEY_ID_1);
+    assertTrue(encryptionStatus.success);
+    assertTrue(encryptionStatus.complete);
 
     // Send another encrypt request with no key id, still on the empty index.
-    response = encrypt(NO_KEY_ID);
-    assertEquals(STATUS_SUCCESS, response.get(STATUS));
-    assertEquals(STATE_COMPLETE, response.get(ENCRYPTION_STATE));
+    encryptionStatus = encrypt(NO_KEY_ID);
+    assertTrue(encryptionStatus.success);
+    assertTrue(encryptionStatus.complete);
 
     // Index some documents to create a first segment.
     testUtil.indexDocsAndCommit("weather broadcast");
 
     // Verify that the segment is cleartext.
-    mockDir.forceClearText = true;
-    testUtil.reloadCore();
+    forceClearText = true;
+    testUtil.reloadCores();
     testUtil.assertQueryReturns("weather", 1);
   }
 
@@ -140,26 +140,26 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     testUtil.indexDocsAndCommit("weather broadcast");
     testUtil.indexDocsAndCommit("sunny weather");
     // Verify that the segments are cleartext.
-    mockDir.forceClearText = true;
-    testUtil.reloadCore();
+    forceClearText = true;
+    testUtil.reloadCores();
     testUtil.assertQueryReturns("weather", 2);
-    mockDir.forceClearText = false;
+    forceClearText = false;
 
     // Send an encrypt request with a key id.
-    NamedList<Object> response = encrypt(KEY_ID_1);
-    assertEquals(STATUS_SUCCESS, response.get(STATUS));
-    assertEquals(STATE_PENDING, response.get(ENCRYPTION_STATE));
+    EncryptionStatus encryptionStatus = encrypt(KEY_ID_1);
+    assertTrue(encryptionStatus.success);
+    assertFalse(encryptionStatus.complete);
 
     waitUntilEncryptionIsComplete(KEY_ID_1);
 
     // Verify that the segment is encrypted.
-    mockDir.forceClearText = true;
-    testUtil.assertCannotReloadCore();
-    mockDir.forceClearText = false;
-    mockDir.soleKeyIdAllowed = KEY_ID_1;
-    testUtil.reloadCore();
+    forceClearText = true;
+    testUtil.assertCannotReloadCores();
+    forceClearText = false;
+    soleKeyIdAllowed = KEY_ID_1;
+    testUtil.reloadCores();
     testUtil.assertQueryReturns("weather", 2);
-    mockDir.clearMockValues();
+    clearMockValues();
   }
 
   @Test
@@ -170,18 +170,18 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     testUtil.indexDocsAndCommit("foggy weather");
 
     // Send an encrypt request with another key id.
-    NamedList<Object> response = encrypt(KEY_ID_2);
-    assertEquals(STATUS_SUCCESS, response.get(STATUS));
-    assertEquals(STATE_PENDING, response.get(ENCRYPTION_STATE));
+    EncryptionStatus encryptionStatus = encrypt(KEY_ID_2);
+    assertTrue(encryptionStatus.success);
+    assertFalse(encryptionStatus.complete);
 
     waitUntilEncryptionIsComplete(KEY_ID_2);
 
     // Verify that the segment is encrypted.
-    mockDir.forceClearText = true;
-    testUtil.assertCannotReloadCore();
-    mockDir.forceClearText = false;
-    mockDir.soleKeyIdAllowed = KEY_ID_2;
-    testUtil.reloadCore();
+    forceClearText = true;
+    testUtil.assertCannotReloadCores();
+    forceClearText = false;
+    soleKeyIdAllowed = KEY_ID_2;
+    testUtil.reloadCores();
     testUtil.assertQueryReturns("weather", 3);
   }
 
@@ -193,41 +193,48 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     testUtil.indexDocsAndCommit("foggy weather");
 
     // Send an encrypt request with no key id.
-    NamedList<Object> response = encrypt(NO_KEY_ID);
-    assertEquals(STATUS_SUCCESS, response.get(STATUS));
-    assertEquals(STATE_PENDING, response.get(ENCRYPTION_STATE));
+    EncryptionStatus encryptionStatus = encrypt(NO_KEY_ID);
+    assertTrue(encryptionStatus.success);
+    assertFalse(encryptionStatus.complete);
 
     waitUntilEncryptionIsComplete(NO_KEY_ID);
 
     // Verify that the segment is cleartext.
-    mockDir.forceClearText = true;
-    testUtil.reloadCore();
+    forceClearText = true;
+    testUtil.reloadCores();
     testUtil.assertQueryReturns("weather", 3);
-    mockDir.clearMockValues();
+    clearMockValues();
 
     // Index some documents to ensure we have at least two segments.
     testUtil.indexDocsAndCommit("cloudy weather");
 
     // Send an encrypt request with another key id.
-    response = encrypt(KEY_ID_2);
-    assertEquals(STATUS_SUCCESS, response.get(STATUS));
-    assertEquals(STATE_PENDING, response.get(ENCRYPTION_STATE));
+    encryptionStatus = encrypt(KEY_ID_2);
+    assertTrue(encryptionStatus.success);
+    assertFalse(encryptionStatus.complete);
 
     waitUntilEncryptionIsComplete(KEY_ID_2);
 
     // Verify that the segment is encrypted.
-    mockDir.forceClearText = true;
-    testUtil.assertCannotReloadCore();
-    mockDir.forceClearText = false;
-    mockDir.soleKeyIdAllowed = KEY_ID_2;
-    testUtil.reloadCore();
+    forceClearText = true;
+    testUtil.assertCannotReloadCores();
+    forceClearText = false;
+    soleKeyIdAllowed = KEY_ID_2;
+    testUtil.reloadCores();
     testUtil.assertQueryReturns("weather", 4);
   }
 
-  private NamedList<Object> encrypt(String keyId) throws Exception {
+  private EncryptionStatus encrypt(String keyId) {
     ModifiableSolrParams params = new ModifiableSolrParams();
     params.set(PARAM_KEY_ID, keyId);
-    return solrClient.request(new GenericSolrRequest(SolrRequest.METHOD.GET, "/admin/encrypt", params));
+    GenericSolrRequest encryptRequest = new GenericSolrRequest(SolrRequest.METHOD.GET, "/admin/encrypt", params);
+    EncryptionStatus encryptionStatus = new EncryptionStatus();
+    testUtil.forAllReplicas(replica -> {
+      NamedList<Object> response = testUtil.requestCore(encryptRequest, replica);
+      encryptionStatus.success &= response.get(STATUS).equals(STATUS_SUCCESS);
+      encryptionStatus.complete &= response.get(ENCRYPTION_STATE).equals(STATE_COMPLETE);
+    });
+    return encryptionStatus;
   }
 
   private void waitUntilEncryptionIsComplete(String keyId) throws InterruptedException {
@@ -236,15 +243,20 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
                          100,
                          TimeUnit.MILLISECONDS,
                          () -> {
-                           NamedList<Object> response;
+                           EncryptionStatus encryptionStatus;
                            try {
-                             response = encrypt(keyId);
+                             encryptionStatus = encrypt(keyId);
                            } catch (Exception e) {
                              throw new RuntimeException(e);
                            }
-                           assertEquals(STATUS_SUCCESS, response.get(STATUS));
-                           return response.get(ENCRYPTION_STATE).equals(STATE_COMPLETE);
+                           assertTrue(encryptionStatus.success);
+                           return encryptionStatus.complete;
                          });
+  }
+
+  private static void clearMockValues() {
+    forceClearText = false;
+    soleKeyIdAllowed = null;
   }
 
   public static class MockFactory implements EncryptionDirectoryFactory.InnerFactory {
@@ -252,23 +264,15 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     public EncryptionDirectory create(Directory delegate,
                                       AesCtrEncrypterFactory encrypterFactory,
                                       KeySupplier keySupplier) throws IOException {
-      return mockDir = new MockEncryptionDirectory(delegate, encrypterFactory, keySupplier);
+      return new MockEncryptionDirectory(delegate, encrypterFactory, keySupplier);
     }
   }
 
   private static class MockEncryptionDirectory extends EncryptionDirectory {
 
-    boolean forceClearText;
-    String soleKeyIdAllowed;
-
     MockEncryptionDirectory(Directory delegate, AesCtrEncrypterFactory encrypterFactory, KeySupplier keySupplier)
       throws IOException {
       super(delegate, encrypterFactory, keySupplier);
-    }
-
-    void clearMockValues() {
-      forceClearText = false;
-      soleKeyIdAllowed = null;
     }
 
     @Override
@@ -300,5 +304,10 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
         return data;
       }
     }
+  }
+
+  public static class EncryptionStatus {
+    public boolean success = true;
+    public boolean complete = true;
   }
 }

@@ -19,7 +19,6 @@ package org.apache.solr.encryption;
 import com.carrotsearch.randomizedtesting.generators.RandomStrings;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
-import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
 import org.apache.solr.client.solrj.request.GenericSolrRequest;
@@ -35,19 +34,18 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 import static org.apache.solr.encryption.EncryptionRequestHandler.*;
+import static org.apache.solr.encryption.EncryptionRequestHandlerTest.EncryptionStatus;
 import static org.apache.solr.encryption.TestingKeySupplier.*;
 
 /**
@@ -78,7 +76,9 @@ public class EncryptionHeavyLoadTest extends SolrCloudTestCase {
   private static final String COLLECTION_PREFIX = EncryptionHeavyLoadTest.class.getSimpleName() + "-collection-";
   private static final String SYSTEM_OUTPUT_MARKER = "*** ";
 
+  private volatile String collectionName;
   private volatile CloudSolrClient solrClient;
+  private volatile EncryptionTestUtil testUtil;
   private volatile boolean stopTest;
   private volatile Dictionary dictionary;
   private List<Thread> threads;
@@ -91,9 +91,9 @@ public class EncryptionHeavyLoadTest extends SolrCloudTestCase {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    TestUtil.setInstallDirProperty();
-    cluster = new MiniSolrCloudCluster.Builder(1, createTempDir())
-      .addConfig("config", TestUtil.getConfigPath("collection1"))
+    EncryptionTestUtil.setInstallDirProperty();
+    cluster = new MiniSolrCloudCluster.Builder(2, createTempDir())
+      .addConfig("config", EncryptionTestUtil.getConfigPath("collection1"))
       .configure();
   }
 
@@ -105,11 +105,11 @@ public class EncryptionHeavyLoadTest extends SolrCloudTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    String collectionName = COLLECTION_PREFIX + UUID.randomUUID();
+    collectionName = COLLECTION_PREFIX + random().nextLong();
     solrClient = cluster.getSolrClient();
-    solrClient.setDefaultCollection(collectionName);
-    CollectionAdminRequest.createCollection(collectionName, 1, 1).process(solrClient);
-    cluster.waitForActiveCollection(collectionName, 1, 1);
+    CollectionAdminRequest.createCollection(collectionName, 2, 2).process(solrClient);
+    cluster.waitForActiveCollection(collectionName, 2, 4);
+    testUtil = new EncryptionTestUtil(solrClient, collectionName);
     dictionary = new Dictionary.Builder().build(DICTIONARY_SIZE, random());
     threads = new ArrayList<>();
   }
@@ -191,18 +191,18 @@ public class EncryptionHeavyLoadTest extends SolrCloudTestCase {
   }
 
   private boolean encrypt(String keyId, boolean waitForCompletion) throws Exception {
-    NamedList<Object> response = sendEncryptionRequest(keyId);
-    if (response.get(ENCRYPTION_STATE).equals(STATE_PENDING)) {
+    EncryptionStatus encryptionStatus = sendEncryptionRequests(keyId);
+    if (!encryptionStatus.complete) {
       if (!waitForCompletion) {
         return false;
       }
       print("waiting for encryption completion for keyId=" + keyId);
-      while (response.get(ENCRYPTION_STATE).equals(STATE_PENDING)) {
+      while (!encryptionStatus.complete) {
         if (isTimeElapsed()) {
           return false;
         }
         Thread.sleep(500);
-        response = sendEncryptionRequest(keyId);
+        encryptionStatus = sendEncryptionRequests(keyId);
       }
       print("encryption complete for keyId=" + keyId);
     }
@@ -213,12 +213,18 @@ public class EncryptionHeavyLoadTest extends SolrCloudTestCase {
     return random.nextFloat() <= PROBABILITY_OF_WAITING_ENCRYPTION_COMPLETION;
   }
 
-  private NamedList<Object> sendEncryptionRequest(String keyId) throws SolrServerException, IOException {
+  private EncryptionStatus sendEncryptionRequests(String keyId) {
     ModifiableSolrParams params = new ModifiableSolrParams();
     params.set(PARAM_KEY_ID, keyId);
-    NamedList<Object> response = solrClient.request(new GenericSolrRequest(SolrRequest.METHOD.GET, "/admin/encrypt", params));
-    print("encrypt keyId=" + keyId + " => response status=" + response.get(STATUS) + " state=" + response.get(ENCRYPTION_STATE));
-    return response;
+    GenericSolrRequest encryptRequest = new GenericSolrRequest(SolrRequest.METHOD.GET, "/admin/encrypt", params);
+    EncryptionStatus encryptionStatus = new EncryptionStatus();
+    testUtil.forAllReplicas(replica -> {
+      NamedList<Object> response = testUtil.requestCore(encryptRequest, replica);
+      encryptionStatus.success &= response.get(STATUS).equals(STATUS_SUCCESS);
+      encryptionStatus.complete &= response.get(ENCRYPTION_STATE).equals(STATE_COMPLETE);
+    });
+    print("encrypt keyId=" + keyId + " => response success=" + encryptionStatus.success + " complete=" + encryptionStatus.complete);
+    return encryptionStatus;
   }
 
   private static void print(String message) {
@@ -246,7 +252,7 @@ public class EncryptionHeavyLoadTest extends SolrCloudTestCase {
       Dictionary build(int size, Random random) {
         Set<String> terms = new HashSet<>();
         for (int i = 0; i < size;) {
-          String term = RandomStrings.randomUnicodeOfCodepointLengthBetween(random, 4, 12);
+          String term = RandomStrings.randomAsciiLettersOfLengthBetween(random, 4, 12);
           if (terms.add(term)) {
             i++;
           }
@@ -279,10 +285,10 @@ public class EncryptionHeavyLoadTest extends SolrCloudTestCase {
             docs.add(createDoc(random));
           }
           totalDocs += docs.size();
-          solrClient.add(docs);
+          solrClient.add(collectionName, docs);
           if (random.nextFloat() <= PROBABILITY_OF_COMMIT_PER_BATCH) {
             numCommits++;
-            solrClient.commit();
+            solrClient.commit(collectionName);
           }
           if (++numBatches % 10 == 0) {
             threadPrint("sent " + numBatches + " indexing batches, totalDocs=" + totalDocs + ", numCommits=" + numCommits);
@@ -330,7 +336,7 @@ public class EncryptionHeavyLoadTest extends SolrCloudTestCase {
           QueryResponse response = null;
           do {
             try {
-              response = solrClient.query(new SolrQuery(dictionary.getTerm(random)));
+              response = solrClient.query(collectionName, new SolrQuery(dictionary.getTerm(random)));
             } catch (Exception e) {
               // Some queries might not be parseable due to the random terms. Just retry with another term.
             }
