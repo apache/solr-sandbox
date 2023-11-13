@@ -18,7 +18,6 @@ package org.apache.solr.encryption.crypto;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 
 import static org.apache.solr.encryption.crypto.AesCtrUtil.AES_BLOCK_SIZE;
 import static org.apache.solr.encryption.crypto.AesCtrUtil.IV_LENGTH;
@@ -40,10 +39,12 @@ public class DecryptingInputStream extends InputStream {
   private final InputStream inputStream;
   private final byte[] iv;
   private final AesCtrEncrypter encrypter;
-  private final ByteBuffer inBuffer;
-  private final ByteBuffer outBuffer;
-  private final byte[] inArray;
+  private final byte[] inBuffer;
+  private final byte[] outBuffer;
   private final byte[] oneByteBuf;
+  private int inPos;
+  private int outPos;
+  private int outSize;
   private int padding;
   private boolean closed;
 
@@ -75,16 +76,35 @@ public class DecryptingInputStream extends InputStream {
                                byte[] key,
                                AesCtrEncrypterFactory factory)
     throws IOException {
+    this(inputStream, position, iv, key, factory, BUFFER_CAPACITY);
+  }
+
+  /**
+   * @param inputStream The delegate {@link InputStream} to read and decrypt data from.
+   * @param position    The position in the input stream. A non-zero position means the
+   *                    input skips the beginning of the file, in this case the iv should
+   *                    be provided and not null.
+   * @param iv          The IV to use (not read) if the position is greater than zero;
+   *                    or null to read it at the beginning of the input.
+   * @param key         The encryption key secret. It is cloned internally, its content
+   *                    is not modified, and no reference to it is kept.
+   * @param factory     The factory to use to create one instance of {@link AesCtrEncrypter}.
+   * @param bufferCapacity The encryption buffer capacity. It must be a multiple of {@link AesCtrUtil#AES_BLOCK_SIZE}.
+   */
+  public DecryptingInputStream(InputStream inputStream,
+                               long position,
+                               byte[] iv,
+                               byte[] key,
+                               AesCtrEncrypterFactory factory,
+                               int bufferCapacity)
+    throws IOException {
     if (position < 0) {
       throw new IllegalArgumentException("Invalid position " + position);
     }
     this.inputStream = inputStream;
-    inBuffer = ByteBuffer.allocate(BUFFER_CAPACITY);
-    outBuffer = ByteBuffer.allocate(BUFFER_CAPACITY + AES_BLOCK_SIZE);
-    outBuffer.limit(0);
-    assert inBuffer.hasArray() && outBuffer.hasArray();
-    assert inBuffer.arrayOffset() == 0;
-    inArray = inBuffer.array();
+    assert bufferCapacity % AES_BLOCK_SIZE == 0;
+    inBuffer = new byte[bufferCapacity];
+    outBuffer = new byte[bufferCapacity + AES_BLOCK_SIZE];
     oneByteBuf = new byte[1];
     long counter;
     if (position == 0) {
@@ -100,7 +120,7 @@ public class DecryptingInputStream extends InputStream {
     } else {
       counter = position / AES_BLOCK_SIZE;
       padding = (int) (position & AES_BLOCK_SIZE_MOD_MASK);
-      inBuffer.position(padding);
+      inPos = padding;
     }
     this.iv = iv;
     encrypter = factory.create(key, iv);
@@ -138,20 +158,20 @@ public class DecryptingInputStream extends InputStream {
     int numDecrypted = 0;
     while (length > 0) {
       // Transfer decrypted bytes from outBuffer.
-      int outRemaining = outBuffer.remaining();
+      int outRemaining = outSize - outPos;
       if (outRemaining > 0) {
         if (length <= outRemaining) {
-          outBuffer.get(b, offset, length);
+          System.arraycopy(outBuffer, outPos, b, offset, length);
+          outPos += length;
           numDecrypted += length;
           return numDecrypted;
         }
-        outBuffer.get(b, offset, outRemaining);
+        System.arraycopy(outBuffer, outPos, b, offset, outRemaining);
+        outPos += outRemaining;
         numDecrypted += outRemaining;
-        assert outBuffer.remaining() == 0;
         offset += outRemaining;
         length -= outRemaining;
       }
-
       if (!readToFillBuffer(length)) {
         return numDecrypted == 0 ? -1 : numDecrypted;
       }
@@ -162,29 +182,24 @@ public class DecryptingInputStream extends InputStream {
 
   private boolean readToFillBuffer(int length) throws IOException {
     assert length > 0;
-    int inRemaining = inBuffer.remaining();
+    int inRemaining = inBuffer.length - inPos;
     if (inRemaining > 0) {
-      int position = inBuffer.position();
       int numBytesToRead = Math.min(inRemaining, length);
-      int n = inputStream.read(inArray, position, numBytesToRead);
+      int n = inputStream.read(inBuffer, inPos, numBytesToRead);
       if (n == -1) {
         return false;
       }
-      inBuffer.position(position + n);
+      inPos += n;
     }
     return true;
   }
 
   private void decryptBuffer() {
-    assert inBuffer.position() > padding : "position=" + inBuffer.position() + ", padding=" + padding;
-    inBuffer.flip();
-    outBuffer.clear();
-    encrypter.process(inBuffer, outBuffer);
-    inBuffer.clear();
-    outBuffer.flip();
-    if (padding > 0) {
-      outBuffer.position(padding);
-      padding = 0;
-    }
+    assert inPos > padding : "inPos=" + inPos + " padding=" + padding;
+    encrypter.process(inBuffer, 0, inPos, outBuffer, 0);
+    outSize = inPos;
+    inPos = 0;
+    outPos = padding;
+    padding = 0;
   }
 }

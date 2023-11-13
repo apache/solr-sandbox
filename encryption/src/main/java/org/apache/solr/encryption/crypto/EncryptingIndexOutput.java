@@ -20,7 +20,6 @@ import org.apache.lucene.store.BufferedChecksum;
 import org.apache.lucene.store.IndexOutput;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
 
@@ -42,15 +41,15 @@ public class EncryptingIndexOutput extends IndexOutput {
   /**
    * Must be a multiple of {@link AesCtrUtil#AES_BLOCK_SIZE}.
    */
-  static final int BUFFER_CAPACITY = 64 * AES_BLOCK_SIZE; // 1024
+  public static final int BUFFER_CAPACITY = 64 * AES_BLOCK_SIZE; // 1024
 
   private final IndexOutput indexOutput;
   private final AesCtrEncrypter encrypter;
-  private final ByteBuffer inBuffer;
-  private final ByteBuffer outBuffer;
-  private final byte[] outArray;
+  private final byte[] inBuffer;
+  private final byte[] outBuffer;
   private final byte[] oneByteBuf;
   private final Checksum clearChecksum;
+  private int inSize;
   private long filePointer;
   private boolean closed;
 
@@ -62,7 +61,26 @@ public class EncryptingIndexOutput extends IndexOutput {
    *                    reference to it is kept.
    * @param factory     The factory to use to create one instance of {@link AesCtrEncrypter}. This instance may be cloned.
    */
-  public EncryptingIndexOutput(IndexOutput indexOutput, byte[] key, AesCtrEncrypterFactory factory) throws IOException {
+  public EncryptingIndexOutput(IndexOutput indexOutput, byte[] key, AesCtrEncrypterFactory factory)
+    throws IOException {
+    this(indexOutput, key, factory, BUFFER_CAPACITY);
+  }
+
+  /**
+   * @param indexOutput    The delegate {@link IndexOutput} to write encrypted data to. Its current file pointer may be
+   *                       greater than or equal to zero, this allows for example the caller to first write some special
+   *                       encryption header followed by a key id, to identify the key secret used to encrypt.
+   * @param key            The encryption key secret. It is cloned internally, its content is not modified, and no
+   *                       reference to it is kept.
+   * @param factory        The factory to use to create one instance of {@link AesCtrEncrypter}. This instance may be
+   *                       cloned.
+   * @param bufferCapacity The encryption buffer capacity. It must be a multiple of {@link AesCtrUtil#AES_BLOCK_SIZE}.
+   */
+  public EncryptingIndexOutput(IndexOutput indexOutput,
+                               byte[] key,
+                               AesCtrEncrypterFactory factory,
+                               int bufferCapacity)
+    throws IOException {
     super("Encrypting " + indexOutput.toString(), indexOutput.getName());
     this.indexOutput = indexOutput;
 
@@ -72,14 +90,10 @@ public class EncryptingIndexOutput extends IndexOutput {
     // IV is written at the beginning of the index output. It's public.
     // Even if the delegate indexOutput is positioned after the initial IV, this index output file pointer is 0 initially.
     indexOutput.writeBytes(iv, 0, iv.length);
-
-    inBuffer = ByteBuffer.allocate(getBufferCapacity());
-    outBuffer = ByteBuffer.allocate(getBufferCapacity() + AES_BLOCK_SIZE);
-    assert inBuffer.hasArray() && outBuffer.hasArray();
-    assert outBuffer.arrayOffset() == 0;
-    outArray = outBuffer.array();
+    assert bufferCapacity % AES_BLOCK_SIZE == 0;
+    inBuffer = new byte[bufferCapacity];
+    outBuffer = new byte[bufferCapacity];
     oneByteBuf = new byte[1];
-
     // Compute the checksum to skip the initial IV, because an external checksum checker will not see it.
     clearChecksum = new BufferedChecksum(new CRC32());
   }
@@ -91,19 +105,12 @@ public class EncryptingIndexOutput extends IndexOutput {
     return generateRandomAesCtrIv(SecureRandomProvider.get());
   }
 
-  /**
-   * Gets the buffer capacity. It must be a multiple of {@link AesCtrUtil#AES_BLOCK_SIZE}.
-   */
-  protected int getBufferCapacity() {
-    return BUFFER_CAPACITY;
-  }
-
   @Override
   public void close() throws IOException {
     if (!closed) {
       closed = true;
       try {
-        if (inBuffer.position() != 0) {
+        if (inSize != 0) {
           encryptBufferAndWrite();
         }
       } finally {
@@ -139,12 +146,14 @@ public class EncryptingIndexOutput extends IndexOutput {
     clearChecksum.update(b, offset, length);
     filePointer += length;
     while (length > 0) {
-      int remaining = inBuffer.remaining();
+      int remaining = inBuffer.length - inSize;
       if (length < remaining) {
-        inBuffer.put(b, offset, length);
+        System.arraycopy(b, offset, inBuffer, inSize, length);
+        inSize += length;
         break;
       } else {
-        inBuffer.put(b, offset, remaining);
+        System.arraycopy(b, offset, inBuffer, inSize, remaining);
+        inSize += remaining;
         offset += remaining;
         length -= remaining;
         encryptBufferAndWrite();
@@ -153,12 +162,9 @@ public class EncryptingIndexOutput extends IndexOutput {
   }
 
   private void encryptBufferAndWrite() throws IOException {
-    assert inBuffer.position() != 0;
-    inBuffer.flip();
-    outBuffer.clear();
-    encrypter.process(inBuffer, outBuffer);
-    inBuffer.clear();
-    outBuffer.flip();
-    indexOutput.writeBytes(outArray, 0, outBuffer.limit());
+    assert inSize > 0;
+    encrypter.process(inBuffer, 0, inSize, outBuffer, 0);
+    indexOutput.writeBytes(outBuffer, 0, inSize);
+    inSize = 0;
   }
 }

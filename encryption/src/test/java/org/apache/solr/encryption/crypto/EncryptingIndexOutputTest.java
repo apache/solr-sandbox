@@ -61,13 +61,8 @@ public class EncryptingIndexOutputTest extends BaseDataOutputTestCase<Encrypting
     OutputStreamIndexOutput delegateIndexOutput = new OutputStreamIndexOutput("test", "test", baos, 10);
     byte[] key = new byte[32];
     Arrays.fill(key, (byte) 1);
-    EncryptingIndexOutput indexOutput = new EncryptingIndexOutput(delegateIndexOutput, key, encrypterFactory()) {
-      @Override
-      protected int getBufferCapacity() {
-        // Reduce the buffer capacity to make sure we often write to the index output.
-        return AesCtrUtil.AES_BLOCK_SIZE;
-      }
-    };
+    // Reduce the buffer capacity to make sure we often write to the index output.
+    EncryptingIndexOutput indexOutput = new EncryptingIndexOutput(delegateIndexOutput, key, encrypterFactory(), AesCtrUtil.AES_BLOCK_SIZE);
     indexOutput.writeByte((byte) 3);
     // Check same file pointer.
     assertEquals(1, indexOutput.getFilePointer());

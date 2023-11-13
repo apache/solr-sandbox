@@ -20,7 +20,6 @@ import org.apache.lucene.store.IndexInput;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 import static org.apache.solr.encryption.crypto.AesCtrUtil.*;
 
@@ -40,7 +39,7 @@ public class DecryptingIndexInput extends IndexInput {
    * Must be a multiple of {@link AesCtrUtil#AES_BLOCK_SIZE}.
    * Benchmarks showed that 6 x {@link AesCtrUtil#AES_BLOCK_SIZE} is a good buffer size.
    */
-  static final int BUFFER_CAPACITY = 6 * AES_BLOCK_SIZE; // 96 B
+  public static final int BUFFER_CAPACITY = 6 * AES_BLOCK_SIZE; // 96 B
 
   static final long AES_BLOCK_SIZE_MOD_MASK = AES_BLOCK_SIZE - 1;
 
@@ -51,10 +50,12 @@ public class DecryptingIndexInput extends IndexInput {
   private final long sliceEnd;
   private IndexInput indexInput;
   private AesCtrEncrypter encrypter;
-  private ByteBuffer inBuffer;
-  private ByteBuffer outBuffer;
-  private byte[] inArray;
+  private byte[] inBuffer;
+  private byte[] outBuffer;
   private byte[] oneByteBuf;
+  private int inPos;
+  private int outPos;
+  private int outSize;
   private int padding;
   private boolean closed;
 
@@ -67,13 +68,30 @@ public class DecryptingIndexInput extends IndexInput {
    * @param factory    The factory to use to create one instance of {@link AesCtrEncrypter}. This instance may be cloned.
    */
   public DecryptingIndexInput(IndexInput indexInput, byte[] key, AesCtrEncrypterFactory factory) throws IOException {
+    this(indexInput, key, factory, BUFFER_CAPACITY);
+  }
+
+  /**
+   * @param indexInput The delegate {@link IndexInput} to read and decrypt data from. Its current file pointer may be
+   *                   greater than or equal to zero, this allows for example the caller to first read some special
+   *                   encryption header followed by a key id to retrieve the key secret.
+   * @param key        The encryption key secret. It is cloned internally, its content is not modified, and no
+   *                   reference to it is kept.
+   * @param factory    The factory to use to create one instance of {@link AesCtrEncrypter}. This instance may be cloned.
+   * @param bufferCapacity The encryption buffer capacity. It must be a multiple of {@link AesCtrUtil#AES_BLOCK_SIZE}.
+   */
+  public DecryptingIndexInput(IndexInput indexInput,
+                              byte[] key,
+                              AesCtrEncrypterFactory factory,
+                              int bufferCapacity) throws IOException {
     this("Decrypting " + indexInput.toString(),
-      indexInput.getFilePointer() + IV_LENGTH,
-      indexInput.getFilePointer() + IV_LENGTH,
-      indexInput.length() - indexInput.getFilePointer() - IV_LENGTH,
-      false,
-      indexInput,
-      createEncrypter(indexInput, key, factory));
+         indexInput.getFilePointer() + IV_LENGTH,
+         indexInput.getFilePointer() + IV_LENGTH,
+         indexInput.length() - indexInput.getFilePointer() - IV_LENGTH,
+         false,
+         indexInput,
+         createEncrypter(indexInput, key, factory),
+         bufferCapacity);
   }
 
   private DecryptingIndexInput(String resourceDescription,
@@ -82,7 +100,8 @@ public class DecryptingIndexInput extends IndexInput {
                                long sliceLength,
                                boolean isClone,
                                IndexInput indexInput,
-                               AesCtrEncrypter encrypter) {
+                               AesCtrEncrypter encrypter,
+                               int bufferCapacity) {
     super(resourceDescription);
     assert delegateOffset >= 0 && sliceOffset >= 0 && sliceLength >= 0;
     this.delegateOffset = delegateOffset;
@@ -92,12 +111,9 @@ public class DecryptingIndexInput extends IndexInput {
     this.indexInput = indexInput;
     this.encrypter = encrypter;
     encrypter.init(0);
-    inBuffer = ByteBuffer.allocate(BUFFER_CAPACITY);
-    outBuffer = ByteBuffer.allocate(BUFFER_CAPACITY + AES_BLOCK_SIZE);
-    outBuffer.limit(0);
-    assert inBuffer.hasArray() && outBuffer.hasArray();
-    assert inBuffer.arrayOffset() == 0;
-    inArray = inBuffer.array();
+    assert bufferCapacity % AES_BLOCK_SIZE == 0;
+    inBuffer = new byte[bufferCapacity];
+    outBuffer = new byte[bufferCapacity + AES_BLOCK_SIZE];
     oneByteBuf = new byte[1];
   }
 
@@ -132,7 +148,7 @@ public class DecryptingIndexInput extends IndexInput {
    * Gets the current internal position in the delegate {@link IndexInput}. It includes IV length.
    */
   private long getPosition() {
-    return indexInput.getFilePointer() - outBuffer.remaining();
+    return indexInput.getFilePointer() - (outSize - outPos);
   }
 
   @Override
@@ -145,11 +161,11 @@ public class DecryptingIndexInput extends IndexInput {
     }
     long targetPosition = position + sliceOffset;
     long delegatePosition = indexInput.getFilePointer();
-    long currentPosition = delegatePosition - outBuffer.remaining();
+    long currentPosition = delegatePosition - (outSize - outPos);
     if (targetPosition >= currentPosition && targetPosition <= delegatePosition) {
       // The target position is within the buffered output. Just move the output buffer position.
-      outBuffer.position(outBuffer.position() + (int) (targetPosition - currentPosition));
-      assert targetPosition == delegatePosition - outBuffer.remaining();
+      outPos += (int) (targetPosition - currentPosition);
+      assert targetPosition == delegatePosition - (outSize - outPos);
     } else {
       indexInput.seek(targetPosition);
       setPosition(targetPosition);
@@ -157,15 +173,13 @@ public class DecryptingIndexInput extends IndexInput {
   }
 
   private void setPosition(long position) {
-    inBuffer.clear();
-    outBuffer.clear();
-    outBuffer.limit(0);
+    outPos = outSize = 0;
     // Compute the counter by ignoring the IV and the delegate offset, if any.
     long delegatePosition = position - delegateOffset;
     long counter = delegatePosition / AES_BLOCK_SIZE;
     encrypter.init(counter);
     padding = (int) (delegatePosition & AES_BLOCK_SIZE_MOD_MASK);
-    inBuffer.position(padding);
+    inPos = padding;
   }
 
   /**
@@ -185,8 +199,9 @@ public class DecryptingIndexInput extends IndexInput {
       throw new IllegalArgumentException("Slice \"" + sliceDescription + "\" out of bounds (offset=" + offset
         + ", sliceLength=" + length + ", fileLength=" + length() + ") of " + this);
     }
-    DecryptingIndexInput slice = new DecryptingIndexInput(getFullSliceDescription(sliceDescription),
-      delegateOffset, sliceOffset + offset, length, true, indexInput.clone(), encrypter.clone());
+    DecryptingIndexInput slice = new DecryptingIndexInput(
+      getFullSliceDescription(sliceDescription), delegateOffset, sliceOffset + offset, length, true,
+      indexInput.clone(), encrypter.clone(), inBuffer.length);
     slice.seek(0);
     return slice;
   }
@@ -209,18 +224,18 @@ public class DecryptingIndexInput extends IndexInput {
     }
     while (length > 0) {
       // Transfer decrypted bytes from outBuffer.
-      int outRemaining = outBuffer.remaining();
+      int outRemaining = outSize - outPos;
       if (outRemaining > 0) {
         if (length <= outRemaining) {
-          outBuffer.get(b, offset, length);
+          System.arraycopy(outBuffer, outPos, b, offset, length);
+          outPos += length;
           return;
         }
-        outBuffer.get(b, offset, outRemaining);
-        assert outBuffer.remaining() == 0;
+        System.arraycopy(outBuffer, outPos, b, offset, outRemaining);
+        outPos += outRemaining;
         offset += outRemaining;
         length -= outRemaining;
       }
-
       readToFillBuffer(length);
       decryptBuffer();
     }
@@ -228,26 +243,21 @@ public class DecryptingIndexInput extends IndexInput {
 
   private void readToFillBuffer(int length) throws IOException {
     assert length > 0;
-    int inRemaining = inBuffer.remaining();
+    int inRemaining = inBuffer.length - inPos;
     if (inRemaining > 0) {
-      int position = inBuffer.position();
       int numBytesToRead = Math.min(inRemaining, length);
-      indexInput.readBytes(inArray, position, numBytesToRead);
-      inBuffer.position(position + numBytesToRead);
+      indexInput.readBytes(inBuffer, inPos, numBytesToRead);
+      inPos += numBytesToRead;
     }
   }
 
   private void decryptBuffer() {
-    assert inBuffer.position() > padding : "position=" + inBuffer.position() + ", padding=" + padding;
-    inBuffer.flip();
-    outBuffer.clear();
-    encrypter.process(inBuffer, outBuffer);
-    inBuffer.clear();
-    outBuffer.flip();
-    if (padding > 0) {
-      outBuffer.position(padding);
-      padding = 0;
-    }
+    assert inPos > padding : "inPos=" + inPos + " padding=" + padding;
+    encrypter.process(inBuffer, 0, inPos, outBuffer, 0);
+    outSize = inPos;
+    inPos = 0;
+    outPos = padding;
+    padding = 0;
   }
 
   @Override
@@ -257,9 +267,8 @@ public class DecryptingIndexInput extends IndexInput {
     clone.indexInput = indexInput.clone();
     assert clone.indexInput.getFilePointer() == indexInput.getFilePointer();
     clone.encrypter = encrypter.clone();
-    clone.inBuffer = ByteBuffer.allocate(BUFFER_CAPACITY);
-    clone.outBuffer = ByteBuffer.allocate(BUFFER_CAPACITY + AES_BLOCK_SIZE);
-    clone.inArray = clone.inBuffer.array();
+    clone.inBuffer = new byte[inBuffer.length];
+    clone.outBuffer = new byte[outBuffer.length];
     clone.oneByteBuf = new byte[1];
     // The clone must be initialized.
     clone.setPosition(getPosition());

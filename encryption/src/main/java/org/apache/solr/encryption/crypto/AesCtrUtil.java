@@ -32,41 +32,47 @@ public class AesCtrUtil {
    * AES/CTR IV length. It is equal to {@link #AES_BLOCK_SIZE}. It is defined separately mainly for code clarity.
    */
   public static final int IV_LENGTH = AES_BLOCK_SIZE;
+  /** CTR counter length. 5 bytes means we can encrypt files up to 2^(5 x 8) x 16 B = 17.5 TB */
+  private static final int COUNTER_LENGTH = 5;
+  private static final long COUNTER_MAX_VALUE = (1L << (COUNTER_LENGTH * Byte.SIZE)) - 1;
 
   /**
    * Checks a key for AES. Its length must be either 16, 24 or 32 bytes.
+   * @return true
+   * @throws IllegalArgumentException If the key length is invalid.
    */
-  public static void checkAesKey(byte[] key) {
+  public static boolean checkAesKey(byte[] key) {
     if (key.length != 16 && key.length != 24 && key.length != 32) {
       // AES requires either 128, 192 or 256 bits keys.
       throw new IllegalArgumentException("Invalid AES key length; it must be either 128, 192 or 256 bits long");
     }
+    return true;
   }
 
   /**
-   * Checks the CTR counter. It must be positive or null.
+   * Checks the CTR counter. It must be greater than or equal to 0, and less than or equal to
+   * {@link #COUNTER_MAX_VALUE}.
+   * @return true
+   * @throws IllegalArgumentException If the counter is invalid.
    */
-  public static void checkCtrCounter(long counter) {
-    if (counter < 0) {
-      throw new IllegalArgumentException("Illegal counter=" + counter);
+  public static boolean checkCtrCounter(long counter) {
+    if (counter < 0 || counter > COUNTER_MAX_VALUE) {
+      throw new IllegalArgumentException("Invalid counter=" + counter);
     }
+    return true;
   }
 
   /**
    * Generates a random IV for AES/CTR of length {@link #IV_LENGTH}.
    */
   public static byte[] generateRandomAesCtrIv(SecureRandom secureRandom) {
-    // IV length must be the AES block size.
-    // IV must be random for the CTR mode. It starts with counter 0, so it's simply IV.
+    // The IV length must be the AES block size.
+    // For the CTR mode, the IV is composed of a random NONCE (first bytes) and a counter (last bytes).
+    // com.sun.crypto.provider.CounterMode.increment() increments the counter starting from the last byte.
+    byte[] nonce = new byte[IV_LENGTH - COUNTER_LENGTH];
+    secureRandom.nextBytes(nonce);
     byte[] iv = new byte[IV_LENGTH];
-    do {
-      secureRandom.nextBytes(iv);
-      // Ensure that we have enough bits left to allow the 8 bytes counter to add with the carry.
-      // The high-order byte is at index 0.
-      // We check that there is at least one unset bit in the 3 highest bytes. It guarantees
-      // that we can add with the carry at least 5 bytes of the counter, which means we handle
-      // files of at least 2^(5*8) * 2 * 16 B = 35,000 GB.
-    } while (iv[0] == -1 && iv[1] == -1 && iv[2] == -1);
+    System.arraycopy(nonce, 0, iv, 0, nonce.length);
     return iv;
   }
 
@@ -74,20 +80,13 @@ public class AesCtrUtil {
    * Builds an AES/CTR IV based on the provided counter and an initial IV.
    * The built IV is the same as with {@code com.sun.crypto.provider.CounterMode.increment()}.
    */
-  public static void buildAesCtrIv(byte[] initialIv, long counter, byte[] iv) {
-    assert initialIv.length == IV_LENGTH && iv.length == IV_LENGTH;
-    int ivIndex = iv.length;
-    int counterIndex = 0;
-    int sum = 0;
-    while (ivIndex-- > 0) {
-      // (sum >>> Byte.SIZE) is the carry for counter addition.
-      sum = (initialIv[ivIndex] & 0xff) + (sum >>> Byte.SIZE);
-      // Add long counter.
-      if (counterIndex++ < 8) {
-        sum += (byte) counter & 0xff;
-        counter >>>= 8;
-      }
-      iv[ivIndex] = (byte) sum;
-    }
+  public static void buildAesCtrIv(byte[] iv, long counter) {
+    assert iv.length == IV_LENGTH;
+    assert checkCtrCounter(counter);
+    iv[iv.length - 1] = (byte) counter;
+    iv[iv.length - 2] = (byte) (counter >>= 8);
+    iv[iv.length - 3] = (byte) (counter >>= 8);
+    iv[iv.length - 4] = (byte) (counter >>= 8);
+    iv[iv.length - 5] = (byte) (counter >> 8);
   }
 }

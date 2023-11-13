@@ -16,13 +16,11 @@
  */
 package org.apache.solr.encryption.crypto;
 
-import java.nio.ByteBuffer;
-
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import org.junit.Test;
 
-import static junit.framework.TestCase.assertEquals;
 import static org.apache.solr.encryption.crypto.AesCtrUtil.*;
+import static org.junit.Assert.assertArrayEquals;
 
 /**
  * Tests {@link AesCtrEncrypter} implementations.
@@ -35,21 +33,25 @@ public class AesCtrEncrypterTest extends RandomizedTest {
    */
   @Test
   public void testEncryptionDecryption() {
-    for (int i = 0; i < 100; i++) {
-      ByteBuffer clearData = generateRandomData(randomIntBetween(5000, 10000));
-      byte[] key = randomBytesOfLength(randomIntBetween(2, 4) * 8);
-      byte[] iv = generateRandomAesCtrIv(SecureRandomProvider.get());
-      AesCtrEncrypter encrypter1 = encrypterFactory().create(key, iv);
-      AesCtrEncrypter encrypter2 = encrypterFactory().create(key, iv);
+    for (int i = 0; i < 3000; i++) {
+      try {
+        byte[] clearData = generateRandomBytes(randomIntBetween(5000, 10000));
+        byte[] key = randomBytesOfLength(randomIntBetween(2, 4) * 8);
+        byte[] iv = generateRandomAesCtrIv(SecureRandomProvider.get());
+        AesCtrEncrypter encrypter1 = encrypterFactory().create(key, iv);
+        AesCtrEncrypter encrypter2 = encrypterFactory().create(key, iv);
 
-      ByteBuffer encryptedDataLight = crypt(clearData, encrypter1);
-      ByteBuffer encryptedDataCipher = crypt(clearData, encrypter2);
-      assertEquals(encryptedDataCipher, encryptedDataLight);
+        byte[] encryptedDataLight = crypt(clearData, encrypter1);
+        byte[] encryptedDataCipher = crypt(clearData, encrypter2);
+        assertArrayEquals(encryptedDataCipher, encryptedDataLight);
 
-      ByteBuffer decryptedData = crypt(encryptedDataLight, encrypter1);
-      assertEquals(clearData, decryptedData);
-      decryptedData = crypt(encryptedDataLight, encrypter2);
-      assertEquals(clearData, decryptedData);
+        byte[] decryptedData = crypt(encryptedDataLight, encrypter1);
+        assertArrayEquals(clearData, decryptedData);
+        decryptedData = crypt(encryptedDataLight, encrypter2);
+        assertArrayEquals(clearData, decryptedData);
+      } catch (RuntimeException e) {
+        throw new RuntimeException("Exception at i=" + i, e);
+      }
     }
   }
 
@@ -60,29 +62,28 @@ public class AesCtrEncrypterTest extends RandomizedTest {
     return CipherAesCtrEncrypter.FACTORY;
   }
 
-  private static ByteBuffer generateRandomData(int numBytes) {
-    ByteBuffer buffer = ByteBuffer.allocate(numBytes);
+  private static byte[] generateRandomBytes(int numBytes) {
+    byte[] b = new byte[numBytes];
+    // Random.nextBytes(byte[]) does not produce good enough randomness here,
+    // it has a bias to produce 0 and -1 bytes.
     for (int i = 0; i < numBytes; i++) {
-      buffer.put((byte) randomInt());
+      b[i] = (byte) randomInt();
     }
-    buffer.position(0);
-    return buffer;
+    return b;
   }
 
-  private ByteBuffer crypt(ByteBuffer inputBuffer, AesCtrEncrypter encrypter) {
+  private byte[] crypt(byte[] inputBuffer, AesCtrEncrypter encrypter) {
     encrypter = randomClone(encrypter);
     encrypter.init(0);
-    int inputInitialPosition = inputBuffer.position();
-    ByteBuffer outputBuffer = ByteBuffer.allocate(inputBuffer.capacity());
-    while (inputBuffer.remaining() > 0) {
-      int length = Math.min(randomIntBetween(0, 50) + 1, inputBuffer.remaining());
-      ByteBuffer inputSlice = inputBuffer.slice();
-      inputSlice.limit(inputSlice.position() + length);
-      encrypter.process(inputSlice, outputBuffer);
-      inputBuffer.position(inputBuffer.position() + length);
+    byte[] outputBuffer = new byte[inputBuffer.length];
+    int inIndex = 0;
+    int outIndex = 0;
+    while (inIndex < inputBuffer.length) {
+      int length = Math.min(randomIntBetween(0, 50) + 1, inputBuffer.length - inIndex);
+      encrypter.process(inputBuffer, inIndex, length, outputBuffer, outIndex);
+      inIndex += length;
+      outIndex += length;
     }
-    inputBuffer.position(inputInitialPosition);
-    outputBuffer.position(0);
     return outputBuffer;
   }
 
