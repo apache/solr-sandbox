@@ -63,7 +63,7 @@ public class EncryptionUpdateLogTest extends SolrCloudTestCase {
   @BeforeClass
   public static void setupClass() throws Exception {
     configureCluster(NUM_SHARDS * NUM_REPLICAS)
-      .addConfig("config", TestUtil.getConfigPath("collection1"))
+      .addConfig("config", EncryptionTestUtil.getConfigPath("collection1"))
       .configure();
   }
 
