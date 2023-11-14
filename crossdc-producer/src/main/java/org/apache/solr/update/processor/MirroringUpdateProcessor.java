@@ -44,6 +44,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
    */
   private final boolean doMirroring;
   final RequestMirroringHandler requestMirroringHandler;
+  final ProducerMirroringMetrics producerMirroringMetrics;
 
   /**
    * The mirrored request starts as null, gets created and appended to at each process() call,
@@ -75,13 +76,15 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
    */
   private DistributedUpdateProcessor.DistribPhase distribPhase;
 
-  public MirroringUpdateProcessor(final UpdateRequestProcessor next, boolean doMirroring,
+  public MirroringUpdateProcessor(final UpdateRequestProcessor next,
+                                  boolean doMirroring,
       final boolean indexUnmirrorableDocs,
       final boolean mirrorCommits,
       final long maxMirroringBatchSizeBytes,
       final SolrParams mirroredReqParams,
       final DistributedUpdateProcessor.DistribPhase distribPhase,
-      final RequestMirroringHandler requestMirroringHandler) {
+      final RequestMirroringHandler requestMirroringHandler,
+      final ProducerMirroringMetrics producerMirroringMetrics) {
     super(next);
     this.doMirroring = doMirroring;
     this.indexUnmirrorableDocs = indexUnmirrorableDocs;
@@ -90,7 +93,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
     this.mirrorParams = mirroredReqParams;
     this.distribPhase = distribPhase;
     this.requestMirroringHandler = requestMirroringHandler;
-
+    this.producerMirroringMetrics = producerMirroringMetrics;
     // Find the downstream distributed update processor
 
   }
@@ -113,6 +116,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
 
           + cmd.getPrintableId() + " doc size=" + estimatedDocSizeInBytes + " maxDocSize=" + maxMirroringDocSizeBytes);
     } else if (tooLargeForKafka) {
+      producerMirroringMetrics.getTooLargeDocumentsCounter().inc();
       log.warn(
           "Skipping mirroring of doc {} as it exceeds the doc-size limit ({} bytes) and is unmirrorable. doc size={}",
           cmd.getPrintableId(), maxMirroringDocSizeBytes, estimatedDocSizeInBytes);

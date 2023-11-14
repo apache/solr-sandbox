@@ -31,10 +31,12 @@ public class KafkaRequestMirroringHandler implements RequestMirroringHandler {
     private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     final KafkaMirroringSink sink;
+    final ProducerMirroringMetrics producerMirroringMetrics;
 
-    public KafkaRequestMirroringHandler(KafkaMirroringSink sink) {
+    public KafkaRequestMirroringHandler(KafkaMirroringSink sink, ProducerMirroringMetrics producerMirroringMetrics) {
         log.debug("create KafkaRequestMirroringHandler");
         this.sink = sink;
+        this.producerMirroringMetrics = producerMirroringMetrics;
     }
 
     /**
@@ -51,11 +53,13 @@ public class KafkaRequestMirroringHandler implements RequestMirroringHandler {
         final MirroredSolrRequest mirroredRequest = new MirroredSolrRequest(MirroredSolrRequest.Type.UPDATE, 1, request, TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis()));
         try {
             sink.submit(mirroredRequest);
+            producerMirroringMetrics.getMessagesCounter().inc();
         } catch (MirroringException exception) {
             if (log.isInfoEnabled()) {
                 log.info("Sending message to dead letter queue");
             }
             sink.submitToDlq(mirroredRequest);
+            producerMirroringMetrics.getDlqMessagesCounter().inc();
             throw new MirroringException(exception);
         }
     }

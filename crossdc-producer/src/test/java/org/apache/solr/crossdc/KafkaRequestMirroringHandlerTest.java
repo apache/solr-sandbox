@@ -4,6 +4,7 @@ import org.apache.solr.client.solrj.request.UpdateRequest;
 import org.apache.solr.crossdc.common.KafkaMirroringSink;
 import org.apache.solr.crossdc.common.MirroringException;
 import org.apache.solr.update.processor.KafkaRequestMirroringHandler;
+import org.apache.solr.update.processor.ProducerMirroringMetrics;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -20,12 +21,15 @@ public class KafkaRequestMirroringHandlerTest {
     @Mock
     KafkaMirroringSink kafkaMirroringSink;
 
+    @Mock
+    ProducerMirroringMetrics producerMirroringMetrics;
+
     @Test
     public void testCheckDeadLetterQueueMessageExecution() throws MirroringException {
         doThrow(MirroringException.class).when(kafkaMirroringSink).submit(any());
 
         final UpdateRequest updateRequest = new UpdateRequest();
-        final KafkaRequestMirroringHandler kafkaRequestMirroringHandler = new KafkaRequestMirroringHandler(kafkaMirroringSink);
+        final KafkaRequestMirroringHandler kafkaRequestMirroringHandler = new KafkaRequestMirroringHandler(kafkaMirroringSink, producerMirroringMetrics);
 
         try {
             kafkaRequestMirroringHandler.mirror(updateRequest);
