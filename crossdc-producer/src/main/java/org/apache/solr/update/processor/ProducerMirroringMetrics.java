@@ -19,19 +19,19 @@ public class ProducerMirroringMetrics {
         documentsSizeHistogram = solrMetricsContext.histogram(solrCore, "documentsSizeHistogram", "crossdc", "producer");
     }
 
-    public Counter getMessagesCounter() {
-        return this.messagesCounter;
+    public void incrementMessagesCounter() {
+        this.messagesCounter.inc();
     }
 
-    public Counter getDlqMessagesCounter() {
-        return this.dlqMessagesCounter;
+    public void incrementDlqMessagesCounter() {
+        this.dlqMessagesCounter.inc();
     }
 
-    public Counter getTooLargeDocumentsCounter() {
-        return this.tooLargeDocumentsCounter;
+    public void incrementTooLargeDocumentsCounter() {
+        this.tooLargeDocumentsCounter.inc();
     }
 
-    public Histogram getDocumentsSizeHistogram() {
-        return this.documentsSizeHistogram;
+    public void updateDocumentsSizeHistogram(long value) {
+        this.documentsSizeHistogram.update(value);
     }
 }

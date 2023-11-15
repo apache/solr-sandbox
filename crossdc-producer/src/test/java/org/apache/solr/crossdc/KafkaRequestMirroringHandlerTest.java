@@ -19,10 +19,10 @@ import static org.mockito.Mockito.verify;
 public class KafkaRequestMirroringHandlerTest {
 
     @Mock
-    KafkaMirroringSink kafkaMirroringSink;
+    private KafkaMirroringSink kafkaMirroringSink;
 
     @Mock
-    ProducerMirroringMetrics producerMirroringMetrics;
+    private ProducerMirroringMetrics producerMirroringMetrics;
 
     @Test
     public void testCheckDeadLetterQueueMessageExecution() throws MirroringException {
