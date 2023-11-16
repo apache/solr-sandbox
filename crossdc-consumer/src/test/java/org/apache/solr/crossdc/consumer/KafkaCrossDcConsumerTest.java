@@ -244,8 +244,9 @@ public class KafkaCrossDcConsumerTest {
         doReturn(new IQueueHandler.Result<>(IQueueHandler.ResultStatus.HANDLED)).when(messageProcessorMock).handleItem(any());
         CollectionAdminRequest.Create create = CollectionAdminRequest.createCollection("test", "testConfig", 2, 2);
 
-        ConsumerRecord<String, MirroredSolrRequest> record = new ConsumerRecord<>("test-topic", 0, 0, "key", new MirroredSolrRequest(MirroredSolrRequest.Type.ADMIN, create));
-        ConsumerRecords<String, MirroredSolrRequest> records = new ConsumerRecords<>(Collections.singletonMap(new TopicPartition("test-topic", 0), List.of(record)));
+        ConsumerRecord<String, MirroredSolrRequest> record1 = new ConsumerRecord<>("test-topic", 0, 0, "key1", new MirroredSolrRequest(MirroredSolrRequest.Type.ADMIN, create));
+        ConsumerRecord<String, MirroredSolrRequest> record2 = new ConsumerRecord<>("test-topic", 0, 1, "key2", new MirroredSolrRequest(MirroredSolrRequest.Type.UPDATE, new UpdateRequest()));
+        ConsumerRecords<String, MirroredSolrRequest> records = new ConsumerRecords<>(Collections.singletonMap(new TopicPartition("test-topic", 0), List.of(record1, record2)));
 
         when(mockConsumer.poll(any())).thenReturn(records).thenThrow(new WakeupException());
 
@@ -255,7 +256,8 @@ public class KafkaCrossDcConsumerTest {
         verify(spyConsumer, times(1)).sendBatch(argThat(solrRequest -> {
             // Check if the SolrRequest has the same content as the original validRequest
             return solrRequest.getParams().toNamedList().equals(create.getParams().toNamedList());
-        }), eq(MirroredSolrRequest.Type.ADMIN), eq(record), any());
+        }), eq(MirroredSolrRequest.Type.ADMIN), eq(record1), any());
+        verify(spyConsumer, times(1)).sendBatch(any(), eq(MirroredSolrRequest.Type.UPDATE), eq(record2), any());
     }
 
     @Test

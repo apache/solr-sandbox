@@ -227,7 +227,9 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
                 log.trace("SolrParams have changed, starting new UpdateRequest, params={}", params);
               }
               // send previous batch, if any
-              sendBatch(updateReqBatch, type, lastRecord, workUnit);
+              if (updateReqBatch != null) {
+                sendBatch(updateReqBatch, type, lastRecord, workUnit);
+              }
               updateReqBatch = new UpdateRequest();
               lastUpdateParamsAsNamedList = null;
               workUnit = new PartitionManager.WorkUnit(partition);
