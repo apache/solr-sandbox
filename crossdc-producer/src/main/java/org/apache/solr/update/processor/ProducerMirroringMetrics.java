@@ -7,37 +7,37 @@ import org.apache.solr.metrics.SolrMetricsContext;
 
 public class ProducerMirroringMetrics {
 
-    private final Counter savedDocumentsCounter;
-    private final Counter messagesCounter;
-    private final Counter dlqMessagesCounter;
-    private final Counter tooLargeDocumentsCounter;
-    private final Histogram documentsSizeHistogram;
+    private final Counter savedDocuments;
+    private final Counter messages;
+    private final Counter tooLargeDocuments;
+    private final Counter mirroredFailures;
+    private final Histogram documentsSize;
 
     public ProducerMirroringMetrics(SolrMetricsContext solrMetricsContext, SolrCore solrCore) {
-        this.savedDocumentsCounter = solrMetricsContext.counter(solrCore, "savedDocuments", "crossdc", "producer");
-        this.messagesCounter = solrMetricsContext.counter(solrCore, "messagesCounter", "crossdc", "producer");
-        this.dlqMessagesCounter = solrMetricsContext.counter(solrCore, "dlqMessagesCounter", "crossdc", "producer");
-        this.tooLargeDocumentsCounter = solrMetricsContext.counter(solrCore, "tooLargeDocumentsCounter", "crossdc", "producer");
-        this.documentsSizeHistogram = solrMetricsContext.histogram(solrCore, "documentsSizeHistogram", "crossdc", "producer");
+        this.savedDocuments = solrMetricsContext.counter(solrCore, "savedDocuments", "crossdc", "producer");
+        this.messages = solrMetricsContext.counter(solrCore, "messages", "crossdc", "producer");
+        this.tooLargeDocuments = solrMetricsContext.counter(solrCore, "tooLargeDocuments", "crossdc", "producer", "errors");
+        this.mirroredFailures = solrMetricsContext.counter(solrCore, "mirroredFailures", "crossdc", "producer", "errors");
+        this.documentsSize = solrMetricsContext.histogram(solrCore, "documentsSize", "crossdc", "producer");
     }
 
-    public void incrementSavedDocumentsCounter() {
-        this.savedDocumentsCounter.inc();
+    public Counter getSavedDocuments() {
+        return this.savedDocuments;
     }
 
-    public void incrementMessagesCounter() {
-        this.messagesCounter.inc();
+    public Counter getMessages() {
+        return this.messages;
     }
 
-    public void incrementDlqMessagesCounter() {
-        this.dlqMessagesCounter.inc();
+    public Counter getTooLargeDocuments() {
+        return this.tooLargeDocuments;
     }
 
-    public void incrementTooLargeDocumentsCounter() {
-        this.tooLargeDocumentsCounter.inc();
+    public Counter getMirroredFailures() {
+        return this.mirroredFailures;
     }
 
-    public void updateDocumentsSizeHistogram(long value) {
-        this.documentsSizeHistogram.update(value);
+    public Histogram getDocumentsSize() {
+        return this.documentsSize;
     }
 }

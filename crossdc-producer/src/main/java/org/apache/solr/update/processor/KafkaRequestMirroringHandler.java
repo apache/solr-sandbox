@@ -53,13 +53,12 @@ public class KafkaRequestMirroringHandler implements RequestMirroringHandler {
         final MirroredSolrRequest mirroredRequest = new MirroredSolrRequest(MirroredSolrRequest.Type.UPDATE, 1, request, TimeUnit.MILLISECONDS.toNanos(System.currentTimeMillis()));
         try {
             sink.submit(mirroredRequest);
-            producerMirroringMetrics.incrementMessagesCounter();
+            producerMirroringMetrics.getMessages().inc();
         } catch (MirroringException exception) {
             if (log.isInfoEnabled()) {
                 log.info("Sending message to dead letter queue");
             }
             sink.submitToDlq(mirroredRequest);
-            producerMirroringMetrics.incrementDlqMessagesCounter();
             throw new MirroringException(exception);
         }
     }
