@@ -100,7 +100,7 @@ public class MirroringUpdateProcessorTest extends SolrTestCaseJ4 {
                 return counterMock;
             }
 
-            public Counter getMirroredFailures() {
+            public Counter getMirrorFailures() {
                 return counterMock;
             }
 

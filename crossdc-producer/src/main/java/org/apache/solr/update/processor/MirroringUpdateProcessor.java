@@ -139,7 +139,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
         requestMirroringHandler.mirror(mirrorRequest);
       } catch (Exception e) {
         log.error("mirror submit failed", e);
-        producerMirroringMetrics.getMirroredFailures().inc();
+        producerMirroringMetrics.getMirrorFailures().inc();
         throw new SolrException(SERVER_ERROR, "mirror submit failed", e);
       }
     }

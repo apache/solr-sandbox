@@ -10,14 +10,14 @@ public class ProducerMirroringMetrics {
     private final Counter savedDocuments;
     private final Counter messages;
     private final Counter tooLargeDocuments;
-    private final Counter mirroredFailures;
+    private final Counter mirrorFailures;
     private final Histogram documentsSize;
 
     public ProducerMirroringMetrics(SolrMetricsContext solrMetricsContext, SolrCore solrCore) {
         this.savedDocuments = solrMetricsContext.counter(solrCore, "savedDocuments", "crossdc", "producer");
         this.messages = solrMetricsContext.counter(solrCore, "messages", "crossdc", "producer");
         this.tooLargeDocuments = solrMetricsContext.counter(solrCore, "tooLargeDocuments", "crossdc", "producer", "errors");
-        this.mirroredFailures = solrMetricsContext.counter(solrCore, "mirroredFailures", "crossdc", "producer", "errors");
+        this.mirrorFailures = solrMetricsContext.counter(solrCore, "mirroredFailures", "crossdc", "producer", "errors");
         this.documentsSize = solrMetricsContext.histogram(solrCore, "documentsSize", "crossdc", "producer");
     }
 
@@ -33,8 +33,8 @@ public class ProducerMirroringMetrics {
         return this.tooLargeDocuments;
     }
 
-    public Counter getMirroredFailures() {
-        return this.mirroredFailures;
+    public Counter getMirrorFailures() {
+        return this.mirrorFailures;
     }
 
     public Histogram getDocumentsSize() {
