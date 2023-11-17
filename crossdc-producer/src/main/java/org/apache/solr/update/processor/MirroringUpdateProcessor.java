@@ -123,7 +123,11 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
           cmd.getPrintableId(), maxMirroringDocSizeBytes, estimatedDocSizeInBytes);
     }
 
-    super.processAdd(cmd); // let this throw to prevent mirroring invalid reqs
+    try {
+      super.processAdd(cmd); // let this throw to prevent mirroring invalid reqs
+    } catch (IOException exception) {
+      producerMirroringMetrics.incrementSavedDocumentsCounter();
+    }
 
     // submit only from the leader shards so we mirror each doc once
     boolean isLeader = isLeader(cmd.getReq(),  cmd.getIndexedIdStr(), null, cmd.getSolrInputDocument());
