@@ -83,6 +83,7 @@ public class MirroringUpdateProcessorTest extends SolrTestCaseJ4 {
                         true,
                         true,
                         true,
+                        true,
                         1000L,
                         new ModifiableSolrParams(),
                         DistributedUpdateProcessor.DistribPhase.NONE,
@@ -214,6 +215,7 @@ public class MirroringUpdateProcessorTest extends SolrTestCaseJ4 {
                     true,
                     true,
                     true,
+                    true,
                     1000L,
                     new ModifiableSolrParams(),
                     DistributedUpdateProcessor.DistribPhase.NONE,
@@ -249,6 +251,7 @@ public class MirroringUpdateProcessorTest extends SolrTestCaseJ4 {
                     true,
                     true,
                     false,
+                    true,
                     1000L,
                     new ModifiableSolrParams(),
                     DistributedUpdateProcessor.DistribPhase.NONE,
@@ -292,7 +295,7 @@ public class MirroringUpdateProcessorTest extends SolrTestCaseJ4 {
 
         SolrParams mirrorParams = new ModifiableSolrParams();
         MirroringUpdateProcessor mirroringUpdateProcessorWithLimit = new MirroringUpdateProcessor(nextProcessor, true, false, // indexUnmirrorableDocs set to false
-                true, 50000, mirrorParams, DistributedUpdateProcessor.DistribPhase.NONE, requestMirroringHandler);
+                true, true, 50000, mirrorParams, DistributedUpdateProcessor.DistribPhase.NONE, requestMirroringHandler);
 
         assertThrows(SolrException.class, () -> mirroringUpdateProcessorWithLimit.processAdd(addUpdateCommand));
     }
@@ -322,6 +325,7 @@ public class MirroringUpdateProcessorTest extends SolrTestCaseJ4 {
     public void testProcessDBQResults() throws Exception {
         Mockito.when(cloudDesc.getCoreNodeName()).thenReturn("replica1");
         Mockito.when(builder.build()).thenReturn(client);
+        int NUM_DOCS = 1000;
         SolrInputDocument doc = new SolrInputDocument();
         doc.addField("id", "test");
         addUpdateCommand.solrDoc = doc;

@@ -104,7 +104,7 @@ public class Consumer {
         }
     }
 
-    private CrossDcConsumer getCrossDcConsumer(KafkaCrossDcConf conf, CountDownLatch startLatch) {
+    protected CrossDcConsumer getCrossDcConsumer(KafkaCrossDcConf conf, CountDownLatch startLatch) {
         return new KafkaCrossDcConsumer(conf, startLatch);
     }
 

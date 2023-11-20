@@ -62,6 +62,12 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
    */
   private final boolean mirrorCommits;
 
+  /**
+   * If true then expand Delete-By-Query into series of Delete-by-Ids. If false then mirror the
+   * DBQs unchanged.
+   */
+  private final boolean expandDbq;
+
   private final long maxMirroringDocSizeBytes;
 
 
@@ -78,6 +84,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
   public MirroringUpdateProcessor(final UpdateRequestProcessor next, boolean doMirroring,
       final boolean indexUnmirrorableDocs,
       final boolean mirrorCommits,
+      final boolean expandDbq,
       final long maxMirroringBatchSizeBytes,
       final SolrParams mirroredReqParams,
       final DistributedUpdateProcessor.DistribPhase distribPhase,
@@ -86,6 +93,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
     this.doMirroring = doMirroring;
     this.indexUnmirrorableDocs = indexUnmirrorableDocs;
     this.mirrorCommits = mirrorCommits;
+    this.expandDbq = expandDbq;
     this.maxMirroringDocSizeBytes = maxMirroringBatchSizeBytes;
     this.mirrorParams = mirroredReqParams;
     this.distribPhase = distribPhase;
@@ -138,8 +146,9 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
       log.debug("processAdd isLeader={} doMirroring={} tooLargeForKafka={} cmd={}", isLeader, doMirroring, tooLargeForKafka, cmd);
   }
 
-  @Override public void processDelete(final DeleteUpdateCommand cmd) throws IOException {
-    if (doMirroring && !cmd.isDeleteById() && !"*:*".equals(cmd.query)) {
+  @Override
+  public void processDelete(final DeleteUpdateCommand cmd) throws IOException {
+    if (doMirroring && expandDbq && !cmd.isDeleteById() && !"*:*".equals(cmd.query)) {
 
       CloudDescriptor cloudDesc =
           cmd.getReq().getCore().getCoreDescriptor().getCloudDescriptor();
