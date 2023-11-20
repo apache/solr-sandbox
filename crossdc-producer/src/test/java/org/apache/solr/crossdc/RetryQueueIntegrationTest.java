@@ -114,6 +114,7 @@ import java.util.Properties;
     properties.put(KafkaCrossDcConf.ZK_CONNECT_STRING, solrCluster2.getZkServer().getZkAddress());
     properties.put(KafkaCrossDcConf.TOPIC_NAME, TOPIC);
     properties.put(KafkaCrossDcConf.GROUP_ID, "group1");
+    properties.put(KafkaCrossDcConf.MAX_ATTEMPTS, 100);
     consumer.start(properties);
   }
 
@@ -224,7 +225,7 @@ import java.util.Properties;
       }
     }
 
-    assertTrue("results=" + results, foundUpdates);
+    assertTrue("expected updates not found, results=" + results, foundUpdates);
     System.out.println("Rest: " + results);
 
   }
@@ -278,7 +279,7 @@ import java.util.Properties;
       }
     }
 
-    assertTrue("results=" + results, foundUpdates);
+    assertTrue("expected updates not found, results=" + results, foundUpdates);
     System.out.println("Rest: " + results);
 
   }
