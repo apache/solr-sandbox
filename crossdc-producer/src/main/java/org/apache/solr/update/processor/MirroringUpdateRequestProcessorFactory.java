@@ -166,6 +166,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         if (core.getCoreContainer().isZooKeeperAware()) {
             lookupPropertyOverridesInZk(core);
         } else {
+            applyArgsOverrides();
             if (enabled) {
                 throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, getClass().getSimpleName() + " only supported in SolrCloud mode; please disable or remove from solrconfig.xml");
             }
