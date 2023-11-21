@@ -230,7 +230,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
               if (updateReqBatch != null) {
                 sendBatch(updateReqBatch, type, lastRecord, workUnit);
               }
-              updateReqBatch = new UpdateRequest();
+              updateReqBatch = null;
               lastUpdateParamsAsNamedList = null;
               workUnit = new PartitionManager.WorkUnit(partition);
               workUnit.nextOffset = PartitionManager.getOffsetForPartition(partitionRecords);
@@ -242,6 +242,8 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
               if (updateReqBatch == null) {
                 // just initialize
                 updateReqBatch = new UpdateRequest();
+              } else {
+                metrics.counter(MetricRegistry.name(type.name(), "collapsed")).inc();
               }
               UpdateRequest update = (UpdateRequest) solrReq;
               MirroredSolrRequest.setParams(updateReqBatch, params);
@@ -252,20 +254,24 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
               List<SolrInputDocument> docs = update.getDocuments();
               if (docs != null) {
                 updateReqBatch.add(docs);
+                metrics.counter(MetricRegistry.name(type.name(), "add")).inc(docs.size());
               }
               List<String> deletes = update.getDeleteById();
               if (deletes != null) {
                 updateReqBatch.deleteById(deletes);
+                metrics.counter(MetricRegistry.name(type.name(), "dbi")).inc(deletes.size());
               }
               List<String> deleteByQuery = update.getDeleteQuery();
               if (deleteByQuery != null) {
                 for (String delByQuery : deleteByQuery) {
                   updateReqBatch.deleteByQuery(delByQuery);
                 }
+                metrics.counter(MetricRegistry.name(type.name(), "dbq")).inc(deleteByQuery.size());
               }
             } else {
               // non-update requests should be sent immediately
               sendBatch(req.getSolrRequest(), type, lastRecord, workUnit);
+              metrics.counter(type.name()).inc();
             }
           }
 
@@ -343,18 +349,20 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
 
   void processResult(IQueueHandler.Result<MirroredSolrRequest> result) throws MirroringException {
+    MirroredSolrRequest item = result.newItem();
     switch (result.status()) {
       case FAILED_RESUBMIT:
         if (log.isTraceEnabled()) {
           log.trace("result=failed-resubmit");
         }
-        metrics.counter("failed-resubmit").inc();
-        final int attempt = result.newItem().getAttempt();
+        final int attempt = item.getAttempt();
         if (attempt > this.maxAttempts) {
           log.info("Sending message to dead letter queue because of max attempts limit with current value = {}", attempt);
-          kafkaMirroringSink.submitToDlq(result.newItem());
+          kafkaMirroringSink.submitToDlq(item);
+          metrics.counter(MetricRegistry.name(item.getType().name(), "failed-dlq")).inc();
         } else {
-          kafkaMirroringSink.submit(result.newItem());
+          kafkaMirroringSink.submit(item);
+          metrics.counter(MetricRegistry.name(item.getType().name(), "failed-resubmit")).inc();
         }
         break;
       case HANDLED:
@@ -362,7 +370,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
         if (log.isTraceEnabled()) {
           log.trace("result=handled");
         }
-        metrics.counter("handled").inc();
+        metrics.counter(MetricRegistry.name(item.getType().name(), "handled")).inc();
         break;
       case NOT_HANDLED_SHUTDOWN:
         if (log.isTraceEnabled()) {
@@ -371,7 +379,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
         metrics.counter("nothandled_shutdown").inc();
       case FAILED_RETRY:
         log.error("Unexpected response while processing request. We never expect {}.", result.status().toString());
-        metrics.counter("failed-retry").inc();
+        metrics.counter(MetricRegistry.name(item.getType().name(), "failed-retry")).inc();
         break;
       default:
         if (log.isTraceEnabled()) {
