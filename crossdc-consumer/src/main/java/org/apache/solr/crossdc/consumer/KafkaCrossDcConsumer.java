@@ -37,7 +37,7 @@ import java.util.concurrent.*;
 public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  private final MetricRegistry metrics = SharedMetricRegistries.getOrCreate("metrics");
+  private final MetricRegistry metrics = SharedMetricRegistries.getOrCreate(Consumer.METRICS_REGISTRY);
 
   private final KafkaConsumer<String,MirroredSolrRequest> kafkaConsumer;
   private final CountDownLatch startLatch;

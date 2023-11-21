@@ -16,6 +16,9 @@
  */
 package org.apache.solr.crossdc.consumer;
 
+import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.servlets.MetricsServlet;
+import com.codahale.metrics.servlets.ThreadDumpServlet;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.cloud.SolrZkClient;
 import org.apache.solr.crossdc.common.ConfUtil;
@@ -24,6 +27,8 @@ import org.apache.solr.crossdc.common.CrossDcConf;
 import org.apache.solr.crossdc.common.KafkaCrossDcConf;
 import org.apache.solr.crossdc.common.SensitivePropRedactionUtils;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,10 +46,9 @@ import static org.apache.solr.crossdc.common.KafkaCrossDcConf.*;
 
 // Cross-DC Consumer main class
 public class Consumer {
-
-    private static final boolean enabled = true;
-
     private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+    public static final String METRICS_REGISTRY = "metrics";
 
     private Server server;
     private CrossDcConsumer crossDcConsumer;
@@ -78,12 +82,18 @@ public class Consumer {
         String bootstrapServers = (String) properties.get(KafkaCrossDcConf.BOOTSTRAP_SERVERS);
         String topicName = (String) properties.get(TOPIC_NAME);
 
-        //server = new Server();
-        //ServerConnector connector = new ServerConnector(server);
-        //connector.setPort(port);
-        //server.setConnectors(new Connector[] {connector})
         KafkaCrossDcConf conf = new KafkaCrossDcConf(properties);
         crossDcConsumer = getCrossDcConsumer(conf, startLatch);
+
+        // jetty endpoint for /metrics
+        int port = conf.getInt(PORT);
+        server = new Server(port);
+        ServletContextHandler context = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
+        context.setContextPath("/");
+        server.setHandler(context);
+        context.addServlet(ThreadDumpServlet.class, "/threads/*");
+        context.addServlet(MetricsServlet.class, "/metrics/*");
+        context.setAttribute("com.codahale.metrics.servlets.MetricsServlet.registry", SharedMetricRegistries.getOrCreate(METRICS_REGISTRY));
 
         // Start consumer thread
 
@@ -97,9 +107,21 @@ public class Consumer {
         Runtime.getRuntime().addShutdownHook(shutdownHook);
 
         try {
+            server.start();
+        } catch (Exception e) {
+            throw new SolrException(SolrException.ErrorCode.SERVICE_UNAVAILABLE, e);
+        }
+        try {
             startLatch.await(30, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            if (server != null) {
+                try {
+                    server.stop();
+                } catch (Exception e1) {
+                    // ignore
+                }
+            }
             throw new SolrException(SolrException.ErrorCode.SERVICE_UNAVAILABLE, e);
         }
     }
@@ -118,6 +140,13 @@ public class Consumer {
         if (crossDcConsumer != null) {
             crossDcConsumer.shutdown();
         }
+        if (server != null) {
+            try {
+                server.stop();
+            } catch (Exception e) {
+                // ignore
+            }
+        }
     }
 
     /**
@@ -127,5 +156,4 @@ public class Consumer {
         abstract void shutdown();
 
     }
-
 }

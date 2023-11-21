@@ -33,6 +33,7 @@ dependencies {
     implementation project(path: ':crossdc-commons', configuration: 'shadow')
 
     implementation 'io.dropwizard.metrics:metrics-core:4.2.17'
+    implementation 'io.dropwizard.metrics:metrics-servlets:4.2.17'
     implementation 'org.slf4j:slf4j-api:2.0.5'
     implementation 'org.eclipse.jetty:jetty-http:9.4.41.v20210516'
     implementation 'org.eclipse.jetty:jetty-server:9.4.41.v20210516'
