@@ -54,7 +54,7 @@ public class MirroringUpdateProcessorTest extends SolrTestCaseJ4 {
     private CloudDescriptor cloudDesc;
     private ZkStateReader zkStateReader;
     private Replica replica;
-    private ProducerMirroringMetrics producerMirroringMetrics;
+    private ProducerMetrics producerMetrics;
 
     @Before
     public void setUp() throws Exception {
@@ -85,26 +85,30 @@ public class MirroringUpdateProcessorTest extends SolrTestCaseJ4 {
         commitUpdateCommand.openSearcher = true;
         commitUpdateCommand.waitSearcher = true;
 
-        producerMirroringMetrics = spy(new ProducerMirroringMetrics(mock(SolrMetricsContext.class), mock(SolrCore.class)) {
+        producerMetrics = spy(new ProducerMetrics(mock(SolrMetricsContext.class), mock(SolrCore.class)) {
             private final Counter counterMock = mock(Counter.class);
 
-            public Counter getSavedDocuments() {
+            public Counter getLocal() {
                 return counterMock;
             }
 
-            public Counter getMessages() {
+            public Counter getLocalError() {
                 return counterMock;
             }
 
-            public Counter getTooLargeDocuments() {
+            public Counter getSubmitted() {
                 return counterMock;
             }
 
-            public Counter getMirrorFailures() {
+            public Counter getDocumentTooLarge() {
                 return counterMock;
             }
 
-            public Histogram getDocumentsSize() {
+            public Counter getSubmitError() {
+                return counterMock;
+            }
+
+            public Histogram getDocumentSize() {
                 return mock(Histogram.class);
             }
         });
@@ -121,7 +125,7 @@ public class MirroringUpdateProcessorTest extends SolrTestCaseJ4 {
                         new ModifiableSolrParams(),
                         DistributedUpdateProcessor.DistribPhase.NONE,
                         requestMirroringHandler,
-                        producerMirroringMetrics) {
+                        producerMetrics) {
                     UpdateRequest createMirrorRequest() {
                         return requestMock;
                     }
@@ -253,7 +257,7 @@ public class MirroringUpdateProcessorTest extends SolrTestCaseJ4 {
                     new ModifiableSolrParams(),
                     DistributedUpdateProcessor.DistribPhase.NONE,
                     requestMirroringHandler,
-                    producerMirroringMetrics);
+                        producerMetrics);
             ArgumentCaptor<UpdateRequest> captor = ArgumentCaptor.forClass(UpdateRequest.class);
             processor.processCommit(commitUpdateCommand);
             verify(next).processCommit(commitUpdateCommand);
@@ -289,7 +293,7 @@ public class MirroringUpdateProcessorTest extends SolrTestCaseJ4 {
                     new ModifiableSolrParams(),
                     DistributedUpdateProcessor.DistribPhase.NONE,
                     requestMirroringHandler,
-                    producerMirroringMetrics);
+                        producerMetrics);
             processor.processCommit(commitUpdateCommand);
             verify(next).processCommit(commitUpdateCommand);
             verify(requestMirroringHandler, times(0)).mirror(requestMock);
@@ -329,7 +333,7 @@ public class MirroringUpdateProcessorTest extends SolrTestCaseJ4 {
 
         SolrParams mirrorParams = new ModifiableSolrParams();
         MirroringUpdateProcessor mirroringUpdateProcessorWithLimit = new MirroringUpdateProcessor(nextProcessor, true, false, // indexUnmirrorableDocs set to false
-                true, 50000, mirrorParams, DistributedUpdateProcessor.DistribPhase.NONE, requestMirroringHandler, producerMirroringMetrics);
+                true, 50000, mirrorParams, DistributedUpdateProcessor.DistribPhase.NONE, requestMirroringHandler, producerMetrics);
 
         assertThrows(SolrException.class, () -> mirroringUpdateProcessorWithLimit.processAdd(addUpdateCommand));
     }

@@ -44,7 +44,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
    */
   private final boolean doMirroring;
   final RequestMirroringHandler requestMirroringHandler;
-  final ProducerMirroringMetrics producerMirroringMetrics;
+  final ProducerMetrics producerMetrics;
 
   /**
    * The mirrored request starts as null, gets created and appended to at each process() call,
@@ -84,7 +84,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
       final SolrParams mirroredReqParams,
       final DistributedUpdateProcessor.DistribPhase distribPhase,
       final RequestMirroringHandler requestMirroringHandler,
-      final ProducerMirroringMetrics producerMirroringMetrics) {
+      final ProducerMetrics producerMetrics) {
     super(next);
     this.doMirroring = doMirroring;
     this.indexUnmirrorableDocs = indexUnmirrorableDocs;
@@ -93,7 +93,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
     this.mirrorParams = mirroredReqParams;
     this.distribPhase = distribPhase;
     this.requestMirroringHandler = requestMirroringHandler;
-    this.producerMirroringMetrics = producerMirroringMetrics;
+    this.producerMetrics = producerMetrics;
     // Find the downstream distributed update processor
 
   }
@@ -110,14 +110,14 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
     doc.removeField(CommonParams.VERSION_FIELD); // strip internal doc version
     final long estimatedDocSizeInBytes = ObjectSizeEstimator.estimate(doc);
     log.info("estimated doc size is {} bytes, max size is {}", estimatedDocSizeInBytes, maxMirroringDocSizeBytes);
-    producerMirroringMetrics.getDocumentsSize().update(estimatedDocSizeInBytes);
+    producerMetrics.getDocumentSize().update(estimatedDocSizeInBytes);
     final boolean tooLargeForKafka = estimatedDocSizeInBytes > maxMirroringDocSizeBytes;
     if (tooLargeForKafka && !indexUnmirrorableDocs) {
       throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "Update exceeds the doc-size limit and is unmirrorable. id="
 
           + cmd.getPrintableId() + " doc size=" + estimatedDocSizeInBytes + " maxDocSize=" + maxMirroringDocSizeBytes);
     } else if (tooLargeForKafka) {
-      producerMirroringMetrics.getTooLargeDocuments().inc();
+      producerMetrics.getDocumentTooLarge().inc();
       log.warn(
           "Skipping mirroring of doc {} as it exceeds the doc-size limit ({} bytes) and is unmirrorable. doc size={}",
           cmd.getPrintableId(), maxMirroringDocSizeBytes, estimatedDocSizeInBytes);
@@ -125,8 +125,9 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
 
     try {
       super.processAdd(cmd); // let this throw to prevent mirroring invalid reqs
+      producerMetrics.getLocal().inc();
     } catch (IOException exception) {
-      producerMirroringMetrics.getSavedDocuments().inc();
+      producerMetrics.getLocalError().inc();
     }
 
     // submit only from the leader shards so we mirror each doc once
@@ -137,9 +138,10 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
 
       try {
         requestMirroringHandler.mirror(mirrorRequest);
+        producerMetrics.getSubmitted().inc();
       } catch (Exception e) {
         log.error("mirror submit failed", e);
-        producerMirroringMetrics.getMirrorFailures().inc();
+        producerMetrics.getSubmitError().inc();
         throw new SolrException(SERVER_ERROR, "mirror submit failed", e);
       }
     }
