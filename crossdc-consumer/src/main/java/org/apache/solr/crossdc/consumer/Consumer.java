@@ -29,6 +29,7 @@ import org.apache.solr.crossdc.common.SensitivePropRedactionUtils;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,13 +88,19 @@ public class Consumer {
 
         // jetty endpoint for /metrics
         int port = conf.getInt(PORT);
-        server = new Server(port);
-        ServletContextHandler context = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
-        context.setContextPath("/");
-        server.setHandler(context);
-        context.addServlet(ThreadDumpServlet.class, "/threads/*");
-        context.addServlet(MetricsServlet.class, "/metrics/*");
-        context.setAttribute("com.codahale.metrics.servlets.MetricsServlet.registry", SharedMetricRegistries.getOrCreate(METRICS_REGISTRY));
+        if (port > 0) {
+            log.info("Starting API endpoints...");
+            server = new Server(port);
+            ServletContextHandler context = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
+            context.setContextPath("/");
+            server.setHandler(context);
+            context.addServlet(ThreadDumpServlet.class, "/threads/*");
+            context.addServlet(MetricsServlet.class, "/metrics/*");
+            context.setAttribute("com.codahale.metrics.servlets.MetricsServlet.registry", SharedMetricRegistries.getOrCreate(METRICS_REGISTRY));
+            for (ServletMapping mapping : context.getServletHandler().getServletMappings()) {
+                log.info(" - {}", mapping.getPathSpecs()[0]);
+            }
+        }
 
         // Start consumer thread
 
@@ -106,10 +113,12 @@ public class Consumer {
         Thread shutdownHook = new Thread(() -> System.out.println("Shutting down consumers!"));
         Runtime.getRuntime().addShutdownHook(shutdownHook);
 
-        try {
-            server.start();
-        } catch (Exception e) {
-            throw new SolrException(SolrException.ErrorCode.SERVICE_UNAVAILABLE, e);
+        if (server != null) {
+            try {
+                server.start();
+            } catch (Exception e) {
+                throw new SolrException(SolrException.ErrorCode.SERVICE_UNAVAILABLE, e);
+            }
         }
         try {
             startLatch.await(30, TimeUnit.SECONDS);
