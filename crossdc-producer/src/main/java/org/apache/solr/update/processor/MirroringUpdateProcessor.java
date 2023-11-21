@@ -128,6 +128,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
       producerMetrics.getLocal().inc();
     } catch (IOException exception) {
       producerMetrics.getLocalError().inc();
+      throw exception;
     }
 
     // submit only from the leader shards so we mirror each doc once
