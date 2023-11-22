@@ -70,8 +70,6 @@ public class EncryptionDirectoryTest extends SolrCloudTestCase {
 
   @AfterClass
   public static void afterClass() throws Exception {
-    System.clearProperty(PROPERTY_INNER_ENCRYPTION_DIRECTORY_FACTORY);
-    System.clearProperty("solr." + PARAM_KEY_SUPPLIER_FACTORY);
     cluster.shutdown();
   }
 
