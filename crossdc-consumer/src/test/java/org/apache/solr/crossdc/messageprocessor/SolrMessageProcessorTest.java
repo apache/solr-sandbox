@@ -65,7 +65,7 @@ public class SolrMessageProcessorTest {
         IQueueHandler.Result<MirroredSolrRequest> result = solrMessageProcessor.handleItem(mirroredSolrRequest);
 
         assertEquals(IQueueHandler.ResultStatus.FAILED_RESUBMIT, result.status());
-        assertEquals(mirroredSolrRequest, result.newItem());
+        assertEquals(mirroredSolrRequest, result.getItem());
     }
 
     /**
@@ -84,7 +84,7 @@ public class SolrMessageProcessorTest {
         IQueueHandler.Result<MirroredSolrRequest> result = solrMessageProcessor.handleItem(mirroredSolrRequest);
 
         assertEquals(IQueueHandler.ResultStatus.HANDLED, result.status());
-        assertNull(result.newItem());
+        assertNull(result.getItem());
     }
 
     /**

@@ -351,7 +351,7 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
 
     private void backoffIfNeeded(Result<MirroredSolrRequest> result) {
         if (result.status().equals(ResultStatus.FAILED_RESUBMIT)) {
-            final long backoffMs = getResubmitBackoffPolicy().getBackoffTimeMs(result.newItem());
+            final long backoffMs = getResubmitBackoffPolicy().getBackoffTimeMs(result.getItem());
             if (backoffMs > 0L) {
                 try {
                     Thread.sleep(backoffMs);

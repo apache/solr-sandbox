@@ -335,7 +335,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
         final MirroredSolrRequest mirroredSolrRequest = new MirroredSolrRequest(type, lastRecord.value().getAttempt(), finalSolrReqBatch);
         final IQueueHandler.Result<MirroredSolrRequest> result = messageProcessor.handleItem(mirroredSolrRequest);
 
-        processResult(result);
+        processResult(type, result);
       } catch (MirroringException e) {
         // We don't really know what to do here
         log.error("Mirroring exception occurred while resubmitting to Kafka. We are going to stop the consumer thread now.", e);
@@ -348,8 +348,8 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
 
 
-  void processResult(IQueueHandler.Result<MirroredSolrRequest> result) throws MirroringException {
-    MirroredSolrRequest item = result.newItem();
+  void processResult(MirroredSolrRequest.Type type, IQueueHandler.Result<MirroredSolrRequest> result) throws MirroringException {
+    MirroredSolrRequest item = result.getItem();
     switch (result.status()) {
       case FAILED_RESUBMIT:
         if (log.isTraceEnabled()) {
@@ -359,10 +359,10 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
         if (attempt > this.maxAttempts) {
           log.info("Sending message to dead letter queue because of max attempts limit with current value = {}", attempt);
           kafkaMirroringSink.submitToDlq(item);
-          metrics.counter(MetricRegistry.name(item.getType().name(), "failed-dlq")).inc();
+          metrics.counter(MetricRegistry.name(type.name(), "failed-dlq")).inc();
         } else {
           kafkaMirroringSink.submit(item);
-          metrics.counter(MetricRegistry.name(item.getType().name(), "failed-resubmit")).inc();
+          metrics.counter(MetricRegistry.name(type.name(), "failed-resubmit")).inc();
         }
         break;
       case HANDLED:
@@ -370,7 +370,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
         if (log.isTraceEnabled()) {
           log.trace("result=handled");
         }
-        metrics.counter(MetricRegistry.name(item.getType().name(), "handled")).inc();
+        metrics.counter(MetricRegistry.name(type.name(), "handled")).inc();
         break;
       case NOT_HANDLED_SHUTDOWN:
         if (log.isTraceEnabled()) {
@@ -379,7 +379,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
         metrics.counter("nothandled_shutdown").inc();
       case FAILED_RETRY:
         log.error("Unexpected response while processing request. We never expect {}.", result.status().toString());
-        metrics.counter(MetricRegistry.name(item.getType().name(), "failed-retry")).inc();
+        metrics.counter(MetricRegistry.name(type.name(), "failed-retry")).inc();
         break;
       default:
         if (log.isTraceEnabled()) {
