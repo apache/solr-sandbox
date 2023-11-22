@@ -38,6 +38,7 @@ public class SolrMessageProcessorTest {
     public void handleItemWithFailedResultNoRetry() throws SolrServerException, IOException {
         MirroredSolrRequest mirroredSolrRequest = mock(MirroredSolrRequest.class);
         SolrRequest solrRequest = mock(SolrRequest.class);
+        when(mirroredSolrRequest.getType()).thenReturn(MirroredSolrRequest.Type.UPDATE);
         when(mirroredSolrRequest.getSolrRequest()).thenReturn(solrRequest);
 
         SolrResponseBase solrResponseBase = mock(SolrResponseBase.class);
@@ -58,6 +59,7 @@ public class SolrMessageProcessorTest {
     public void handleItemWithFailedResultResubmit() throws SolrServerException, IOException {
         MirroredSolrRequest mirroredSolrRequest = mock(MirroredSolrRequest.class);
         SolrRequest solrRequest = mock(SolrRequest.class);
+        when(mirroredSolrRequest.getType()).thenReturn(MirroredSolrRequest.Type.UPDATE);
         when(mirroredSolrRequest.getSolrRequest()).thenReturn(solrRequest);
         when(solrRequest.process(client))
                 .thenThrow(new SolrException(ErrorCode.SERVER_ERROR, "Server error"));
@@ -77,6 +79,7 @@ public class SolrMessageProcessorTest {
         SolrRequest solrRequest = mock(SolrRequest.class);
         SolrResponseBase solrResponse = mock(SolrResponseBase.class);
 
+        when(mirroredSolrRequest.getType()).thenReturn(MirroredSolrRequest.Type.UPDATE);
         when(mirroredSolrRequest.getSolrRequest()).thenReturn(solrRequest);
         when(solrRequest.process(client)).thenReturn(solrResponse);
         when(solrResponse.getStatus()).thenReturn(0);
@@ -96,6 +99,7 @@ public class SolrMessageProcessorTest {
         SolrRequest solrRequest = mock(SolrRequest.class);
         SolrResponseBase solrResponse = mock(SolrResponseBase.class);
 
+        when(mirroredSolrRequest.getType()).thenReturn(MirroredSolrRequest.Type.UPDATE);
         when(mirroredSolrRequest.getSolrRequest()).thenReturn(solrRequest);
         when(solrRequest.process(client)).thenReturn(solrResponse);
         when(solrResponse.getStatus()).thenReturn(0);
