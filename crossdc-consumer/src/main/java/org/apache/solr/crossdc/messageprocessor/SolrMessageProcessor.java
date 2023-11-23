@@ -285,7 +285,7 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
         if (mirroredSolrRequest.getAttempt() == 1) {
             final long latency = System.currentTimeMillis() - TimeUnit.NANOSECONDS.toMillis(mirroredSolrRequest.getSubmitTimeNanos());
             log.debug("First attempt latency = {}", latency);
-            metrics.timer(MetricRegistry.name(mirroredSolrRequest.getType().name(), "latency")).update(latency, TimeUnit.MILLISECONDS);
+            metrics.timer(MetricRegistry.name(mirroredSolrRequest.getType().name(), "outputLatency")).update(latency, TimeUnit.MILLISECONDS);
         }
     }
 

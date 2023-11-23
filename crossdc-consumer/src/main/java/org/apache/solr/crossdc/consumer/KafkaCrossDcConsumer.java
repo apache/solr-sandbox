@@ -272,7 +272,6 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
             } else {
               // non-update requests should be sent immediately
               sendBatch(req.getSolrRequest(), type, lastRecord, workUnit);
-              metrics.counter(type.name()).inc();
             }
           }
 
