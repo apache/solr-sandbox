@@ -216,6 +216,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
             MirroredSolrRequest req = requestRecord.value();
             SolrRequest solrReq = req.getSolrRequest();
             MirroredSolrRequest.Type type = req.getType();
+            metrics.counter(MetricRegistry.name(type.name(), "input")).inc();
             ModifiableSolrParams params = new ModifiableSolrParams(solrReq.getParams());
             if (log.isTraceEnabled()) {
               log.trace("-- picked type={}, params={}", req.getType(), params);
@@ -376,7 +377,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
         if (log.isTraceEnabled()) {
           log.trace("result=nothandled_shutdown");
         }
-        metrics.counter("nothandled_shutdown").inc();
+        metrics.counter(MetricRegistry.name(type.name(), "nothandled_shutdown")).inc();
       case FAILED_RETRY:
         log.error("Unexpected response while processing request. We never expect {}.", result.status().toString());
         metrics.counter(MetricRegistry.name(type.name(), "failed-retry")).inc();

@@ -78,7 +78,7 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
     private Result<MirroredSolrRequest> processMirroredRequest(MirroredSolrRequest request) {
         final Result<MirroredSolrRequest> result = handleSolrRequest(request);
         // Back-off before returning
-        backoffIfNeeded(result);
+        backoffIfNeeded(result, request.getType());
         return result;
     }
 
@@ -184,7 +184,7 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
         }
         Result<MirroredSolrRequest> result;
         SolrResponseBase response = null;
-        Timer.Context ctx = metrics.timer(MetricRegistry.name(type.name(), "processedTime")).time();
+        Timer.Context ctx = metrics.timer(MetricRegistry.name(type.name(), "outputTime")).time();
 
         try {
             response = (SolrResponseBase) request.process(client);
@@ -199,11 +199,10 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
         }
 
         if (status != 0) {
-            metrics.counter(MetricRegistry.name(type.name(), "processedErrors")).inc();
+            metrics.counter(MetricRegistry.name(type.name(), "outputErrors")).inc();
             throw new SolrException(SolrException.ErrorCode.getErrorCode(status), "response=" + response);
         }
 
-        metrics.counter(MetricRegistry.name(type.name(), "processed")).inc();
         if (log.isDebugEnabled()) {
             log.debug("Finished sending request to Solr at ZK address={} with params {} status_code={}", client.getZkStateReader().getZkClient().getZkServerAddress(), request.getParams(), status);
         }
@@ -218,17 +217,14 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
             rmsg.append("Submitting update request for collection=").append(collection != null ? collection : request.getParams().get("collection"));
             if(((UpdateRequest) request).getDeleteById() != null) {
                 final int numDeleteByIds = ((UpdateRequest) request).getDeleteById().size();
-                metrics.counter("numDeleteByIds").inc(numDeleteByIds);
                 rmsg.append(" numDeleteByIds=").append(numDeleteByIds);
             }
             if(((UpdateRequest) request).getDocuments() != null) {
                 final int numUpdates = ((UpdateRequest) request).getDocuments().size();
-                metrics.counter("numUpdates").inc(numUpdates);
                 rmsg.append(" numUpdates=").append(numUpdates);
             }
             if(((UpdateRequest) request).getDeleteQuery() != null) {
                 final int numDeleteByQuery = ((UpdateRequest) request).getDeleteQuery().size();
-                metrics.counter("numDeleteByQuery").inc(numDeleteByQuery);
                 rmsg.append(" numDeleteByQuery=").append(numDeleteByQuery);
             }
             log.info(rmsg.toString());
@@ -289,7 +285,7 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
         if (mirroredSolrRequest.getAttempt() == 1) {
             final long latency = System.currentTimeMillis() - TimeUnit.NANOSECONDS.toMillis(mirroredSolrRequest.getSubmitTimeNanos());
             log.debug("First attempt latency = {}", latency);
-            metrics.timer("latency").update(latency, TimeUnit.MILLISECONDS);
+            metrics.timer(MetricRegistry.name(mirroredSolrRequest.getType().name(), "latency")).update(latency, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -349,10 +345,11 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
         }
     }
 
-    private void backoffIfNeeded(Result<MirroredSolrRequest> result) {
+    private void backoffIfNeeded(Result<MirroredSolrRequest> result, MirroredSolrRequest.Type type) {
         if (result.status().equals(ResultStatus.FAILED_RESUBMIT)) {
             final long backoffMs = getResubmitBackoffPolicy().getBackoffTimeMs(result.getItem());
             if (backoffMs > 0L) {
+                metrics.meter(MetricRegistry.name(type.name(), "backoff")).mark(backoffMs);
                 try {
                     Thread.sleep(backoffMs);
                 } catch (final InterruptedException ex) {
