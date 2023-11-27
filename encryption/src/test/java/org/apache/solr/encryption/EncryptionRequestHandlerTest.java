@@ -70,7 +70,6 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
 
   @AfterClass
   public static void afterClass() throws Exception {
-    System.clearProperty(PROPERTY_INNER_ENCRYPTION_DIRECTORY_FACTORY);
     cluster.shutdown();
   }
 
