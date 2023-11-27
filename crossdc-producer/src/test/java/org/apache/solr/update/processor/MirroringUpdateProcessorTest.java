@@ -363,6 +363,34 @@ public class MirroringUpdateProcessorTest extends SolrTestCaseJ4 {
     }
 
     @Test
+    public void testExpandDbq() throws Exception {
+        when(cloudDesc.getCoreNodeName()).thenReturn("replica1");
+        deleteUpdateCommand.query = "id:test*";
+        UpdateRequest updateRequest = new UpdateRequest();
+        processor =
+            new MirroringUpdateProcessor(
+                next,
+                true,
+                true,
+                true,
+                false,
+                1000L,
+                new ModifiableSolrParams(),
+                DistributedUpdateProcessor.DistribPhase.NONE,
+                requestMirroringHandler,
+                producerMetrics) {
+                UpdateRequest createMirrorRequest() {
+                    return updateRequest;
+                }
+            };
+
+        processor.processDelete(deleteUpdateCommand);
+        verify(requestMirroringHandler, times(1)).mirror(updateRequest);
+        assertEquals("missing dbq", 1, updateRequest.getDeleteQuery().size());
+        assertEquals("dbq value", "id:test*", updateRequest.getDeleteQuery().get(0));
+    }
+
+    @Test
     public void testProcessDBQResults() throws Exception {
         when(cloudDesc.getCoreNodeName()).thenReturn("replica1");
         when(builder.build()).thenReturn(client);
