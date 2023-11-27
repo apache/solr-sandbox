@@ -66,7 +66,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
 
     /** This is instantiated in inform(SolrCore) and then shared by all processor instances - visible for testing */
     private volatile KafkaRequestMirroringHandler mirroringHandler;
-
+    private volatile ProducerMetrics producerMetrics;
 
     private boolean enabled = true;
 
@@ -190,6 +190,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         Closer closer = new Closer(sink);
         core.addCloseHook(new MyCloseHook(closer));
 
+        producerMetrics = new ProducerMetrics(core.getSolrMetricsContext().getChildContext(this), core);
         mirroringHandler = new KafkaRequestMirroringHandler(sink);
     }
 
@@ -250,7 +251,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         }
 
         return new MirroringUpdateProcessor(next, doMirroring, indexUnmirrorableDocs, mirrorCommits, maxMirroringBatchSizeBytes, mirroredParams,
-                DistribPhase.parseParam(req.getParams().get(DISTRIB_UPDATE_PARAM)), doMirroring ? mirroringHandler : null);
+                DistribPhase.parseParam(req.getParams().get(DISTRIB_UPDATE_PARAM)), doMirroring ? mirroringHandler : null, producerMetrics);
     }
 
     public static class NoOpUpdateRequestProcessor extends UpdateRequestProcessor {
