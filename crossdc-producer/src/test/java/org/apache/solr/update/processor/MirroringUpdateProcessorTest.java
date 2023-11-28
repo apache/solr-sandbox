@@ -17,6 +17,7 @@ import org.apache.solr.common.params.UpdateParams;
 import org.apache.solr.core.CoreContainer;
 import org.apache.solr.core.CoreDescriptor;
 import org.apache.solr.core.SolrCore;
+import org.apache.solr.crossdc.common.CrossDcConf;
 import org.apache.solr.metrics.SolrMetricsContext;
 import org.apache.solr.request.SolrQueryRequestBase;
 import org.apache.solr.schema.IndexSchema;
@@ -121,7 +122,7 @@ public class MirroringUpdateProcessorTest extends SolrTestCaseJ4 {
                         true,
                         true,
                         true,
-                        true,
+                        CrossDcConf.ExpandDbq.EXPAND,
                         1000L,
                         new ModifiableSolrParams(),
                         DistributedUpdateProcessor.DistribPhase.NONE,
@@ -254,7 +255,7 @@ public class MirroringUpdateProcessorTest extends SolrTestCaseJ4 {
                     true,
                     true,
                     true,
-                    true,
+                    CrossDcConf.ExpandDbq.EXPAND,
                     1000L,
                     new ModifiableSolrParams(),
                     DistributedUpdateProcessor.DistribPhase.NONE,
@@ -291,7 +292,7 @@ public class MirroringUpdateProcessorTest extends SolrTestCaseJ4 {
                     true,
                     true,
                     false,
-                    true,
+                    CrossDcConf.ExpandDbq.EXPAND,
                     1000L,
                     new ModifiableSolrParams(),
                     DistributedUpdateProcessor.DistribPhase.NONE,
@@ -336,7 +337,7 @@ public class MirroringUpdateProcessorTest extends SolrTestCaseJ4 {
 
         SolrParams mirrorParams = new ModifiableSolrParams();
         MirroringUpdateProcessor mirroringUpdateProcessorWithLimit = new MirroringUpdateProcessor(nextProcessor, true, false, // indexUnmirrorableDocs set to false
-                true, true, 50000, mirrorParams, DistributedUpdateProcessor.DistribPhase.NONE, requestMirroringHandler, producerMetrics);
+                true, CrossDcConf.ExpandDbq.EXPAND, 50000, mirrorParams, DistributedUpdateProcessor.DistribPhase.NONE, requestMirroringHandler, producerMetrics);
 
         assertThrows(SolrException.class, () -> mirroringUpdateProcessorWithLimit.processAdd(addUpdateCommand));
     }
@@ -373,7 +374,7 @@ public class MirroringUpdateProcessorTest extends SolrTestCaseJ4 {
                 true,
                 true,
                 true,
-                false,
+                CrossDcConf.ExpandDbq.NONE,
                 1000L,
                 new ModifiableSolrParams(),
                 DistributedUpdateProcessor.DistribPhase.NONE,

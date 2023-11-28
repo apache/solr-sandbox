@@ -63,7 +63,7 @@ public class KafkaCrossDcConf extends CrossDcConf {
 
   private static final String DEFAULT_MIRROR_COMMITS = "false";
 
-  private static final String DEFAULT_EXPAND_DBQ = "true";
+  private static final String DEFAULT_EXPAND_DBQ = ExpandDbq.EXPAND.name();
 
   public static final String TOPIC_NAME = "topicName";
 

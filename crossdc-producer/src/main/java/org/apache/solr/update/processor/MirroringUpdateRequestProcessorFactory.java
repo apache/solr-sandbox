@@ -218,7 +218,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
         // Check if mirroring is disabled in request params, defaults to true
         boolean doMirroring = req.getParams().getBool(SERVER_SHOULD_MIRROR, true);
         boolean mirrorCommits = conf.getBool(MIRROR_COMMITS);
-        boolean expandDbq = conf.getBool(EXPAND_DBQ);
+        ExpandDbq expandDbq = ExpandDbq.getOrDefault(conf.get(EXPAND_DBQ), ExpandDbq.EXPAND);
         final long maxMirroringBatchSizeBytes = conf.getInt(MAX_REQUEST_SIZE_BYTES);
         Boolean indexUnmirrorableDocs = conf.getBool(INDEX_UNMIRRORABLE_DOCS);
 

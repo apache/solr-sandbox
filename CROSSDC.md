@@ -81,19 +81,19 @@ The required configuration properties are:
 - `topicName`: Kafka topicName used to indicate which Kafka queue the Solr updates will be pushed on. This topic must already exist.
 
 Optional configuration properties:
-- `batchSizeBytes`: maximum batch size in bytes for the Kafka queue
-- `bufferMemoryBytes`: memory allocated by the Producer in total for buffering 
-- `lingerMs`: amount of time that the Producer will wait to add to a batch
-- `requestTimeout`: request timeout for the Producer 
-- `indexUnmirrorableDocs`: if set to True, updates that are too large for the Kafka queue will still be indexed on the primary.
-- `enableDataCompression`: whether to use compression for data sent over the Kafka queue - can be none (default), gzip, snappy, lz4, or zstd
-- `numRetries`: Setting a value greater than zero will cause the Producer to resend any record whose send fails with a potentially transient error.
-- `retryBackoffMs`: The amount of time to wait before attempting to retry a failed request to a given topic partition.
-- `deliveryTimeoutMS`: Updates sent to the Kafka queue will be failed before the number of retries has been exhausted if the timeout configured by delivery.timeout.ms expires first
-- `maxRequestSizeBytes`: The maximum size of a Kafka queue request in bytes - limits the number of requests that will be sent over the queue in a single batch.
-- `dqlTopicName`: if not empty then requests that failed processing `maxAttempts` times will be sent to a "dead letter queue" topic in Kafka (must exist if configured).
-- `mirrorCommits`: if "true" then standalone commit requests will be mirrored, otherwise they will be processed only locally.
-- `expandDbq`: if "true" (default) then Delete-By-Query will be expanded before mirroring into series of Delete-By-Id, which may help with correct processing of out-of-order requests on the consumer side.
+- `batchSizeBytes`: (integer) maximum batch size in bytes for the Kafka queue
+- `bufferMemoryBytes`: (integer) memory allocated by the Producer in total for buffering 
+- `lingerMs`: (integer) amount of time that the Producer will wait to add to a batch
+- `requestTimeout`: (integer) request timeout for the Producer 
+- `indexUnmirrorableDocs`: (boolean) if set to True, updates that are too large for the Kafka queue will still be indexed on the primary.
+- `enableDataCompression`: (boolean) whether to use compression for data sent over the Kafka queue - can be none (default), gzip, snappy, lz4, or zstd
+- `numRetries`: (integer) Setting a value greater than zero will cause the Producer to resend any record whose send fails with a potentially transient error.
+- `retryBackoffMs`: (integer) The amount of time to wait before attempting to retry a failed request to a given topic partition.
+- `deliveryTimeoutMS`: (integer) Updates sent to the Kafka queue will be failed before the number of retries has been exhausted if the timeout configured by delivery.timeout.ms expires first
+- `maxRequestSizeBytes`: (integer) The maximum size of a Kafka queue request in bytes - limits the number of requests that will be sent over the queue in a single batch.
+- `dqlTopicName`: (string) if not empty then requests that failed processing `maxAttempts` times will be sent to a "dead letter queue" topic in Kafka (must exist if configured).
+- `mirrorCommits`: (boolean) if "true" then standalone commit requests will be mirrored, otherwise they will be processed only locally.
+- `expandDbq`: (enum) if set to "expand" (default) then Delete-By-Query will be expanded before mirroring into series of Delete-By-Id, which may help with correct processing of out-of-order requests on the consumer side. If set to "none" then Delete-By-Query requests will be mirrored as-is.
 
 #### CrossDC Consumer Application
 

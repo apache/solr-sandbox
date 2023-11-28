@@ -14,6 +14,7 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.SolrInputField;
 import org.apache.solr.common.cloud.*;
 import org.apache.solr.common.params.*;
+import org.apache.solr.crossdc.common.CrossDcConf;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.update.AddUpdateCommand;
 import org.apache.solr.update.CommitUpdateCommand;
@@ -67,7 +68,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
    * If true then expand Delete-By-Query into series of Delete-by-Ids. If false then mirror the
    * DBQs unchanged.
    */
-  private final boolean expandDbq;
+  private final CrossDcConf.ExpandDbq expandDbq;
 
   private final long maxMirroringDocSizeBytes;
 
@@ -86,7 +87,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
                                   boolean doMirroring,
       final boolean indexUnmirrorableDocs,
       final boolean mirrorCommits,
-      final boolean expandDbq,
+      final CrossDcConf.ExpandDbq expandDbq,
       final long maxMirroringBatchSizeBytes,
       final SolrParams mirroredReqParams,
       final DistributedUpdateProcessor.DistribPhase distribPhase,
@@ -163,7 +164,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
 
   @Override
   public void processDelete(final DeleteUpdateCommand cmd) throws IOException {
-    if (doMirroring && expandDbq && !cmd.isDeleteById() && !"*:*".equals(cmd.query)) {
+    if (doMirroring && (expandDbq != CrossDcConf.ExpandDbq.NONE) && !cmd.isDeleteById() && !"*:*".equals(cmd.query)) {
 
       CloudDescriptor cloudDesc =
           cmd.getReq().getCore().getCoreDescriptor().getCloudDescriptor();
@@ -176,6 +177,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
 
         String uniqueField = cmd.getReq().getSchema().getUniqueKeyField().getName();
 
+        // TODO: implement "expand without deep paging"
         int rows = Integer.getInteger("solr.crossdc.dbq_rows", 1000);
         SolrQuery q = new SolrQuery(cmd.query).setRows(rows).setSort(SolrQuery.SortClause.asc(uniqueField)).setFields(uniqueField);
         String cursorMark = CursorMarkParams.CURSOR_MARK_START;

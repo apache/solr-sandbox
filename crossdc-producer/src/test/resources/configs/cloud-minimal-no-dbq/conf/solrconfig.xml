@@ -112,7 +112,7 @@
     <processor class="org.apache.solr.update.processor.MirroringUpdateRequestProcessorFactory">
       <bool name="enabled">${enabled:true}</bool>
       <bool name="indexUnmirrorableDocs">${indexUnmirrorableDocs:false}</bool>
-      <bool name="expandDbq">${expandDbq:false}</bool>
+      <str name="expandDbq">${expandDbq:none}</str>
       <str name="bootstrapServers">${bootstrapServers:}</str>
       <str name="topicName">${topicName:}</str>
     </processor>
