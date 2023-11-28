@@ -65,8 +65,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
   private final boolean mirrorCommits;
 
   /**
-   * If true then expand Delete-By-Query into series of Delete-by-Ids. If false then mirror the
-   * DBQs unchanged.
+   * Controls the processing of Delete-By-Query requests..
    */
   private final CrossDcConf.ExpandDbq expandDbq;
 
