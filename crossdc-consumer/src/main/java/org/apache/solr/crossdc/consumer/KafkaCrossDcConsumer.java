@@ -48,7 +48,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
   private final int maxAttempts;
   private final SolrMessageProcessor messageProcessor;
 
-  private final CloudSolrClient solrClient;
+  protected final CloudSolrClient solrClient;
 
   private final ThreadPoolExecutor executor;
 
@@ -342,7 +342,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
 
 
-  void processResult(IQueueHandler.Result<MirroredSolrRequest> result) throws MirroringException {
+  protected void processResult(IQueueHandler.Result<MirroredSolrRequest> result) throws MirroringException {
     switch (result.status()) {
       case FAILED_RESUBMIT:
         if (log.isTraceEnabled()) {

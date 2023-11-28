@@ -14,6 +14,7 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.SolrInputField;
 import org.apache.solr.common.cloud.*;
 import org.apache.solr.common.params.*;
+import org.apache.solr.crossdc.common.CrossDcConf;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.update.AddUpdateCommand;
 import org.apache.solr.update.CommitUpdateCommand;
@@ -63,6 +64,11 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
    */
   private final boolean mirrorCommits;
 
+  /**
+   * Controls the processing of Delete-By-Query requests..
+   */
+  private final CrossDcConf.ExpandDbq expandDbq;
+
   private final long maxMirroringDocSizeBytes;
 
 
@@ -80,6 +86,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
                                   boolean doMirroring,
       final boolean indexUnmirrorableDocs,
       final boolean mirrorCommits,
+      final CrossDcConf.ExpandDbq expandDbq,
       final long maxMirroringBatchSizeBytes,
       final SolrParams mirroredReqParams,
       final DistributedUpdateProcessor.DistribPhase distribPhase,
@@ -89,6 +96,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
     this.doMirroring = doMirroring;
     this.indexUnmirrorableDocs = indexUnmirrorableDocs;
     this.mirrorCommits = mirrorCommits;
+    this.expandDbq = expandDbq;
     this.maxMirroringDocSizeBytes = maxMirroringBatchSizeBytes;
     this.mirrorParams = mirroredReqParams;
     this.distribPhase = distribPhase;
@@ -109,7 +117,9 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
     final SolrInputDocument doc = cmd.getSolrInputDocument().deepCopy();
     doc.removeField(CommonParams.VERSION_FIELD); // strip internal doc version
     final long estimatedDocSizeInBytes = ObjectSizeEstimator.estimate(doc);
-    log.info("estimated doc size is {} bytes, max size is {}", estimatedDocSizeInBytes, maxMirroringDocSizeBytes);
+    if (log.isDebugEnabled()) {
+      log.debug("estimated doc size is {} bytes, max size is {}", estimatedDocSizeInBytes, maxMirroringDocSizeBytes);
+    }
     producerMetrics.getDocumentSize().update(estimatedDocSizeInBytes);
     final boolean tooLargeForKafka = estimatedDocSizeInBytes > maxMirroringDocSizeBytes;
     if (tooLargeForKafka && !indexUnmirrorableDocs) {
@@ -151,8 +161,9 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
       log.debug("processAdd isLeader={} doMirroring={} tooLargeForKafka={} cmd={}", isLeader, doMirroring, tooLargeForKafka, cmd);
   }
 
-  @Override public void processDelete(final DeleteUpdateCommand cmd) throws IOException {
-    if (doMirroring && !cmd.isDeleteById() && !"*:*".equals(cmd.query)) {
+  @Override
+  public void processDelete(final DeleteUpdateCommand cmd) throws IOException {
+    if (doMirroring && (expandDbq != CrossDcConf.ExpandDbq.NONE) && !cmd.isDeleteById() && !"*:*".equals(cmd.query)) {
 
       CloudDescriptor cloudDesc =
           cmd.getReq().getCore().getCoreDescriptor().getCloudDescriptor();
@@ -165,6 +176,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
 
         String uniqueField = cmd.getReq().getSchema().getUniqueKeyField().getName();
 
+        // TODO: implement "expand without deep paging"
         int rows = Integer.getInteger("solr.crossdc.dbq_rows", 1000);
         SolrQuery q = new SolrQuery(cmd.query).setRows(rows).setSort(SolrQuery.SortClause.asc(uniqueField)).setFields(uniqueField);
         String cursorMark = CursorMarkParams.CURSOR_MARK_START;

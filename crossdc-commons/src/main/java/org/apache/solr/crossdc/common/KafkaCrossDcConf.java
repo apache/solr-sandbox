@@ -63,6 +63,8 @@ public class KafkaCrossDcConf extends CrossDcConf {
 
   private static final String DEFAULT_MIRROR_COMMITS = "false";
 
+  private static final String DEFAULT_EXPAND_DBQ = ExpandDbq.EXPAND.name();
+
   public static final String TOPIC_NAME = "topicName";
 
   public static final String DLQ_TOPIC_NAME = "dlqTopicName";
@@ -161,6 +163,7 @@ public class KafkaCrossDcConf extends CrossDcConf {
 
             new ConfigProperty(MIRROR_COLLECTIONS, DEFAULT_MIRROR_COLLECTIONS),
             new ConfigProperty(MIRROR_COMMITS, DEFAULT_MIRROR_COMMITS),
+            new ConfigProperty(EXPAND_DBQ, DEFAULT_EXPAND_DBQ),
 
             new ConfigProperty(MAX_PARTITION_FETCH_BYTES, DEFAULT_MAX_PARTITION_FETCH_BYTES),
             new ConfigProperty(MAX_POLL_RECORDS, DEFAULT_MAX_POLL_RECORDS),
