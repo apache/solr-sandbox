@@ -16,7 +16,32 @@
  */
 package org.apache.solr.crossdc.common;
 
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+
 public abstract class CrossDcConf {
     public static final String CROSSDC_PROPERTIES = "/crossdc.properties";
     public static final String ZK_CROSSDC_PROPS_PATH = "zkCrossDcPropsPath";
+    public static final String EXPAND_DBQ = "expandDbq";
+
+    public enum ExpandDbq {
+        NONE,
+        EXPAND;
+
+        private static final Map<String, ExpandDbq> valueMap = new HashMap<>();
+        static {
+            for (ExpandDbq value : values()) {
+                valueMap.put(value.name().toUpperCase(Locale.ROOT), value);
+            }
+        }
+
+        public static ExpandDbq getOrDefault(String strValue, ExpandDbq defaultValue) {
+            if (strValue == null || strValue.isBlank()) {
+                return defaultValue;
+            }
+            ExpandDbq value = valueMap.get(strValue.toUpperCase(Locale.ROOT));
+            return value != null ? value : defaultValue;
+        }
+    }
 }
