@@ -27,6 +27,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringReader;
+import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -48,6 +49,23 @@ public class CharStreamEncrypter {
 
   public CharStreamEncrypter(AesCtrEncrypterFactory factory) {
     this.factory = factory;
+  }
+
+  /**
+   * Encrypts an input string to base 64 characters compatible with JSON.
+   *
+   * @param key AES key, can either 16, 24 or 32 bytes.
+   * @return the encrypted base 64 chars.
+   */
+  public String encrypt(String input, byte[] key) {
+    StringBuilder output = new StringBuilder(input.length() * 2);
+    try {
+      encrypt(input, key, output);
+    } catch (IOException e) {
+      // Never happens when appending to a StringBuilder.
+      throw new UncheckedIOException(e);
+    }
+    return output.toString();
   }
 
   /**
@@ -95,6 +113,23 @@ public class CharStreamEncrypter {
                bufferSize
       );
     }
+  }
+
+  /**
+   * Decrypts an input string previously encrypted with {@link #encrypt}.
+   *
+   * @param key AES key, can either 16, 24 or 32 bytes.
+   * @return the decrypted chars.
+   */
+  public String decrypt(String input, byte[] key) {
+    StringBuilder output = new StringBuilder((int) (input.length() * 0.6f));
+    try {
+      decrypt(input, key, output);
+    } catch (IOException e) {
+      // Never happens when appending to a StringBuilder.
+      throw new UncheckedIOException(e);
+    }
+    return output.toString();
   }
 
   /**

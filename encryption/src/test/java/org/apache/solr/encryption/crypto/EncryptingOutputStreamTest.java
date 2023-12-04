@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import static org.apache.solr.encryption.crypto.AesCtrUtil.IV_LENGTH;
+import static org.apache.solr.encryption.crypto.CryptoTestUtil.encrypterFactory;
 import static org.junit.Assert.*;
 
 /**
@@ -115,10 +116,6 @@ public class EncryptingOutputStreamTest extends RandomizedTest {
     assertEquals(-1, dis.read(decryptedBytes, 0, 1));
     dis.close();
     assertArrayEquals(source, decryptedBytes);
-  }
-
-  private static AesCtrEncrypterFactory encrypterFactory() {
-    return randomBoolean() ? CipherAesCtrEncrypter.FACTORY : LightAesCtrEncrypter.FACTORY;
   }
 
   private static void write(byte[] source, int offset, int length, OutputStream os) throws IOException {

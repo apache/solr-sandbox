@@ -16,89 +16,78 @@
  */
 package org.apache.solr.encryption;
 
-import org.apache.solr.client.solrj.SolrClient;
-import org.apache.solr.client.solrj.SolrRequest;
+import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
-import org.apache.solr.client.solrj.request.GenericSolrRequest;
-import org.apache.solr.client.solrj.request.QueryRequest;
-import org.apache.solr.client.solrj.request.UpdateRequest;
-import org.apache.solr.cloud.AbstractDistribZkTestBase;
+import org.apache.solr.cloud.MiniSolrCloudCluster;
 import org.apache.solr.cloud.SolrCloudTestCase;
-import org.apache.solr.common.params.ModifiableSolrParams;
-import org.apache.solr.common.util.NamedList;
-import org.apache.solr.common.util.RetryUtil;
-import org.apache.solr.embedded.JettySolrRunner;
-import org.hamcrest.MatcherAssert;
+import org.apache.solr.encryption.crypto.AesCtrEncrypterFactory;
+import org.apache.solr.encryption.crypto.DecryptingChannelInputStream;
+import org.apache.solr.encryption.crypto.EncryptingOutputStream;
+import org.apache.solr.update.TransactionLog;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.channels.FileChannel;
+import java.nio.file.Path;
+import java.util.Collection;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.apache.solr.encryption.EncryptionRequestHandler.*;
-import static org.apache.solr.encryption.TestingEncryptionUpdateLog.reencryptionCallCount;
-import static org.apache.solr.encryption.TestingKeySupplier.*;
-import static org.hamcrest.Matchers.*;
+import static org.apache.solr.encryption.EncryptionRequestHandler.NO_KEY_ID;
+import static org.apache.solr.encryption.TestingKeySupplier.KEY_ID_1;
+import static org.apache.solr.encryption.TestingKeySupplier.KEY_ID_2;
+import static org.apache.solr.encryption.EncryptionTestUtil.EncryptionStatus;
+import static org.apache.solr.encryption.EncryptionUpdateLogTest.TestingEncryptionUpdateLog.*;
 
 /**
  * Tests {@link EncryptionUpdateLog} and {@link EncryptionTransactionLog}.
  */
 public class EncryptionUpdateLogTest extends SolrCloudTestCase {
 
-  private static final int NUM_SHARDS = 1;
-  private static final int NUM_REPLICAS = 4;
-  private static final long TIMEOUT = DEFAULT_TIMEOUT;
+  private static final String COLLECTION_PREFIX = EncryptionRequestHandlerTest.class.getSimpleName() + "-collection-";
+
+  private static final int NUM_SHARDS = 2;
+  private static final int NUM_REPLICAS = 2;
 
   private String collectionName;
-  private List<SolrClient> solrClients;
-  private int nonLeaderIndex;
+  private CloudSolrClient solrClient;
+  private EncryptionTestUtil testUtil;
 
   @BeforeClass
-  public static void setupClass() throws Exception {
-    configureCluster(NUM_SHARDS * NUM_REPLICAS)
+  public static void beforeClass() throws Exception {
+    EncryptionTestUtil.setInstallDirProperty();
+    System.setProperty("solr.updateLog", TestingEncryptionUpdateLog.class.getName());
+    cluster = new MiniSolrCloudCluster.Builder(NUM_SHARDS, createTempDir())
       .addConfig("config", EncryptionTestUtil.getConfigPath("collection1"))
       .configure();
   }
 
-  @Before
-  public void setupTest() throws Exception {
-    collectionName = "collection" + UUID.randomUUID();
-    CollectionAdminRequest.createCollection(collectionName, "config", NUM_SHARDS, NUM_REPLICAS)
-      .processAndWait(cluster.getSolrClient(), TIMEOUT);
-    AbstractDistribZkTestBase.waitForRecoveriesToFinish(
-      collectionName, cluster.getZkStateReader(), false, true, TIMEOUT);
-
-    solrClients = new ArrayList<>();
-    nonLeaderIndex = 0;
-    for (JettySolrRunner jettySolrRunner : cluster.getJettySolrRunners()) {
-      if (!jettySolrRunner
-        .getBaseUrl()
-        .toString()
-        .equals(getCollectionState(collectionName).getLeader("shard1").getBaseUrl())) {
-        nonLeaderIndex = solrClients.size();
-      }
-      solrClients.add(jettySolrRunner.newClient());
-    }
+  @AfterClass
+  public static void afterClass() throws Exception {
+    cluster.shutdown();
   }
 
+  @Override
+  @Before
+  public void setUp() throws Exception {
+    super.setUp();
+    collectionName = COLLECTION_PREFIX + UUID.randomUUID();
+    solrClient = cluster.getSolrClient();
+    CollectionAdminRequest.createCollection(collectionName, NUM_SHARDS, NUM_REPLICAS).process(solrClient);
+    cluster.waitForActiveCollection(collectionName, NUM_SHARDS, NUM_SHARDS * NUM_REPLICAS);
+    testUtil = new EncryptionTestUtil(solrClient, collectionName);
+  }
+
+  @Override
   @After
-  public void tearDownTest() throws Exception {
-    try {
-      if (solrClients != null) {
-        for (SolrClient solrClient : solrClients) {
-          solrClient.close();
-        }
-      }
-    } finally {
-      CollectionAdminRequest.deleteCollection(collectionName).process(cluster.getSolrClient());
-    }
+  public void tearDown() throws Exception {
+    CollectionAdminRequest.deleteCollection(collectionName).process(solrClient);
+    super.tearDown();
   }
 
   @Test
@@ -117,149 +106,133 @@ public class EncryptionUpdateLogTest extends SolrCloudTestCase {
   }
 
   private void checkEncryptionFromNoKeysToOneKey(String keyId) throws Exception {
+    EncryptionStatus encryptionStatus = testUtil.encrypt(keyId);
+    assertTrue(encryptionStatus.isSuccess());
+    assertTrue(encryptionStatus.isComplete());
 
-    reencryptionCallCount.set(0);
-    EncryptionStatus encryptionStatus = encrypt(keyId);
-    assertTrue(encryptionStatus.statusSuccess);
-    assertTrue(encryptionStatus.stateComplete);
+    resetCounters();
+    testUtil.indexDocsAndCommit("doc0");
+    assertEquals(NUM_REPLICAS, encryptedLogWriteCount.get());
+    assertEquals(0, encryptedLogReadCount.get());
+    assertEquals(0, reencryptionCallCount.get());
 
-    new UpdateRequest()
-      .add(sdoc("id", "0", "text", "zero"))
-      .commit(cluster.getSolrClient(), collectionName);
-
-    for (SolrClient solrClient : solrClients) {
-      checkNumUpdates(solrClient, 1);
-    }
-
-    cluster.getJettySolrRunner(nonLeaderIndex).stop();
-    AbstractDistribZkTestBase.waitForRecoveriesToFinish(
-      collectionName, cluster.getZkStateReader(), false, true, TIMEOUT);
-
-    new UpdateRequest()
-      .add(sdoc("id", "1", "text", "one"))
-      .deleteById("2")
-      .deleteByQuery("text:three")
-      .commit(cluster.getSolrClient(), collectionName);
-
-    cluster.getJettySolrRunner(nonLeaderIndex).start();
-    AbstractDistribZkTestBase.waitForRecoveriesToFinish(
-      collectionName, cluster.getZkStateReader(), false, true, TIMEOUT);
-
-    for (SolrClient solrClient : solrClients) {
-      checkNumUpdates(solrClient, 4);
-    }
-
+    resetCounters();
+    testUtil.reloadCores();
+    assertEquals(0, encryptedLogWriteCount.get());
+    assertEquals(NUM_REPLICAS, encryptedLogReadCount.get());
     assertEquals(0, reencryptionCallCount.get());
   }
 
   private void checkEncryptionFromOneKeyToAnotherKey(String fromKeyId, String toKeyId) throws Exception {
     checkEncryptionFromNoKeysToOneKey(fromKeyId);
 
-    reencryptionCallCount.set(0);
-    encrypt(fromKeyId);
-    waitUntilEncryptionIsComplete(toKeyId);
-
-    new UpdateRequest()
-      .add(sdoc("id", "2", "text", "four"))
-      .commit(cluster.getSolrClient(), collectionName);
-
-    for (SolrClient solrClient : solrClients) {
-      checkNumUpdates(solrClient, 5);
+    for (int i = 1 ; i <= 3; i++) {
+      resetCounters();
+      testUtil.indexDocsAndCommit("doc" + i);
+      assertEquals(NUM_REPLICAS, encryptedLogWriteCount.get());
+      assertEquals(0, encryptedLogReadCount.get());
+      assertEquals(0, reencryptionCallCount.get());
     }
 
-    cluster.getJettySolrRunner(nonLeaderIndex).stop();
-    AbstractDistribZkTestBase.waitForRecoveriesToFinish(
-      collectionName, cluster.getZkStateReader(), false, true, TIMEOUT);
+    resetCounters();
+    EncryptionStatus encryptionStatus = testUtil.encrypt(toKeyId);
+    assertTrue(encryptionStatus.isSuccess());
+    testUtil.waitUntilEncryptionIsComplete(toKeyId);
+    assertEquals(0, encryptedLogWriteCount.get());
+    assertEquals(0, encryptedLogReadCount.get());
+    assertEquals(4 * NUM_REPLICAS, reencryptionCallCount.get());
 
-    new UpdateRequest()
-      .add(sdoc("id", "3", "text", "five"))
-      .deleteById("6")
-      .deleteByQuery("text:seven")
-      .commit(cluster.getSolrClient(), collectionName);
-
-    cluster.getJettySolrRunner(nonLeaderIndex).start();
-    AbstractDistribZkTestBase.waitForRecoveriesToFinish(
-      collectionName, cluster.getZkStateReader(), false, true, TIMEOUT);
-
-    for (SolrClient solrClient : solrClients) {
-      checkNumUpdates(solrClient, 8);
-    }
-
-    MatcherAssert.assertThat(reencryptionCallCount.get(), greaterThanOrEqualTo(1));
+    resetCounters();
+    testUtil.reloadCores();
+    assertEquals(0, encryptedLogWriteCount.get());
+    assertEquals(4 * NUM_REPLICAS, encryptedLogReadCount.get());
+    assertEquals(0, reencryptionCallCount.get());
   }
 
-  private EncryptionStatus encrypt(String keyId) throws Exception {
-    ModifiableSolrParams params = new ModifiableSolrParams();
-    params.set(PARAM_KEY_ID, keyId);
+  public static class TestingEncryptionUpdateLog extends EncryptionUpdateLog {
 
-    boolean statusSuccess = true;
-    boolean stateComplete = true;
-    for (SolrClient solrClient : solrClients) {
-      NamedList<Object> response = solrClient.request(
-        new GenericSolrRequest(SolrRequest.METHOD.GET, "/admin/encrypt", params), collectionName);
-      statusSuccess &= STATUS_SUCCESS.equals(response.get(STATUS));
-      stateComplete &= STATE_COMPLETE.equals(response.get(ENCRYPTION_STATE));
-    }
-    return new EncryptionStatus(statusSuccess, stateComplete);
-  }
+    static final AtomicInteger reencryptionCallCount = new AtomicInteger();
+    static final AtomicInteger encryptedLogWriteCount = new AtomicInteger();
+    static final AtomicInteger encryptedLogReadCount = new AtomicInteger();
 
-  private void waitUntilEncryptionIsComplete(String keyId) throws InterruptedException {
-    RetryUtil.retryUntil("Timeout waiting for encryption completion",
-                         50,
-                         100,
-                         TimeUnit.MILLISECONDS,
-                         () -> {
-                           EncryptionStatus encryptionStatus;
-                           try {
-                             encryptionStatus = encrypt(keyId);
-                           } catch (Exception e) {
-                             throw new RuntimeException(e);
-                           }
-                           assertTrue(encryptionStatus.statusSuccess);
-                           return encryptionStatus.stateComplete;
-                         });
-  }
-
-  @SuppressWarnings("unchecked")
-  private void checkNumUpdates(SolrClient solrClient, int numExpected) throws Exception {
-
-    final QueryRequest reqV = new QueryRequest(params("qt", "/get", "getVersions", "12345"));
-    final NamedList<?> rspV = solrClient.request(reqV, collectionName);
-    final List<Long> versions = (List<Long>) rspV.get("versions");
-    assertEquals(versions.toString(), numExpected, versions.size());
-    if (numExpected == 0) {
-      return;
+    static void resetCounters() {
+      reencryptionCallCount.set(0);
+      encryptedLogWriteCount.set(0);
+      encryptedLogReadCount.set(0);
     }
 
-    final Deque<Long> absVersions =
-      versions.stream().map(Math::abs).sorted().collect(Collectors.toCollection(ArrayDeque::new));
-    final Long minVersion = absVersions.getFirst();
-    final Long maxVersion = absVersions.getLast();
-
-    for (boolean skipDbq : new boolean[]{false, true}) {
-      final QueryRequest reqU =
-        new QueryRequest(
-          params(
-            "qt",
-            "/get",
-            "getUpdates",
-            minVersion + "..." + maxVersion,
-            "skipDbq",
-            Boolean.toString(skipDbq)));
-      final NamedList<?> rspU = solrClient.request(reqU, collectionName);
-      final List<?> updatesList = (List<?>) rspU.get("updates");
-      assertEquals(updatesList.toString(), numExpected, updatesList.size());
+    @Override
+    public TransactionLog newTransactionLog(Path tlogFile, Collection<String> globalStrings, boolean openExisting) {
+      return new TestingTransactionLog(tlogFile, globalStrings, openExisting, directorySupplier);
     }
-  }
 
-  private static class EncryptionStatus {
+    protected void reencrypt(FileChannel inputChannel,
+                             String inputKeyRef,
+                             OutputStream outputStream,
+                             String activeKeyRef,
+                             EncryptionDirectory directory)
+      throws IOException {
+      reencryptionCallCount.incrementAndGet();
+      super.reencrypt(inputChannel, inputKeyRef, outputStream, activeKeyRef, directory);
+    }
 
-    final boolean statusSuccess;
-    final boolean stateComplete;
+    private static class TestingTransactionLog extends EncryptionTransactionLog {
 
-    EncryptionStatus(boolean statusSuccess, boolean stateComplete) {
-      this.statusSuccess = statusSuccess;
-      this.stateComplete = stateComplete;
+      TestingTransactionLog(Path tlogFile,
+                            Collection<String> globalStrings,
+                            boolean openExisting,
+                            EncryptionDirectorySupplier directorySupplier) {
+        this(tlogFile, globalStrings, openExisting, directorySupplier, new IvHolder());
+      }
+
+      TestingTransactionLog(Path tlogFile,
+                            Collection<String> globalStrings,
+                            boolean openExisting,
+                            EncryptionDirectorySupplier directorySupplier,
+                            IvHolder ivHolder) {
+        super(tlogFile,
+              globalStrings,
+              openExisting,
+              new TestingEncryptionOutputStreamOpener(directorySupplier, ivHolder),
+              new TestingEncryptionChannelInputStreamOpener(directorySupplier, ivHolder));
+      }
+
+      static class TestingEncryptionOutputStreamOpener extends EncryptionOutputStreamOpener {
+
+        TestingEncryptionOutputStreamOpener(EncryptionDirectorySupplier directorySupplier, IvHolder ivHolder) {
+          super(directorySupplier, ivHolder);
+        }
+
+        @Override
+        protected EncryptingOutputStream createEncryptingOutputStream(OutputStream outputStream,
+                                                                      long position,
+                                                                      byte[] iv,
+                                                                      byte[] key,
+                                                                      AesCtrEncrypterFactory factory)
+          throws IOException {
+          encryptedLogWriteCount.incrementAndGet();
+          return super.createEncryptingOutputStream(outputStream, position, iv, key, factory);
+        }
+      }
+
+      static class TestingEncryptionChannelInputStreamOpener extends EncryptionChannelInputStreamOpener {
+
+        TestingEncryptionChannelInputStreamOpener(EncryptionDirectorySupplier directorySupplier,
+                                                            IvHolder ivHolder) {
+          super(directorySupplier, ivHolder);
+        }
+
+        @Override
+        protected DecryptingChannelInputStream createDecryptingChannelInputStream(FileChannel channel,
+                                                                                  long offset,
+                                                                                  long position,
+                                                                                  byte[] key,
+                                                                                  AesCtrEncrypterFactory factory)
+          throws IOException {
+          encryptedLogReadCount.incrementAndGet();
+          return super.createDecryptingChannelInputStream(channel, offset, position, key, factory);
+        }
+      }
     }
   }
 }

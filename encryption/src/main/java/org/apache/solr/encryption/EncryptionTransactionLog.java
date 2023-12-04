@@ -16,6 +16,7 @@
  */
 package org.apache.solr.encryption;
 
+import org.apache.solr.encryption.crypto.AesCtrEncrypterFactory;
 import org.apache.solr.encryption.crypto.DecryptingChannelInputStream;
 import org.apache.solr.encryption.crypto.EncryptingOutputStream;
 import org.apache.solr.update.TransactionLog;
@@ -44,8 +45,8 @@ import static org.apache.solr.encryption.crypto.AesCtrUtil.IV_LENGTH;
  */
 public class EncryptionTransactionLog extends TransactionLog {
 
-  static final int ENCRYPTION_KEY_HEADER_LENGTH = 2 * Integer.BYTES;
-  private static final int ENCRYPTION_FULL_HEADER_LENGTH = ENCRYPTION_KEY_HEADER_LENGTH + IV_LENGTH;
+  protected static final int ENCRYPTION_KEY_HEADER_LENGTH = 2 * Integer.BYTES;
+  protected static final int ENCRYPTION_FULL_HEADER_LENGTH = ENCRYPTION_KEY_HEADER_LENGTH + IV_LENGTH;
 
   /** Creates an {@link EncryptionTransactionLog}. */
   public EncryptionTransactionLog(Path tlogFile,
@@ -55,16 +56,36 @@ public class EncryptionTransactionLog extends TransactionLog {
     this(tlogFile, globalStrings, openExisting, directorySupplier, new IvHolder());
   }
 
-  private EncryptionTransactionLog(Path tlogFile,
+  protected EncryptionTransactionLog(Path tlogFile,
                                    Collection<String> globalStrings,
                                    boolean openExisting,
                                    EncryptionDirectorySupplier directorySupplier,
                                    IvHolder ivHolder) {
-    super(tlogFile,
+    this(tlogFile,
           globalStrings,
           openExisting,
           new EncryptionOutputStreamOpener(directorySupplier, ivHolder),
           new EncryptionChannelInputStreamOpener(directorySupplier, ivHolder));
+  }
+
+  protected EncryptionTransactionLog(Path tlogFile,
+                                     Collection<String> globalStrings,
+                                     boolean openExisting,
+                                     EncryptionOutputStreamOpener outputStreamOpener,
+                                     EncryptionChannelInputStreamOpener channelInputStreamOpener) {
+    super(tlogFile,
+          globalStrings,
+          openExisting,
+          outputStreamOpener,
+          channelInputStreamOpener);
+  }
+
+  public Path path() {
+    return tlog;
+  }
+
+  public int refCount() {
+    return refcount.get();
   }
 
   @Override
@@ -135,23 +156,24 @@ public class EncryptionTransactionLog extends TransactionLog {
   }
 
   /** Supplies and releases {@link EncryptionDirectory}. */
-  interface EncryptionDirectorySupplier {
+  protected interface EncryptionDirectorySupplier {
 
     EncryptionDirectory get();
 
     void release(EncryptionDirectory directory) throws IOException;
   }
 
-  private static class IvHolder {
+  /** Holds the IV only during the constructor call. */
+  protected static class IvHolder {
     private byte[] iv;
   }
 
-  private static class EncryptionOutputStreamOpener implements OutputStreamOpener {
+  protected static class EncryptionOutputStreamOpener implements OutputStreamOpener {
 
-    private final EncryptionDirectorySupplier directorySupplier;
-    private final IvHolder ivHolder;
+    protected final EncryptionDirectorySupplier directorySupplier;
+    protected final IvHolder ivHolder;
 
-    EncryptionOutputStreamOpener(EncryptionDirectorySupplier directorySupplier, IvHolder ivHolder) {
+    protected EncryptionOutputStreamOpener(EncryptionDirectorySupplier directorySupplier, IvHolder ivHolder) {
       this.directorySupplier = directorySupplier;
       this.ivHolder = ivHolder;
     }
@@ -169,11 +191,11 @@ public class EncryptionTransactionLog extends TransactionLog {
           // The output stream has to be wrapped to be encrypted with the key.
           directory.shouldCheckEncryptionWhenReading = true;
           writeEncryptionHeader(keyRef, outputStream);
-          EncryptingOutputStream eos = new EncryptingOutputStream(outputStream,
-                                                                  position,
-                                                                  ivHolder.iv,
-                                                                  directory.getKeySecret(keyRef),
-                                                                  directory.getEncrypterFactory());
+          EncryptingOutputStream eos = createEncryptingOutputStream(outputStream,
+                                                                    position,
+                                                                    ivHolder.iv,
+                                                                    directory.getKeySecret(keyRef),
+                                                                    directory.getEncrypterFactory());
           ivHolder.iv = eos.getIv();
           return eos;
         }
@@ -183,15 +205,24 @@ public class EncryptionTransactionLog extends TransactionLog {
         directorySupplier.release(directory);
       }
     }
+
+    protected EncryptingOutputStream createEncryptingOutputStream(OutputStream outputStream,
+                                                                  long position,
+                                                                  byte[] iv,
+                                                                  byte[] key,
+                                                                  AesCtrEncrypterFactory factory)
+      throws IOException {
+      return new EncryptingOutputStream(outputStream, position, iv, key, factory);
+    }
   }
 
-  private static class EncryptionChannelInputStreamOpener implements ChannelInputStreamOpener {
+  protected static class EncryptionChannelInputStreamOpener implements ChannelInputStreamOpener {
 
-    private final EncryptionDirectorySupplier directorySupplier;
-    private final IvHolder ivHolder;
-    private final ByteBuffer readBuffer;
+    protected final EncryptionDirectorySupplier directorySupplier;
+    protected final IvHolder ivHolder;
+    protected final ByteBuffer readBuffer;
 
-    EncryptionChannelInputStreamOpener(
+    protected EncryptionChannelInputStreamOpener(
       EncryptionDirectorySupplier directorySupplier, IvHolder ivHolder) {
       this.directorySupplier = directorySupplier;
       this.ivHolder = ivHolder;
@@ -206,11 +237,11 @@ public class EncryptionTransactionLog extends TransactionLog {
           String keyRef = readEncryptionHeader(channel, readBuffer);
           if (keyRef != null) {
             // The IndexInput has to be wrapped to be decrypted with the key.
-            DecryptingChannelInputStream dcis = new DecryptingChannelInputStream(channel,
-                                                                                 ENCRYPTION_KEY_HEADER_LENGTH,
-                                                                                 position,
-                                                                                 directory.getKeySecret(keyRef),
-                                                                                 directory.getEncrypterFactory());
+            DecryptingChannelInputStream dcis = createDecryptingChannelInputStream(channel,
+                                                                                  ENCRYPTION_KEY_HEADER_LENGTH,
+                                                                                  position,
+                                                                                  directory.getKeySecret(keyRef),
+                                                                                  directory.getEncrypterFactory());
             ivHolder.iv = dcis.getIv();
             return dcis;
           }
@@ -220,6 +251,15 @@ public class EncryptionTransactionLog extends TransactionLog {
       }
       ivHolder.iv = null;
       return CHANNEL_INPUT_STREAM_OPENER.open(channel, position);
+    }
+
+    protected DecryptingChannelInputStream createDecryptingChannelInputStream(FileChannel channel,
+                                                                              long offset,
+                                                                              long position,
+                                                                              byte[] key,
+                                                                              AesCtrEncrypterFactory factory)
+      throws IOException {
+      return new DecryptingChannelInputStream(channel, offset, position, key, factory);
     }
   }
 }

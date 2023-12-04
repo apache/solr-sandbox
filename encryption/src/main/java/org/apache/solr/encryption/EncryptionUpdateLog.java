@@ -16,6 +16,7 @@
  */
 package org.apache.solr.encryption;
 
+import org.apache.lucene.index.SegmentInfos;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.core.DirectoryFactory;
 import org.apache.solr.core.SolrCore;
@@ -44,62 +45,115 @@ import java.util.Objects;
 import static org.apache.solr.encryption.EncryptionTransactionLog.ENCRYPTION_KEY_HEADER_LENGTH;
 import static org.apache.solr.encryption.EncryptionTransactionLog.readEncryptionHeader;
 import static org.apache.solr.encryption.EncryptionTransactionLog.writeEncryptionHeader;
+import static org.apache.solr.encryption.EncryptionUtil.ENCRYPTION_LOG_PREFIX;
 import static org.apache.solr.encryption.EncryptionUtil.getActiveKeyRefFromCommit;
+import static org.apache.solr.encryption.EncryptionUtil.getKeyIdFromCommit;
 
 /**
  * {@link UpdateLog} that creates {@link EncryptionUpdateLog} to encrypts logs if the
  * core index is marked for encryption.
  * <p>
  * The encryption is triggered when the {@link EncryptionRequestHandler} is called. It
- * commits with some metadata that mark the index for encryption. From that point, this
- * {@link EncryptionUpdateLog} will first re-encrypt old log files with the active
- * encryption key id (nearly as fast as a file copy), and it will encrypt new log files
- * with the same active key.
+ * commits with some metadata that mark the index for encryption. It also calls
+ * {@link #encryptLogs} to (re)encrypt old log files with the active encryption key id
+ * (nearly as fast as a file copy). New log files created with {@link #newTransactionLog}
+ * will be encrypted using the active key stored in the commit metadata.
  */
 public class EncryptionUpdateLog extends UpdateLog {
 
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  private static final int REENCRYPTION_BUFFER_SIZE = 1024;
+  protected static final int REENCRYPTION_BUFFER_SIZE = 1024;
 
-  private final DirectorySupplier directorySupplier = new DirectorySupplier();
+  protected final DirectorySupplier directorySupplier = new DirectorySupplier();
+
+  protected boolean shouldEncryptOldLogs = true;
 
   @Override
   public void init(UpdateHandler updateHandler, SolrCore core) {
     directorySupplier.init(core);
     super.init(updateHandler, core);
+    try {
+      encryptLogs();
+    } catch (IOException e) {
+      log.error("{} exception while encrypting old transaction logs", ENCRYPTION_LOG_PREFIX, e);
+    }
   }
 
   @Override
   public TransactionLog newTransactionLog(Path tlogFile, Collection<String> globalStrings, boolean openExisting) {
-    if (openExisting) {
-      assert Files.exists(tlogFile) : tlogFile + " does not exist";
-      try {
-        reencryptOldLogFileIfRequired(tlogFile);
-      } catch (Exception e) {
-        // Absorb the exception and continue opening the transaction log.
-        log.error("Failure to re-encrypt log file (non fatal) {}", tlogFile, e);
-      }
-    }
     return new EncryptionTransactionLog(tlogFile, globalStrings, openExisting, directorySupplier);
   }
 
-  protected void reencryptOldLogFileIfRequired(Path tlog) throws IOException {
-    if (Files.size(tlog) > 0) {
+  /**
+   * (Re)encrypts all existing transaction logs if an encryption key is defined in the {@link SolrCore}
+   * index commit metadata.
+   *
+   * @return {@code true} if all logs were successfully encrypted; {@code false} if some logs were not
+   * encrypted because they are still in use, in this case the encryption will be retried at the next commit.
+   */
+  public synchronized boolean encryptLogs() throws IOException {
+    boolean allLogsEncrypted = true;
+    for (TransactionLog log : logs) {
+      EncryptionTransactionLog encLog = (EncryptionTransactionLog) log;
+      if (encLog.refCount() <= 1) {
+        // The log is only owned by this update log. We can encrypt it.
+        encryptLog(encLog);
+      } else {
+        allLogsEncrypted = false;
+      }
+    }
+    shouldEncryptOldLogs = !allLogsEncrypted;
+    return allLogsEncrypted;
+  }
+
+  @Override
+  protected synchronized void addOldLog(TransactionLog oldLog, boolean removeOld) {
+    super.addOldLog(oldLog, removeOld);
+    if (shouldEncryptOldLogs) {
+      try {
+        encryptLogs();
+      } catch (IOException e) {
+        log.error("{} exception while encrypting old transaction logs", ENCRYPTION_LOG_PREFIX, e);
+      }
+    }
+  }
+
+  /**
+   * Returns whether all logs are encrypted with the provided key id.
+   */
+  public synchronized boolean areAllLogsEncryptedWithKeyId(String keyId, SegmentInfos segmentInfos) throws IOException {
+    if (!logs.isEmpty()) {
+      ByteBuffer readBuffer = ByteBuffer.allocate(4);
+      for (TransactionLog log : logs) {
+        try (FileChannel logChannel = FileChannel.open(((EncryptionTransactionLog) log).path(), StandardOpenOption.READ)) {
+          String logKeyRef = readEncryptionHeader(logChannel, readBuffer);
+          String logKeyId = logKeyRef == null ? null : getKeyIdFromCommit(logKeyRef, segmentInfos.getUserData());
+          if (!Objects.equals(logKeyId, keyId)) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  }
+
+  protected void encryptLog(EncryptionTransactionLog log) throws IOException {
+    if (Files.size(log.path()) > 0) {
       EncryptionDirectory directory = directorySupplier.get();
       try {
         directory.forceReadCommitUserData();
-        try (FileChannel inputChannel = FileChannel.open(tlog, StandardOpenOption.READ)) {
+        try (FileChannel inputChannel = FileChannel.open(log.path(), StandardOpenOption.READ)) {
           String inputKeyRef = readEncryptionHeader(inputChannel, ByteBuffer.allocate(4));
           String activeKeyRef = getActiveKeyRefFromCommit(directory.getLatestCommitData().data);
           if (!Objects.equals(inputKeyRef, activeKeyRef)) {
-            Path newLog = tlog.resolveSibling(tlog.getFileName() + ".enc");
+            Path newLog = log.path().resolveSibling(log.path().getFileName() + ".enc");
             try (OutputStream outputStream = new FileOutputStream(newLog.toFile())) {
               reencrypt(inputChannel, inputKeyRef, outputStream, activeKeyRef, directory);
             }
-            Path backupLog = tlog.resolveSibling(tlog.getFileName() + ".bak");
-            Files.move(tlog, backupLog);
-            Files.move(newLog, tlog);
+            Path backupLog = log.path().resolveSibling(log.path().getFileName() + ".bak");
+            Files.move(log.path(), backupLog);
+            Files.move(newLog, log.path());
             Files.delete(backupLog);
           }
         }

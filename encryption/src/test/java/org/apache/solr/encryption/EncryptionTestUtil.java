@@ -23,18 +23,29 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.impl.Http2SolrClient;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
+import org.apache.solr.client.solrj.request.GenericSolrRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.cloud.Replica;
 import org.apache.solr.common.cloud.Slice;
 import org.apache.solr.common.params.CoreAdminParams;
+import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.util.NamedList;
+import org.apache.solr.common.util.RetryUtil;
 import org.junit.Assert;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+
+import static org.apache.solr.encryption.EncryptionRequestHandler.ENCRYPTION_STATE;
+import static org.apache.solr.encryption.EncryptionRequestHandler.PARAM_KEY_ID;
+import static org.apache.solr.encryption.EncryptionRequestHandler.STATE_COMPLETE;
+import static org.apache.solr.encryption.EncryptionRequestHandler.STATUS;
+import static org.apache.solr.encryption.EncryptionRequestHandler.STATUS_SUCCESS;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Utility methods for encryption tests.
@@ -90,6 +101,36 @@ public class EncryptionTestUtil {
   public void assertQueryReturns(String query, int expectedNumResults) throws Exception {
     QueryResponse response = cloudSolrClient.query(collectionName, new SolrQuery(query));
     Assert.assertEquals(expectedNumResults, response.getResults().size());
+  }
+
+  public EncryptionStatus encrypt(String keyId) {
+    ModifiableSolrParams params = new ModifiableSolrParams();
+    params.set(PARAM_KEY_ID, keyId);
+    GenericSolrRequest encryptRequest = new GenericSolrRequest(SolrRequest.METHOD.GET, "/admin/encrypt", params);
+    EncryptionStatus encryptionStatus = new EncryptionStatus();
+    forAllReplicas(replica -> {
+      NamedList<Object> response = requestCore(encryptRequest, replica);
+      encryptionStatus.success &= response.get(STATUS).equals(STATUS_SUCCESS);
+      encryptionStatus.complete &= response.get(ENCRYPTION_STATE).equals(STATE_COMPLETE);
+    });
+    return encryptionStatus;
+  }
+
+  public void waitUntilEncryptionIsComplete(String keyId) throws InterruptedException {
+    RetryUtil.retryUntil("Timeout waiting for encryption completion",
+                         50,
+                         100,
+                         TimeUnit.MILLISECONDS,
+                         () -> {
+                           EncryptionStatus encryptionStatus;
+                           try {
+                             encryptionStatus = encrypt(keyId);
+                           } catch (Exception e) {
+                             throw new RuntimeException(e);
+                           }
+                           assertTrue(encryptionStatus.success);
+                           return encryptionStatus.complete;
+                         });
   }
 
   /**
@@ -153,6 +194,26 @@ public class EncryptionTestUtil {
   private static class CoreReloadException extends Exception {
     CoreReloadException(String msg, SolrException cause) {
       super(msg, cause);
+    }
+  }
+
+  /** Status of the encryption of potentially multiple cores. */
+  public static class EncryptionStatus {
+
+    private boolean success;
+    private boolean complete;
+
+    private EncryptionStatus() {
+      this.success = true;
+      this.complete = true;
+    }
+
+    public boolean isSuccess() {
+      return success;
+    }
+
+    public boolean isComplete() {
+      return complete;
     }
   }
 }
