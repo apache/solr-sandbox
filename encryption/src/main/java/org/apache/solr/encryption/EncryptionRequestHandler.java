@@ -29,6 +29,8 @@ import org.apache.solr.response.SolrQueryResponse;
 import org.apache.solr.security.AuthorizationContext;
 import org.apache.solr.security.PermissionNameProvider;
 import org.apache.solr.update.CommitUpdateCommand;
+import org.apache.solr.update.UpdateHandler;
+import org.apache.solr.update.UpdateLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -209,7 +211,8 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
       if (isCommitActiveKeyId(keyId, segmentInfos)) {
         log.debug("{} provided keyId={} is the current active key id", ENCRYPTION_LOG_PREFIX, keyId);
         if (Boolean.parseBoolean(segmentInfos.getUserData().get(COMMIT_ENCRYPTION_PENDING))) {
-          encryptionComplete = areAllSegmentsEncryptedWithKeyId(keyId, req.getCore(), segmentInfos);
+          encryptionComplete = areAllSegmentsEncryptedWithKeyId(keyId, req.getCore(), segmentInfos)
+            && areAllLogsEncryptedWithKeyId(keyId, req.getCore(), segmentInfos);
           if (encryptionComplete) {
             commitEncryptionComplete(keyId, segmentInfos, req);
           }
@@ -328,13 +331,22 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     log.debug("{} submitting async encryption", ENCRYPTION_LOG_PREFIX);
     executor.submit(() -> {
       try {
-        log.debug("{} running async encryption", ENCRYPTION_LOG_PREFIX);
+        EncryptionUpdateLog updateLog = getEncryptionUpdateLog(req.getCore());
+        if (updateLog != null) {
+          log.debug("{} running async update log encryption", ENCRYPTION_LOG_PREFIX);
+          boolean logEncryptionComplete = updateLog.encryptLogs();
+          log.info("{} {} encrypted the update log in {}",
+                   ENCRYPTION_LOG_PREFIX, logEncryptionComplete ? "successfully" : "partially", elapsedTime(startTimeMs));
+        }
+
+        log.debug("{} running async index encryption", ENCRYPTION_LOG_PREFIX);
         CommitUpdateCommand commitCmd = new CommitUpdateCommand(req, true);
         // Trigger EncryptionMergePolicy.findForcedMerges() to re-encrypt
         // each segment which is not encrypted with the latest active key id.
         commitCmd.maxOptimizeSegments = Integer.MAX_VALUE;
         req.getCore().getUpdateHandler().commit(commitCmd);
         log.info("{} successfully encrypted the index in {}", ENCRYPTION_LOG_PREFIX, elapsedTime(startTimeMs));
+
       } catch (IOException e) {
         log.error("{} exception while encrypting the index after {}", ENCRYPTION_LOG_PREFIX, elapsedTime(startTimeMs), e);
       } finally {
@@ -346,9 +358,9 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     });
   }
 
-  public static boolean areAllSegmentsEncryptedWithKeyId(@Nullable String keyId,
-                                                         SolrCore core,
-                                                         SegmentInfos segmentInfos) throws IOException {
+  private boolean areAllSegmentsEncryptedWithKeyId(@Nullable String keyId,
+                                                   SolrCore core,
+                                                   SegmentInfos segmentInfos) throws IOException {
     DirectoryFactory directoryFactory = core.getDirectoryFactory();
     Directory indexDir = directoryFactory.get(core.getIndexDir(),
                                               DirectoryFactory.DirContext.DEFAULT,
@@ -362,6 +374,26 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     } finally {
       directoryFactory.release(indexDir);
     }
+  }
+
+  private boolean areAllLogsEncryptedWithKeyId(String keyId, SolrCore core, SegmentInfos segmentInfos)
+    throws IOException {
+    EncryptionUpdateLog updateLog = getEncryptionUpdateLog(core);
+    return updateLog == null || updateLog.areAllLogsEncryptedWithKeyId(keyId, segmentInfos);
+  }
+
+  private EncryptionUpdateLog getEncryptionUpdateLog(SolrCore core) {
+    UpdateHandler updateHandler = core.getUpdateHandler();
+    if (updateHandler == null) {
+      return null;
+    }
+    if (!(updateHandler.getUpdateLog() instanceof EncryptionUpdateLog)) {
+      throw new SolrException(SolrException.ErrorCode.SERVICE_UNAVAILABLE,
+                              UpdateLog.class.getSimpleName()
+                                + " must be configured with an "
+                                + EncryptionUpdateLog.class.getSimpleName());
+    }
+    return (EncryptionUpdateLog) updateHandler.getUpdateLog();
   }
 
   private boolean isCommitActiveKeyId(String keyId, SegmentInfos segmentInfos) {

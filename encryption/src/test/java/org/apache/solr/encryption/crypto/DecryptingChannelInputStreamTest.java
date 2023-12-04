@@ -30,6 +30,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 
 import static org.apache.solr.encryption.crypto.AesCtrUtil.IV_LENGTH;
+import static org.apache.solr.encryption.crypto.CryptoTestUtil.encrypterFactory;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -78,10 +79,6 @@ public class DecryptingChannelInputStreamTest extends RandomizedTest {
     assertEquals(-1, dc.read(decryptedBytes, 0, 1));
     dc.close();
     assertArrayEquals(source, decryptedBytes);
-  }
-
-  private static AesCtrEncrypterFactory encrypterFactory() {
-    return randomBoolean() ? CipherAesCtrEncrypter.FACTORY : LightAesCtrEncrypter.FACTORY;
   }
 
   private static void write(byte[] source, int offset, int length, OutputStream os) throws IOException {

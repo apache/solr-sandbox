@@ -74,7 +74,7 @@ public class TransactionLog implements Closeable {
   public static final String END_MESSAGE = "SOLR_TLOG_END";
 
   long id;
-  Path tlog;
+  protected Path tlog;
   protected FileChannel channel;
   protected OutputStream os;
   // all accesses to this stream should be synchronized on "this" (The TransactionLog)

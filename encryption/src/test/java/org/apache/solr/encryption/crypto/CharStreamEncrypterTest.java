@@ -21,6 +21,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 
+import static org.apache.solr.encryption.crypto.CryptoTestUtil.encrypterFactory;
 import static org.junit.Assert.assertEquals;
 
 /** Tests {@link CharStreamEncrypter}. */
@@ -53,12 +54,5 @@ public class CharStreamEncrypterTest extends RandomizedTest {
     StringBuilder decryptedBuilder = new StringBuilder();
     encrypter.decrypt(encryptedBuilder.toString(), key, decryptedBuilder);
     assertEquals(inputString, decryptedBuilder.toString());
-  }
-
-  private AesCtrEncrypterFactory encrypterFactory() {
-    if (LightAesCtrEncrypter.isSupported()) {
-      return randomBoolean() ? CipherAesCtrEncrypter.FACTORY : LightAesCtrEncrypter.FACTORY;
-    }
-    return CipherAesCtrEncrypter.FACTORY;
   }
 }

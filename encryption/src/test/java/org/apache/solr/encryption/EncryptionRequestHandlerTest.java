@@ -19,15 +19,10 @@ package org.apache.solr.encryption;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
-import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
-import org.apache.solr.client.solrj.request.GenericSolrRequest;
 import org.apache.solr.cloud.MiniSolrCloudCluster;
 import org.apache.solr.cloud.SolrCloudTestCase;
-import org.apache.solr.common.params.ModifiableSolrParams;
-import org.apache.solr.common.util.NamedList;
-import org.apache.solr.common.util.RetryUtil;
 import org.apache.solr.encryption.crypto.AesCtrEncrypterFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -36,10 +31,10 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import static org.apache.solr.encryption.EncryptionDirectoryFactory.PROPERTY_INNER_ENCRYPTION_DIRECTORY_FACTORY;
-import static org.apache.solr.encryption.EncryptionRequestHandler.*;
+import static org.apache.solr.encryption.EncryptionRequestHandler.NO_KEY_ID;
+import static org.apache.solr.encryption.EncryptionTestUtil.EncryptionStatus;
 import static org.apache.solr.encryption.EncryptionUtil.getKeyIdFromCommit;
 import static org.apache.solr.encryption.TestingKeySupplier.KEY_ID_1;
 import static org.apache.solr.encryption.TestingKeySupplier.KEY_ID_2;
@@ -93,9 +88,9 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
   @Test
   public void testEncryptionFromNoKeysToOneKey_NoIndex() throws Exception {
     // Send an encrypt request with a key id on an empty index.
-    EncryptionStatus encryptionStatus = encrypt(KEY_ID_1);
-    assertTrue(encryptionStatus.success);
-    assertTrue(encryptionStatus.complete);
+    EncryptionStatus encryptionStatus = testUtil.encrypt(KEY_ID_1);
+    assertTrue(encryptionStatus.isSuccess());
+    assertTrue(encryptionStatus.isComplete());
 
     // Index some documents to create a first segment.
     testUtil.indexDocsAndCommit("weather broadcast");
@@ -111,14 +106,14 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
   @Test
   public void testEncryptionFromNoKeysToOneKeyToNoKeys_NoIndex() throws Exception {
     // Send an encrypt request with a key id on an empty index.
-    EncryptionStatus encryptionStatus = encrypt(KEY_ID_1);
-    assertTrue(encryptionStatus.success);
-    assertTrue(encryptionStatus.complete);
+    EncryptionStatus encryptionStatus = testUtil.encrypt(KEY_ID_1);
+    assertTrue(encryptionStatus.isSuccess());
+    assertTrue(encryptionStatus.isComplete());
 
     // Send another encrypt request with no key id, still on the empty index.
-    encryptionStatus = encrypt(NO_KEY_ID);
-    assertTrue(encryptionStatus.success);
-    assertTrue(encryptionStatus.complete);
+    encryptionStatus = testUtil.encrypt(NO_KEY_ID);
+    assertTrue(encryptionStatus.isSuccess());
+    assertTrue(encryptionStatus.isComplete());
 
     // Index some documents to create a first segment.
     testUtil.indexDocsAndCommit("weather broadcast");
@@ -145,11 +140,11 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     forceClearText = false;
 
     // Send an encrypt request with a key id.
-    EncryptionStatus encryptionStatus = encrypt(KEY_ID_1);
-    assertTrue(encryptionStatus.success);
-    assertFalse(encryptionStatus.complete);
+    EncryptionStatus encryptionStatus = testUtil.encrypt(KEY_ID_1);
+    assertTrue(encryptionStatus.isSuccess());
+    assertFalse(encryptionStatus.isComplete());
 
-    waitUntilEncryptionIsComplete(KEY_ID_1);
+    testUtil.waitUntilEncryptionIsComplete(KEY_ID_1);
 
     // Verify that the segment is encrypted.
     forceClearText = true;
@@ -169,11 +164,11 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     testUtil.indexDocsAndCommit("foggy weather");
 
     // Send an encrypt request with another key id.
-    EncryptionStatus encryptionStatus = encrypt(KEY_ID_2);
-    assertTrue(encryptionStatus.success);
-    assertFalse(encryptionStatus.complete);
+    EncryptionStatus encryptionStatus = testUtil.encrypt(KEY_ID_2);
+    assertTrue(encryptionStatus.isSuccess());
+    assertFalse(encryptionStatus.isComplete());
 
-    waitUntilEncryptionIsComplete(KEY_ID_2);
+    testUtil.waitUntilEncryptionIsComplete(KEY_ID_2);
 
     // Verify that the segment is encrypted.
     forceClearText = true;
@@ -192,11 +187,11 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     testUtil.indexDocsAndCommit("foggy weather");
 
     // Send an encrypt request with no key id.
-    EncryptionStatus encryptionStatus = encrypt(NO_KEY_ID);
-    assertTrue(encryptionStatus.success);
-    assertFalse(encryptionStatus.complete);
+    EncryptionStatus encryptionStatus = testUtil.encrypt(NO_KEY_ID);
+    assertTrue(encryptionStatus.isSuccess());
+    assertFalse(encryptionStatus.isComplete());
 
-    waitUntilEncryptionIsComplete(NO_KEY_ID);
+    testUtil.waitUntilEncryptionIsComplete(NO_KEY_ID);
 
     // Verify that the segment is cleartext.
     forceClearText = true;
@@ -208,11 +203,11 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     testUtil.indexDocsAndCommit("cloudy weather");
 
     // Send an encrypt request with another key id.
-    encryptionStatus = encrypt(KEY_ID_2);
-    assertTrue(encryptionStatus.success);
-    assertFalse(encryptionStatus.complete);
+    encryptionStatus = testUtil.encrypt(KEY_ID_2);
+    assertTrue(encryptionStatus.isSuccess());
+    assertFalse(encryptionStatus.isComplete());
 
-    waitUntilEncryptionIsComplete(KEY_ID_2);
+    testUtil.waitUntilEncryptionIsComplete(KEY_ID_2);
 
     // Verify that the segment is encrypted.
     forceClearText = true;
@@ -221,36 +216,6 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     soleKeyIdAllowed = KEY_ID_2;
     testUtil.reloadCores();
     testUtil.assertQueryReturns("weather", 4);
-  }
-
-  private EncryptionStatus encrypt(String keyId) {
-    ModifiableSolrParams params = new ModifiableSolrParams();
-    params.set(PARAM_KEY_ID, keyId);
-    GenericSolrRequest encryptRequest = new GenericSolrRequest(SolrRequest.METHOD.GET, "/admin/encrypt", params);
-    EncryptionStatus encryptionStatus = new EncryptionStatus();
-    testUtil.forAllReplicas(replica -> {
-      NamedList<Object> response = testUtil.requestCore(encryptRequest, replica);
-      encryptionStatus.success &= response.get(STATUS).equals(STATUS_SUCCESS);
-      encryptionStatus.complete &= response.get(ENCRYPTION_STATE).equals(STATE_COMPLETE);
-    });
-    return encryptionStatus;
-  }
-
-  private void waitUntilEncryptionIsComplete(String keyId) throws InterruptedException {
-    RetryUtil.retryUntil("Timeout waiting for encryption completion",
-                         50,
-                         100,
-                         TimeUnit.MILLISECONDS,
-                         () -> {
-                           EncryptionStatus encryptionStatus;
-                           try {
-                             encryptionStatus = encrypt(keyId);
-                           } catch (Exception e) {
-                             throw new RuntimeException(e);
-                           }
-                           assertTrue(encryptionStatus.success);
-                           return encryptionStatus.complete;
-                         });
   }
 
   private static void clearMockValues() {
@@ -303,10 +268,5 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
         return data;
       }
     }
-  }
-
-  public static class EncryptionStatus {
-    public boolean success = true;
-    public boolean complete = true;
   }
 }

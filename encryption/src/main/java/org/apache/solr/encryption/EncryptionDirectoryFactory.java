@@ -78,7 +78,7 @@ public class EncryptionDirectoryFactory extends MMapDirectoryFactory {
     }
     KeySupplier.Factory keySupplierFactory = coreContainer.getResourceLoader().newInstance(keySupplierFactoryClass,
                                                                                           KeySupplier.Factory.class);
-    keySupplierFactory.init(args);
+    keySupplierFactory.init(args, coreContainer);
     try {
       keySupplier = keySupplierFactory.create();
     } catch (IOException e) {

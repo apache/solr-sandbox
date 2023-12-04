@@ -47,7 +47,7 @@
   <!-- EncryptionUpdateHandler transfers the encryption key ids from a commit to the next. -->
   <updateHandler class="org.apache.solr.encryption.EncryptionUpdateHandler">
     <!-- EncryptionUpdateLog encrypts transaction logs if the index is encrypted. -->
-    <updateLog class="org.apache.solr.encryption.TestingEncryptionUpdateLog"/>
+    <updateLog class="${solr.updateLog:org.apache.solr.encryption.EncryptionUpdateLog}"/>
   </updateHandler>
 
   <!-- Encryption handler can be called to trigger the encryption of the index and update log. -->

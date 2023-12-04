@@ -14,24 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.solr.encryption;
+package org.apache.solr.encryption.crypto;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.channels.FileChannel;
-import java.util.concurrent.atomic.AtomicInteger;
+import com.carrotsearch.randomizedtesting.RandomizedTest;
 
-public class TestingEncryptionUpdateLog extends EncryptionUpdateLog {
+/**
+ * Tools for encryption tests.
+ */
+public class CryptoTestUtil {
 
-  public static AtomicInteger reencryptionCallCount = new AtomicInteger();
-
-  protected void reencrypt(FileChannel inputChannel,
-                           String inputKeyRef,
-                           OutputStream outputStream,
-                           String activeKeyRef,
-                           EncryptionDirectory directory)
-    throws IOException {
-    super.reencrypt(inputChannel, inputKeyRef, outputStream, activeKeyRef, directory);
-    reencryptionCallCount.incrementAndGet();
+  /**
+   * Provides an {@link AesCtrEncrypterFactory} selected randomly.
+   */
+  public static AesCtrEncrypterFactory encrypterFactory() {
+    if (LightAesCtrEncrypter.isSupported()) {
+      return RandomizedTest.randomBoolean() ? CipherAesCtrEncrypter.FACTORY : LightAesCtrEncrypter.FACTORY;
+    }
+    return CipherAesCtrEncrypter.FACTORY;
   }
 }

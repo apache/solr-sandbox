@@ -20,6 +20,7 @@ import com.carrotsearch.randomizedtesting.RandomizedTest;
 import org.junit.Test;
 
 import static org.apache.solr.encryption.crypto.AesCtrUtil.*;
+import static org.apache.solr.encryption.crypto.CryptoTestUtil.encrypterFactory;
 import static org.junit.Assert.assertArrayEquals;
 
 /**
@@ -53,13 +54,6 @@ public class AesCtrEncrypterTest extends RandomizedTest {
         throw new RuntimeException("Exception at i=" + i, e);
       }
     }
-  }
-
-  private AesCtrEncrypterFactory encrypterFactory() {
-    if (LightAesCtrEncrypter.isSupported()) {
-      return randomBoolean() ? CipherAesCtrEncrypter.FACTORY : LightAesCtrEncrypter.FACTORY;
-    }
-    return CipherAesCtrEncrypter.FACTORY;
   }
 
   private static byte[] generateRandomBytes(int numBytes) {

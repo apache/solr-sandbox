@@ -35,6 +35,7 @@ import org.junit.Test;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.*;
 import static org.apache.solr.encryption.crypto.AesCtrUtil.*;
+import static org.apache.solr.encryption.crypto.CryptoTestUtil.encrypterFactory;
 
 /**
  * Tests {@link EncryptingIndexOutput}.
@@ -115,10 +116,6 @@ public class EncryptingIndexOutputTest extends BaseDataOutputTestCase<Encrypting
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
-  }
-
-  private AesCtrEncrypterFactory encrypterFactory() {
-    return randomBoolean() ? CipherAesCtrEncrypter.FACTORY : LightAesCtrEncrypter.FACTORY;
   }
 
   /**

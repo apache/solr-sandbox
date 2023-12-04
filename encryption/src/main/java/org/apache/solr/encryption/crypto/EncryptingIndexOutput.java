@@ -83,7 +83,6 @@ public class EncryptingIndexOutput extends IndexOutput {
     throws IOException {
     super("Encrypting " + indexOutput.toString(), indexOutput.getName());
     this.indexOutput = indexOutput;
-
     byte[] iv = generateRandomIv();
     encrypter = factory.create(key, iv);
     encrypter.init(0);

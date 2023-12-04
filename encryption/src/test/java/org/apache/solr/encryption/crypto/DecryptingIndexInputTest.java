@@ -35,6 +35,7 @@ import org.apache.lucene.tests.util.LuceneTestCase;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.apache.solr.encryption.crypto.CryptoTestUtil.encrypterFactory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -261,9 +262,5 @@ public class DecryptingIndexInputTest extends RandomizedTest {
     IndexInput indexInput = new ByteBuffersIndexInput(dataOutput.toDataInput(), "Test");
     indexInput.seek(offset);
     return new DecryptingIndexInput(indexInput, key, encrypterFactory());
-  }
-
-  private AesCtrEncrypterFactory encrypterFactory() {
-    return randomBoolean() ? CipherAesCtrEncrypter.FACTORY : LightAesCtrEncrypter.FACTORY;
   }
 }

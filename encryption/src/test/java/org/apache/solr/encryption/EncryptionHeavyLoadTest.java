@@ -18,16 +18,12 @@ package org.apache.solr.encryption;
 
 import com.carrotsearch.randomizedtesting.generators.RandomStrings;
 import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
-import org.apache.solr.client.solrj.request.GenericSolrRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.cloud.MiniSolrCloudCluster;
 import org.apache.solr.cloud.SolrCloudTestCase;
 import org.apache.solr.common.SolrInputDocument;
-import org.apache.solr.common.params.ModifiableSolrParams;
-import org.apache.solr.common.util.NamedList;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -44,9 +40,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
-import static org.apache.solr.encryption.EncryptionRequestHandler.*;
-import static org.apache.solr.encryption.EncryptionRequestHandlerTest.EncryptionStatus;
-import static org.apache.solr.encryption.TestingKeySupplier.*;
+import static org.apache.solr.encryption.EncryptionRequestHandler.NO_KEY_ID;
+import static org.apache.solr.encryption.EncryptionTestUtil.EncryptionStatus;
+import static org.apache.solr.encryption.TestingKeySupplier.KEY_ID_1;
+import static org.apache.solr.encryption.TestingKeySupplier.KEY_ID_2;
+import static org.apache.solr.encryption.TestingKeySupplier.KEY_ID_3;
 
 /**
  * Tests the encryption handler under heavy concurrent load test.
@@ -192,12 +190,12 @@ public class EncryptionHeavyLoadTest extends SolrCloudTestCase {
 
   private boolean encrypt(String keyId, boolean waitForCompletion) throws Exception {
     EncryptionStatus encryptionStatus = sendEncryptionRequests(keyId);
-    if (!encryptionStatus.complete) {
+    if (!encryptionStatus.isComplete()) {
       if (!waitForCompletion) {
         return false;
       }
       print("waiting for encryption completion for keyId=" + keyId);
-      while (!encryptionStatus.complete) {
+      while (!encryptionStatus.isComplete()) {
         if (isTimeElapsed()) {
           return false;
         }
@@ -214,16 +212,8 @@ public class EncryptionHeavyLoadTest extends SolrCloudTestCase {
   }
 
   private EncryptionStatus sendEncryptionRequests(String keyId) {
-    ModifiableSolrParams params = new ModifiableSolrParams();
-    params.set(PARAM_KEY_ID, keyId);
-    GenericSolrRequest encryptRequest = new GenericSolrRequest(SolrRequest.METHOD.GET, "/admin/encrypt", params);
-    EncryptionStatus encryptionStatus = new EncryptionStatus();
-    testUtil.forAllReplicas(replica -> {
-      NamedList<Object> response = testUtil.requestCore(encryptRequest, replica);
-      encryptionStatus.success &= response.get(STATUS).equals(STATUS_SUCCESS);
-      encryptionStatus.complete &= response.get(ENCRYPTION_STATE).equals(STATE_COMPLETE);
-    });
-    print("encrypt keyId=" + keyId + " => response success=" + encryptionStatus.success + " complete=" + encryptionStatus.complete);
+    EncryptionStatus encryptionStatus = testUtil.encrypt(keyId);
+    print("encrypt keyId=" + keyId + " => response success=" + encryptionStatus.isSuccess() + " complete=" + encryptionStatus.isComplete());
     return encryptionStatus;
   }
 

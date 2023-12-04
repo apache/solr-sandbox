@@ -18,6 +18,7 @@ package org.apache.solr.encryption;
 
 import org.apache.lucene.index.IndexFileNames;
 import org.apache.solr.common.util.NamedList;
+import org.apache.solr.core.CoreContainer;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -177,7 +178,7 @@ public class TestingKeySupplier implements KeySupplier {
     private static final KeySupplier SINGLETON = new TestingKeySupplier();
 
     @Override
-    public void init(NamedList<?> args) {
+    public void init(NamedList<?> args, CoreContainer coreContainer) {
       // Do nothing.
     }
 
