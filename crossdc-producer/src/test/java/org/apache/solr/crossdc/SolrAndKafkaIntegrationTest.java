@@ -47,6 +47,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.apache.solr.crossdc.common.KafkaCrossDcConf.DEFAULT_MAX_REQUEST_SIZE;
 import static org.apache.solr.crossdc.common.KafkaCrossDcConf.INDEX_UNMIRRORABLE_DOCS;
+import static org.apache.solr.crossdc.common.KafkaCrossDcConf.PORT;
 import static org.mockito.Mockito.spy;
 
 @ThreadLeakFilters(defaultFilters = true, filters = { SolrIgnoredThreadsFilter.class,
@@ -80,6 +81,7 @@ import static org.mockito.Mockito.spy;
     Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
       log.error("Uncaught exception in thread " + t, e);
     });
+    System.setProperty(PORT, "-1");
     consumer = new Consumer();
     Properties config = new Properties();
     //config.put("unclean.leader.election.enable", "true");

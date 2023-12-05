@@ -101,6 +101,11 @@ Optional configuration properties:
 2. Start the Consumer process using the included start script at bin/crossdc-consumer.
 3. Configure the CrossDC Consumer with Java system properties using the CROSSDC_CONSUMER_OPTS environment variable.
 
+##### API Endpoints
+Currently the following endpoints are exposed (on local port configured using `port` property, default is 8090):
+* `/metrics` - (GET) this endpoint returns JSON-formatted metrics describing various aspects of document processing in Consumer.
+* `/threads` - (GET) returns a plain-text thread dump of the JVM running the Consumer application.
+
 ##### Configuration Properties for the CrossDC Consumer:
 
 The required configuration properties are: 
@@ -110,6 +115,7 @@ The required configuration properties are:
 
 Optional configuration properties:
 - `consumerProcessingThreads`: The number of threads used by the consumer to concurrently process updates from the Kafka queue.
+- `port`: local port for the API endpoints. Default is 8090.
 
 Optional configuration properties used when the consumer must retry by putting updates back on the Kafka queue:
 - `batchSizeBytes`: maximum batch size in bytes for the Kafka queue
@@ -132,5 +138,4 @@ To make the Cross DC UpdateProcessor optional in a common `solrconfig.xml`, use 
 
 ## Limitations
 
-- When `expandDbq` property is true (default) then Delete-By-Query converts to DeleteById, which can be much less efficient for queries matching large numbers of documents.
-  Forwarding a real Delete-By-Query could also be a reasonable option to add if it is not strictly reliant on not being reordered with other requests.
+- When `expandDbq` property is set to `expand` (default) then Delete-By-Query converts to a series of Delete-By-Id, which can be much less efficient for queries matching large numbers of documents. Setting this property to `none` results in forwarding a real Delete-By-Query - this reduces the amount of data to mirror but may cause different results due to the potential re-ordering of failed & re-submitted requests between Consumer and the target Solr.

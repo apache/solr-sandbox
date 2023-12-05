@@ -196,7 +196,7 @@ public class KafkaCrossDcConsumerTest {
         consumer.kafkaMirroringSink = mockKafkaMirroringSink;
 
         // Call the method to test
-        consumer.processResult(failedResubmitResult);
+        consumer.processResult(MirroredSolrRequest.Type.UPDATE, failedResubmitResult);
 
         // Verify that the KafkaMirroringSink.submit() method was called
         verify(consumer.kafkaMirroringSink, times(1)).submit(request);

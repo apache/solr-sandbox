@@ -64,6 +64,8 @@ import java.util.concurrent.CountDownLatch;
   @BeforeClass
   public static void beforeSolrAndKafkaIntegrationTest() throws Exception {
 
+    System.setProperty(KafkaCrossDcConf.PORT, "-1");
+    consumer = new Consumer();
     System.setProperty("solr.crossdc.dbq_rows", "1");
 
     Properties config = new Properties();
