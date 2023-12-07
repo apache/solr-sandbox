@@ -12,6 +12,7 @@ import org.apache.solr.client.solrj.request.UpdateRequest;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.util.Utils;
+import org.apache.solr.crossdc.common.CrossDcConf;
 import org.apache.solr.crossdc.common.IQueueHandler;
 import org.apache.solr.crossdc.common.KafkaCrossDcConf;
 import org.apache.solr.crossdc.common.KafkaMirroringSink;
@@ -76,10 +77,15 @@ public class KafkaCrossDcConsumerTest {
                 };
     }
 
-    private static KafkaCrossDcConf testCrossDCConf() {
+    private static KafkaCrossDcConf testCrossDCConf(String... keyValues) {
         Map config = new HashMap<>();
         config.put(KafkaCrossDcConf.TOPIC_NAME, "topic1");
         config.put(KafkaCrossDcConf.BOOTSTRAP_SERVERS, "localhost:9092");
+        if (keyValues != null) {
+            for (int i = 0; i < keyValues.length; i += 2) {
+                config.put(keyValues[i], keyValues[i + 1]);
+            }
+        }
         return new KafkaCrossDcConf(config);
     }
 
@@ -259,6 +265,63 @@ public class KafkaCrossDcConsumerTest {
         }), eq(MirroredSolrRequest.Type.ADMIN), eq(record1), any());
         verify(spyConsumer, times(1)).sendBatch(any(), eq(MirroredSolrRequest.Type.UPDATE), eq(record2), any());
     }
+
+    @Test
+    public void testCollapseUpdatesNONE() {
+        int NUM_REQS = 100;
+        doTestCollapseUpdates(CrossDcConf.CollapseUpdates.NONE, 500, NUM_REQS, NUM_REQS, 0);
+    }
+
+    @Test
+    public void testCollapseUpdatesALL() {
+        int NUM_REQS = 100;
+        doTestCollapseUpdates(CrossDcConf.CollapseUpdates.ALL, 500, NUM_REQS, 1, 5);
+    }
+
+    @Test
+    public void testCollapseUpdatesALLMaxCollapse() {
+        int NUM_REQS = 100;
+        doTestCollapseUpdates(CrossDcConf.CollapseUpdates.ALL, 50, NUM_REQS, 2, 5);
+    }
+
+    @Test
+    public void testCollapseUpdatesPARTIAL() {
+        int NUM_REQS = 100;
+        doTestCollapseUpdates(CrossDcConf.CollapseUpdates.PARTIAL, 500, NUM_REQS, 10, 5);
+    }
+
+    private void doTestCollapseUpdates(CrossDcConf.CollapseUpdates collapseUpdates, int maxCollapseRecords, int inputReqs, int outputReqs, int reqsWithDeletes) {
+        KafkaConsumer<String, MirroredSolrRequest> mockConsumer = mock(KafkaConsumer.class);
+        // override
+        conf = testCrossDCConf(
+            CrossDcConf.COLLAPSE_UPDATES, collapseUpdates.name(),
+            CrossDcConf.MAX_COLLAPSE_RECORDS, String.valueOf(maxCollapseRecords));
+        KafkaCrossDcConsumer spyConsumer = createCrossDcConsumerSpy(mockConsumer);
+        doReturn(new IQueueHandler.Result<>(IQueueHandler.ResultStatus.HANDLED)).when(messageProcessorMock).handleItem(any());
+        List<ConsumerRecord<String, MirroredSolrRequest>> records = new ArrayList<>();
+        for (int i = 0; i < inputReqs; i++) {
+            SolrInputDocument doc = new SolrInputDocument();
+            doc.addField("id", "id-" + i);
+            UpdateRequest validRequest = new UpdateRequest();
+            validRequest.add(doc);
+            if ((i % 3) == 0 && reqsWithDeletes > 0) {
+                validRequest.deleteById("fakeId-" + i);
+                reqsWithDeletes--;
+            }
+            // Create a valid MirroredSolrRequest
+            ConsumerRecord<String, MirroredSolrRequest> record = new ConsumerRecord<>("test-topic", 0, 0, "key", new MirroredSolrRequest(validRequest));
+            records.add(record);
+        }
+        ConsumerRecords<String, MirroredSolrRequest> consumerRecords = new ConsumerRecords<>(Collections.singletonMap(new TopicPartition("test-topic", 0), records));
+
+        when(mockConsumer.poll(any())).thenReturn(consumerRecords).thenThrow(new WakeupException());
+
+        spyConsumer.run();
+
+        // Verify that the valid MirroredSolrRequest was processed.
+        verify(spyConsumer, times(outputReqs)).sendBatch(any(), eq(MirroredSolrRequest.Type.UPDATE), any(), any());
+    }
+
 
     @Test
     public void testHandleInvalidMirroredSolrRequest() {
