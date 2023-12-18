@@ -46,6 +46,8 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
   private final static int KAFKA_CONSUMER_POLL_TIMEOUT_MS = 5000;
   private final String[] topicNames;
   private final int maxAttempts;
+  private final CrossDcConf.CollapseUpdates collapseUpdates;
+  private final int maxCollapseRecords;
   private final SolrMessageProcessor messageProcessor;
 
   protected final CloudSolrClient solrClient;
@@ -71,6 +73,8 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
     this.topicNames = conf.get(KafkaCrossDcConf.TOPIC_NAME).split(",");
     this.maxAttempts = conf.getInt(KafkaCrossDcConf.MAX_ATTEMPTS);
+    this.collapseUpdates = CrossDcConf.CollapseUpdates.getOrDefault(conf.get(CrossDcConf.COLLAPSE_UPDATES), CrossDcConf.CollapseUpdates.PARTIAL);
+    this.maxCollapseRecords = conf.getInt(KafkaCrossDcConf.MAX_COLLAPSE_RECORDS);
     this.startLatch = startLatch;
     final Properties kafkaConsumerProps = new Properties();
 
@@ -193,6 +197,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
       }
 
       UpdateRequest updateReqBatch = null;
+      int currentCollapsed = 0;
 
       ConsumerRecord<String,MirroredSolrRequest> lastRecord = null;
 
@@ -222,10 +227,28 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
               log.trace("-- picked type={}, params={}", req.getType(), params);
             }
 
+            // determine if it's an UPDATE with deletes, or if the existing batch has deletes
+            boolean hasDeletes = false;
+            if (type == MirroredSolrRequest.Type.UPDATE) {
+              UpdateRequest ureq = (UpdateRequest) solrReq;
+              hasDeletes = hasDeletes(ureq) || hasDeletes(updateReqBatch);
+            }
+
             // it's an update but with different params
-            if (type == MirroredSolrRequest.Type.UPDATE && lastUpdateParams != null && !lastUpdateParams.toNamedList().equals(params.toNamedList())) {
+            if (type == MirroredSolrRequest.Type.UPDATE &&
+                  (
+                    // different params
+                    (lastUpdateParams != null && !lastUpdateParams.toNamedList().equals(params.toNamedList())) ||
+                    // no collapsing
+                    (collapseUpdates == CrossDcConf.CollapseUpdates.NONE) ||
+                    // partial collapsing but has deletes
+                    (collapseUpdates == CrossDcConf.CollapseUpdates.PARTIAL && hasDeletes) ||
+                    // too many collapsed - emit
+                    currentCollapsed >= maxCollapseRecords
+                  )
+                ) {
               if (log.isTraceEnabled()) {
-                log.trace("SolrParams have changed, starting new UpdateRequest, params={}", params);
+                log.trace("Starting new UpdateRequest, params={}", params);
               }
               // send previous batch, if any
               if (updateReqBatch != null) {
@@ -233,6 +256,7 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
               }
               updateReqBatch = null;
               lastUpdateParamsAsNamedList = null;
+              currentCollapsed = 0;
               workUnit = new PartitionManager.WorkUnit(partition);
               workUnit.nextOffset = PartitionManager.getOffsetForPartition(partitionRecords);
               partitionWork.partitionQueue.add(workUnit);
@@ -244,7 +268,14 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
                 // just initialize
                 updateReqBatch = new UpdateRequest();
               } else {
+                if (collapseUpdates == CrossDcConf.CollapseUpdates.NONE) {
+                  throw new RuntimeException("Can't collapse requests.");
+                }
+                if (collapseUpdates == CrossDcConf.CollapseUpdates.PARTIAL && hasDeletes) {
+                  throw new RuntimeException("Can't collapse requests with deletions.");
+                }
                 metrics.counter(MetricRegistry.name(type.name(), "collapsed")).inc();
+                currentCollapsed++;
               }
               UpdateRequest update = (UpdateRequest) solrReq;
               MirroredSolrRequest.setParams(updateReqBatch, params);
@@ -325,6 +356,14 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
       log.error("Exception occurred in Kafka consumer thread, but we will continue.", e);
     }
     return true;
+  }
+
+  private boolean hasDeletes(UpdateRequest ureq) {
+    if (ureq == null) {
+      return false;
+    }
+    return (ureq.getDeleteByIdMap() != null && !ureq.getDeleteByIdMap().isEmpty()) ||
+        (ureq.getDeleteQuery() != null && !ureq.getDeleteQuery().isEmpty());
   }
 
   public void sendBatch(SolrRequest solrReqBatch, MirroredSolrRequest.Type type, ConsumerRecord<String, MirroredSolrRequest> lastRecord, PartitionManager.WorkUnit workUnit) {

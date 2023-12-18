@@ -93,7 +93,7 @@ Optional configuration properties:
 - `maxRequestSizeBytes`: (integer) The maximum size of a Kafka queue request in bytes - limits the number of requests that will be sent over the queue in a single batch.
 - `dqlTopicName`: (string) if not empty then requests that failed processing `maxAttempts` times will be sent to a "dead letter queue" topic in Kafka (must exist if configured).
 - `mirrorCommits`: (boolean) if "true" then standalone commit requests will be mirrored, otherwise they will be processed only locally.
-- `expandDbq`: (enum) if set to "expand" (default) then Delete-By-Query will be expanded before mirroring into series of Delete-By-Id, which may help with correct processing of out-of-order requests on the consumer side. If set to "none" then Delete-By-Query requests will be mirrored as-is.
+- `expandDbq`: (enum) if set to `expand` (default) then Delete-By-Query will be expanded before mirroring into series of Delete-By-Id, which may help with correct processing of out-of-order requests on the consumer side. If set to `none` then Delete-By-Query requests will be mirrored as-is.
 
 #### CrossDC Consumer Application
 
@@ -115,7 +115,9 @@ The required configuration properties are:
 
 Optional configuration properties:
 - `consumerProcessingThreads`: The number of threads used by the consumer to concurrently process updates from the Kafka queue.
-- `port`: local port for the API endpoints. Default is 8090.
+- `port`: local port for the API endpoints. Default is `8090`.
+- `collapseUpdates`: (enum) when set to `all` then all incoming update requests (up to `maxCollapseRecords`) will be collapsed into a single UpdateRequest, as long as their parameters are identical. When set to `partial` (default) then only requests without deletions will be collapsed - requests with any delete ops will be sent individually in order to preserve ordering of updates. When set to `none` the incoming update requests will be sent individually without any collapsing. NOTE: requests of other types than UPDATE are never collapsed.
+- `maxCollapseRecords`: maximum number of incoming update request to collapse into a single outgoing request. Default is `500`.
 
 Optional configuration properties used when the consumer must retry by putting updates back on the Kafka queue:
 - `batchSizeBytes`: maximum batch size in bytes for the Kafka queue
@@ -139,3 +141,4 @@ To make the Cross DC UpdateProcessor optional in a common `solrconfig.xml`, use 
 ## Limitations
 
 - When `expandDbq` property is set to `expand` (default) then Delete-By-Query converts to a series of Delete-By-Id, which can be much less efficient for queries matching large numbers of documents. Setting this property to `none` results in forwarding a real Delete-By-Query - this reduces the amount of data to mirror but may cause different results due to the potential re-ordering of failed & re-submitted requests between Consumer and the target Solr.
+- When `collapseUpdates` is set to `all` then multiple requests containing a mix of add and delete ops will be collapsed into a single outgoing request. This will cause the original ordering of add / delete ops to be lost (because Solr processing of an update request always processes all add ops first, and only then the delete ops), which may affect the final outcome when some of the ops refer to the same document ids.

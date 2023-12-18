@@ -37,21 +37,21 @@ dependencies {
     implementation project(':crossdc-consumer')
     implementation project(path: ':crossdc-commons', configuration: 'shadow')
 
-    provided  group: 'org.apache.solr', name: 'solr-core', version: '8.11.2'
+    provided  group: 'org.apache.solr', name: 'solr-core', version: "${solrVersion}"
 
     testImplementation 'org.hamcrest:hamcrest:2.2'
     testImplementation 'junit:junit:4.13.2'
     testImplementation('org.mockito:mockito-inline:5.1.1')
-    testImplementation group: 'org.apache.solr', name: 'solr-core', version: '8.11.2'
-    testImplementation group: 'org.apache.solr', name: 'solr-test-framework', version: '8.11.2'
+    testImplementation group: 'org.apache.solr', name: 'solr-core', version: "${solrVersion}"
+    testImplementation group: 'org.apache.solr', name: 'solr-test-framework', version: "${solrVersion}"
 
     testImplementation group: 'org.slf4j', name: 'slf4j-simple', version: '2.0.9'
-    testImplementation 'org.apache.kafka:kafka-clients:3.5.1:test'
-    testImplementation 'org.apache.kafka:kafka_2.13:3.5.1'
-    testImplementation 'org.apache.kafka:kafka-streams:3.5.1'
-    testImplementation 'org.apache.kafka:kafka_2.13:3.5.1:test'
-    testImplementation 'org.apache.kafka:kafka-streams:3.5.1:test'
-    testImplementation 'org.apache.kafka:kafka-server-common:3.5.1:test'
+    testImplementation "org.apache.kafka:kafka-clients:${kafkaVersion}:test"
+    testImplementation "org.apache.kafka:kafka_2.13:${kafkaVersion}"
+    testImplementation "org.apache.kafka:kafka-streams:${kafkaVersion}"
+    testImplementation "org.apache.kafka:kafka_2.13:${kafkaVersion}:test"
+    testImplementation "org.apache.kafka:kafka-streams:${kafkaVersion}:test"
+    testImplementation "org.apache.kafka:kafka-server-common:${kafkaVersion}:test"
 
 }
 
