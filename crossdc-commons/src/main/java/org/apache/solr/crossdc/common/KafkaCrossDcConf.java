@@ -65,7 +65,7 @@ public class KafkaCrossDcConf extends CrossDcConf {
 
   private static final String DEFAULT_EXPAND_DBQ = ExpandDbq.EXPAND.name();
 
-  private static final String DEFAULT_COLLAPSE_UPDATES = CollapseUpdates.ALL.name();
+  private static final String DEFAULT_COLLAPSE_UPDATES = CollapseUpdates.PARTIAL.name();
 
   private static final String DEFAULT_MAX_COLLAPSE_RECORDS = "500";
 
