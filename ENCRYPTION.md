@@ -22,7 +22,8 @@ per-directory, making multi-tenant use-cases possible. If you can use OS-level e
 Java-level encryption.
 
 - Java-level encryption can be used when the OS-level encryption management is not possible (e.g. host machine managed
-by a cloud provider). It has an impact on performance: expect -20% on most queries, -60% on multi-term queries.
+by a cloud provider), or when even admin rights should not allow to get clear access to the index files. It has an
+impact on performance: expect -20% on most queries, -60% on multi-term queries.
 
 [1] https://wiki.archlinux.org/title/Fscrypt
 
@@ -88,7 +89,9 @@ the specified folder.
 `encrypterFactory` is an optional parameter to specify the `org.apache.solr.encryption.crypto.AesCtrEncrypterFactory`
 to use. By default `CipherAesCtrEncrypter$Factory` is used. You can change to `LightAesCtrEncrypter$Factory` for a
 more lightweight and efficient implementation (+10% perf), but it calls an internal com.sun.crypto.provider.AESCrypt()
-constructor which logs a JDK warning (Illegal reflective access).
+constructor which either logs a JDK warning (Illegal reflective access) with JDK 16 and below, or with JDK 17 and above
+requires to open the access to the com.sun.crypto.provider package with the jvm arg
+`--add-opens=java.base/com.sun.crypto.provider=ALL-UNNAMED`.
 
 `EncryptionUpdateHandler` replaces the standard `DirectUpdateHandler2` (which it extends) to store persistently the
 encryption key id in the commit metadata. It supports all the configuration parameters of `DirectUpdateHandler2`.
