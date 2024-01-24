@@ -88,9 +88,7 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
   @Test
   public void testEncryptionFromNoKeysToOneKey_NoIndex() throws Exception {
     // Send an encrypt request with a key id on an empty index.
-    EncryptionStatus encryptionStatus = testUtil.encrypt(KEY_ID_1);
-    assertTrue(encryptionStatus.isSuccess());
-    assertTrue(encryptionStatus.isComplete());
+    encryptAndExpectCompletion(KEY_ID_1);
 
     // Index some documents to create a first segment.
     testUtil.indexDocsAndCommit("weather broadcast");
@@ -106,14 +104,10 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
   @Test
   public void testEncryptionFromNoKeysToOneKeyToNoKeys_NoIndex() throws Exception {
     // Send an encrypt request with a key id on an empty index.
-    EncryptionStatus encryptionStatus = testUtil.encrypt(KEY_ID_1);
-    assertTrue(encryptionStatus.isSuccess());
-    assertTrue(encryptionStatus.isComplete());
+    encryptAndExpectCompletion(KEY_ID_1);
 
     // Send another encrypt request with no key id, still on the empty index.
-    encryptionStatus = testUtil.encrypt(NO_KEY_ID);
-    assertTrue(encryptionStatus.isSuccess());
-    assertTrue(encryptionStatus.isComplete());
+    encryptAndExpectCompletion(NO_KEY_ID);
 
     // Index some documents to create a first segment.
     testUtil.indexDocsAndCommit("weather broadcast");
@@ -140,11 +134,7 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     forceClearText = false;
 
     // Send an encrypt request with a key id.
-    EncryptionStatus encryptionStatus = testUtil.encrypt(KEY_ID_1);
-    assertTrue(encryptionStatus.isSuccess());
-    assertFalse(encryptionStatus.isComplete());
-
-    testUtil.waitUntilEncryptionIsComplete(KEY_ID_1);
+    encryptAndWaitForCompletion(KEY_ID_1);
 
     // Verify that the segment is encrypted.
     forceClearText = true;
@@ -164,11 +154,7 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     testUtil.indexDocsAndCommit("foggy weather");
 
     // Send an encrypt request with another key id.
-    EncryptionStatus encryptionStatus = testUtil.encrypt(KEY_ID_2);
-    assertTrue(encryptionStatus.isSuccess());
-    assertFalse(encryptionStatus.isComplete());
-
-    testUtil.waitUntilEncryptionIsComplete(KEY_ID_2);
+    encryptAndWaitForCompletion(KEY_ID_2);
 
     // Verify that the segment is encrypted.
     forceClearText = true;
@@ -187,11 +173,7 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     testUtil.indexDocsAndCommit("foggy weather");
 
     // Send an encrypt request with no key id.
-    EncryptionStatus encryptionStatus = testUtil.encrypt(NO_KEY_ID);
-    assertTrue(encryptionStatus.isSuccess());
-    assertFalse(encryptionStatus.isComplete());
-
-    testUtil.waitUntilEncryptionIsComplete(NO_KEY_ID);
+    encryptAndWaitForCompletion(NO_KEY_ID);
 
     // Verify that the segment is cleartext.
     forceClearText = true;
@@ -203,11 +185,7 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     testUtil.indexDocsAndCommit("cloudy weather");
 
     // Send an encrypt request with another key id.
-    encryptionStatus = testUtil.encrypt(KEY_ID_2);
-    assertTrue(encryptionStatus.isSuccess());
-    assertFalse(encryptionStatus.isComplete());
-
-    testUtil.waitUntilEncryptionIsComplete(KEY_ID_2);
+    encryptAndWaitForCompletion(KEY_ID_2);
 
     // Verify that the segment is encrypted.
     forceClearText = true;
@@ -216,6 +194,21 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     soleKeyIdAllowed = KEY_ID_2;
     testUtil.reloadCores();
     testUtil.assertQueryReturns("weather", 4);
+  }
+
+  private void encryptAndExpectCompletion(String keyId) {
+    encrypt(keyId, true);
+  }
+
+  private void encryptAndWaitForCompletion(String keyId) throws InterruptedException {
+    encrypt(keyId, false);
+    testUtil.waitUntilEncryptionIsComplete(keyId);
+  }
+
+  private void encrypt(String keyId, boolean expectComplete) {
+    EncryptionStatus encryptionStatus = testUtil.encrypt(keyId);
+    assertTrue(encryptionStatus.isSuccess());
+    assertEquals(expectComplete, encryptionStatus.isComplete());
   }
 
   private static void clearMockValues() {
