@@ -73,7 +73,7 @@ public class Consumer {
             throw new IllegalArgumentException("zkConnectString not specified for producer");
         }
 
-        try (SolrZkClient client = new SolrZkClient(zkConnectString, 15000)) {
+        try (SolrZkClient client = new SolrZkClient.Builder().withUrl(zkConnectString).withTimeout(15000, TimeUnit.MILLISECONDS).build()) {
             // update properties, potentially also from ZK
             ConfUtil.fillProperties(client, properties);
         }

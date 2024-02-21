@@ -3,7 +3,7 @@ package org.apache.solr.crossdc;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
 import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
-import org.apache.lucene.util.QuickPatchThreadsFilter;
+import org.apache.lucene.tests.util.QuickPatchThreadsFilter;
 import org.apache.solr.SolrIgnoredThreadsFilter;
 import org.apache.solr.SolrTestCaseJ4;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -69,21 +69,21 @@ import java.util.*;
     System.setProperty("topicName", TOPIC);
     System.setProperty("bootstrapServers", kafkaCluster.bootstrapServers());
 
-    solrCluster1 = new SolrCloudTestCase.Builder(3, createTempDir()).addConfig("conf",
+    solrCluster1 = new MiniSolrCloudCluster.Builder(3, createTempDir()).addConfig("conf",
         getFile("src/test/resources/configs/cloud-minimal/conf").toPath()).configure();
 
     CollectionAdminRequest.Create create =
-        CollectionAdminRequest.createCollection(COLLECTION, "conf", 3, 2).setMaxShardsPerNode(10);;
+        CollectionAdminRequest.createCollection(COLLECTION, "conf", 3, 2);
     solrCluster1.getSolrClient().request(create);
     solrCluster1.waitForActiveCollection(COLLECTION, 3, 6);
 
     solrCluster1.getSolrClient().setDefaultCollection(COLLECTION);
 
-    solrCluster2 = new SolrCloudTestCase.Builder(3, createTempDir()).addConfig("conf",
+    solrCluster2 = new MiniSolrCloudCluster.Builder(3, createTempDir()).addConfig("conf",
         getFile("src/test/resources/configs/cloud-minimal/conf").toPath()).configure();
 
     CollectionAdminRequest.Create create2 =
-        CollectionAdminRequest.createCollection(COLLECTION, "conf", 2, 3).setMaxShardsPerNode(10);
+        CollectionAdminRequest.createCollection(COLLECTION, "conf", 2, 3);
     solrCluster2.getSolrClient().request(create2);
     solrCluster2.waitForActiveCollection(COLLECTION, 2, 6);
 
@@ -108,11 +108,11 @@ import java.util.*;
     ObjectReleaseTracker.clear();
 
     if (solrCluster1 != null) {
-      solrCluster1.getZkServer().getZkClient().printLayoutToStdOut();
+      solrCluster1.getZkServer().getZkClient().printLayoutToStream(System.out);
       solrCluster1.shutdown();
     }
     if (solrCluster2 != null) {
-      solrCluster2.getZkServer().getZkClient().printLayoutToStdOut();
+      solrCluster2.getZkServer().getZkClient().printLayoutToStream(System.out);
       solrCluster2.shutdown();
     }
 

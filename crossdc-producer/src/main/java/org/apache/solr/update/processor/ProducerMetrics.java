@@ -18,12 +18,12 @@ public class ProducerMetrics {
     private final Counter documentTooLarge;
 
     public ProducerMetrics(SolrMetricsContext solrMetricsContext, SolrCore solrCore) {
-        this.local = solrMetricsContext.counter(solrCore, "local", "crossdc", "producer");
-        this.localError = solrMetricsContext.counter(solrCore, "local", "crossdc", "producer", "errors");
-        this.submitted = solrMetricsContext.counter(solrCore, "submitted", "crossdc", "producer");
-        this.submitError = solrMetricsContext.counter(solrCore, "submit", "crossdc", "producer", "errors");
-        this.documentSize = solrMetricsContext.histogram(solrCore, "documentSize", "crossdc", "producer");
-        this.documentTooLarge = solrMetricsContext.counter(solrCore, "documentTooLarge", "crossdc", "producer", "errors");
+        this.local = solrMetricsContext.counter("local", "crossdc", "producer");
+        this.localError = solrMetricsContext.counter("local", "crossdc", "producer", "errors");
+        this.submitted = solrMetricsContext.counter("submitted", "crossdc", "producer");
+        this.submitError = solrMetricsContext.counter("submit", "crossdc", "producer", "errors");
+        this.documentSize = solrMetricsContext.histogram("documentSize", "crossdc", "producer");
+        this.documentTooLarge = solrMetricsContext.counter("documentTooLarge", "crossdc", "producer", "errors");
     }
 
     /**

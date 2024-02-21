@@ -8,13 +8,12 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
-import org.apache.lucene.util.QuickPatchThreadsFilter;
+import org.apache.lucene.tests.util.QuickPatchThreadsFilter;
 import org.apache.solr.SolrIgnoredThreadsFilter;
 import org.apache.solr.SolrTestCaseJ4;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.BaseCloudSolrClient;
 import org.apache.solr.client.solrj.impl.BaseHttpSolrClient;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
@@ -100,7 +99,7 @@ import static org.mockito.Mockito.spy;
     System.setProperty("bootstrapServers", kafkaCluster.bootstrapServers());
     System.setProperty(INDEX_UNMIRRORABLE_DOCS, "false");
 
-    solrCluster1 = new SolrCloudTestCase.Builder(1, createTempDir()).addConfig("conf",
+    solrCluster1 = new MiniSolrCloudCluster.Builder(1, createTempDir()).addConfig("conf",
         getFile("src/test/resources/configs/cloud-minimal/conf").toPath()).configure();
 
     CollectionAdminRequest.Create create =
@@ -110,7 +109,7 @@ import static org.mockito.Mockito.spy;
 
     solrCluster1.getSolrClient().setDefaultCollection(COLLECTION);
 
-    solrCluster2 = new SolrCloudTestCase.Builder(1, createTempDir()).addConfig("conf",
+    solrCluster2 = new MiniSolrCloudCluster.Builder(1, createTempDir()).addConfig("conf",
         getFile("src/test/resources/configs/cloud-minimal/conf").toPath()).configure();
 
     CollectionAdminRequest.Create create2 =
@@ -138,11 +137,11 @@ import static org.mockito.Mockito.spy;
     ObjectReleaseTracker.clear();
 
     if (solrCluster1 != null) {
-      solrCluster1.getZkServer().getZkClient().printLayoutToStdOut();
+      solrCluster1.getZkServer().getZkClient().printLayoutToStream(System.out);
       solrCluster1.shutdown();
     }
     if (solrCluster2 != null) {
-      solrCluster2.getZkServer().getZkClient().printLayoutToStdOut();
+      solrCluster2.getZkServer().getZkClient().printLayoutToStream(System.out);
       solrCluster2.shutdown();
     }
 
@@ -229,7 +228,7 @@ import static org.mockito.Mockito.spy;
     final CloudSolrClient cluster1Client = solrCluster1.getSolrClient();
     try {
       cluster1Client.add(docsToIndex);
-    } catch (BaseCloudSolrClient.RouteException e) {
+    } catch (CloudSolrClient.RouteException e) {
       // expected
     }
     cluster1Client.commit(COLLECTION);

@@ -19,7 +19,7 @@ package org.apache.solr.handler.admin;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
 import org.apache.commons.io.IOUtils;
-import org.apache.lucene.util.QuickPatchThreadsFilter;
+import org.apache.lucene.tests.util.QuickPatchThreadsFilter;
 import org.apache.solr.SolrIgnoredThreadsFilter;
 import org.apache.solr.SolrTestCaseJ4;
 import org.apache.solr.client.solrj.SolrRequest;
@@ -85,7 +85,7 @@ public class MirroringConfigSetsHandlerTest extends SolrTestCaseJ4 {
         Mockito.when(coreContainer.isZooKeeperAware()).thenReturn(true);
         Mockito.when(coreContainer.getZkController()).thenReturn(zkController);
         Mockito.when(zkController.getZkClient()).thenReturn(solrZkClient);
-        Mockito.doAnswer(inv -> null).when(solrZkClient).getData(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.anyBoolean());
+        //Mockito.doAnswer(inv -> null).when(solrZkClient).getData(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.anyBoolean());
         captor = ArgumentCaptor.forClass(MirroredSolrRequest.class);
         Mockito.doNothing().when(sink).submit(captor.capture());
     }

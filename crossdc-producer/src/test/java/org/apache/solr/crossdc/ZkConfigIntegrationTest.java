@@ -3,7 +3,7 @@ package org.apache.solr.crossdc;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
 import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
-import org.apache.lucene.util.QuickPatchThreadsFilter;
+import org.apache.lucene.tests.util.QuickPatchThreadsFilter;
 import org.apache.solr.SolrIgnoredThreadsFilter;
 import org.apache.solr.SolrTestCaseJ4;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -75,7 +75,7 @@ import java.util.Properties;
 
     Properties props = new Properties();
 
-    solrCluster1 = new SolrCloudTestCase.Builder(1, createTempDir()).addConfig("conf",
+    solrCluster1 = new MiniSolrCloudCluster.Builder(1, createTempDir()).addConfig("conf",
         getFile("src/test/resources/configs/cloud-minimal/conf").toPath()).configure();
 
     props.setProperty(KafkaCrossDcConf.TOPIC_NAME, TOPIC2);
@@ -87,7 +87,7 @@ import java.util.Properties;
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     props.store(baos, "");
     byte[] data = baos.toByteArray();
-    solrCluster1.getSolrClient().getZkStateReader().getZkClient().makePath("/crossdc.properties", data, true);
+    solrCluster1.getZkClient().makePath("/crossdc.properties", data, true);
 
     CollectionAdminRequest.Create create =
         CollectionAdminRequest.createCollection(COLLECTION, "conf", 1, 1);
@@ -96,7 +96,7 @@ import java.util.Properties;
 
     solrCluster1.getSolrClient().setDefaultCollection(COLLECTION);
 
-    solrCluster2 = new SolrCloudTestCase.Builder(1, createTempDir()).addConfig("conf",
+    solrCluster2 = new MiniSolrCloudCluster.Builder(1, createTempDir()).addConfig("conf",
         getFile("src/test/resources/configs/cloud-minimal/conf").toPath()).configure();
 
 
@@ -114,7 +114,7 @@ import java.util.Properties;
     baos = new ByteArrayOutputStream();
     props.store(baos, "");
     data = baos.toByteArray();
-    solrCluster2.getSolrClient().getZkStateReader().getZkClient().makePath("/crossdc.properties", data, true);
+    solrCluster2.getZkClient().makePath("/crossdc.properties", data, true);
 
 
     String bootstrapServers = kafkaCluster.bootstrapServers();
@@ -138,11 +138,11 @@ import java.util.Properties;
     ObjectReleaseTracker.clear();
 
     if (solrCluster1 != null) {
-      solrCluster1.getZkServer().getZkClient().printLayoutToStdOut();
+      solrCluster1.getZkClient().printLayoutToStream(System.out);
       solrCluster1.shutdown();
     }
     if (solrCluster2 != null) {
-      solrCluster2.getZkServer().getZkClient().printLayoutToStdOut();
+      solrCluster2.getZkClient().printLayoutToStream(System.out);
       solrCluster2.shutdown();
     }
 
