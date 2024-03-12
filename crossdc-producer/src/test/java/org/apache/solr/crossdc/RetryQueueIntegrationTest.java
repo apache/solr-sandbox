@@ -3,14 +3,14 @@ package org.apache.solr.crossdc;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
 import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
-import org.apache.lucene.util.QuickPatchThreadsFilter;
+import org.apache.lucene.tests.util.QuickPatchThreadsFilter;
 import org.apache.solr.SolrIgnoredThreadsFilter;
 import org.apache.solr.SolrTestCaseJ4;
 import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.embedded.JettyConfig;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.impl.ZkClientClusterStateProvider;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
+import org.apache.solr.client.solrj.request.ConfigSetAdminRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.cloud.MiniSolrCloudCluster;
 import org.apache.solr.cloud.SolrCloudTestCase;
@@ -19,6 +19,7 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.util.ObjectReleaseTracker;
 import org.apache.solr.crossdc.common.KafkaCrossDcConf;
 import org.apache.solr.crossdc.consumer.Consumer;
+import org.apache.solr.embedded.JettyConfig;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -125,12 +126,15 @@ import java.util.Properties;
     MiniSolrCloudCluster cluster =
         new MiniSolrCloudCluster(1, baseDir, MiniSolrCloudCluster.DEFAULT_CLOUD_SOLR_XML,
             JettyConfig.builder().setContext("/solr")
-                .withSSLConfig(sslConfig.buildServerSSLConfig()).build(), zkTestServer);
+                .withSSLConfig(sslConfig.buildServerSSLConfig()).build(), zkTestServer, true);
 
         //new SolrCloudTestCase.Builder(1, baseDir).addConfig("conf",
         //getFile("src/test/resources/configs/cloud-minimal/conf").toPath()).configure();
     CloudSolrClient client = cluster.getSolrClient();
-    ((ZkClientClusterStateProvider)client.getClusterStateProvider()).uploadConfig(getFile("src/test/resources/configs/cloud-minimal/conf").toPath(), "conf");
+    ConfigSetAdminRequest.Upload uploadReq = new ConfigSetAdminRequest.Upload()
+        .setUploadFile(getFile("src/test/resources/configs/cloud-minimal.zip"), "application/zip")
+        .setConfigSetName("conf");
+    uploadReq.process(client);
 
     CollectionAdminRequest.Create create2 =
         CollectionAdminRequest.createCollection(COLLECTION, "conf", 1, 1);

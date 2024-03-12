@@ -27,7 +27,7 @@ public class SimpleSolrIntegrationTest extends SolrCloudTestCase {
   public static void beforeSimpleSolrIntegrationTest() throws Exception {
 
     cluster1 =
-        new SolrCloudTestCase.Builder(2, createTempDir())
+        configureCluster(2)
             .addConfig("conf", getFile("src/test/resources/configs/cloud-minimal/conf").toPath())
             .configure();
 

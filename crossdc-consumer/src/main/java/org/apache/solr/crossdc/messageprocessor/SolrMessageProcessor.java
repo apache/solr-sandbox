@@ -21,6 +21,7 @@ import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
+import org.apache.solr.client.solrj.impl.ZkClientClusterStateProvider;
 import org.apache.solr.client.solrj.request.UpdateRequest;
 import org.apache.solr.client.solrj.response.SolrResponseBase;
 import org.apache.solr.common.SolrException;
@@ -179,8 +180,14 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
      * Process the SolrRequest. If not, this method throws an exception.
      */
     private Result<MirroredSolrRequest> processMirroredSolrRequest(SolrRequest request, MirroredSolrRequest.Type type) throws Exception {
+        String connectString;
+        if (client.getClusterStateProvider() instanceof ZkClientClusterStateProvider) {
+            connectString = ((ZkClientClusterStateProvider) client.getClusterStateProvider()).getZkHost();
+        } else {
+            connectString = client.toString();
+        }
         if (log.isDebugEnabled()) {
-            log.debug("Sending request to Solr at ZK address={} with params {}", client.getZkStateReader().getZkClient().getZkServerAddress(), request.getParams());
+            log.debug("Sending request to Solr at address={} with params {}", connectString, request.getParams());
         }
         Result<MirroredSolrRequest> result;
         SolrResponseBase response = null;
@@ -204,7 +211,7 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
         }
 
         if (log.isDebugEnabled()) {
-            log.debug("Finished sending request to Solr at ZK address={} with params {} status_code={}", client.getZkStateReader().getZkClient().getZkServerAddress(), request.getParams(), status);
+            log.debug("Finished sending request to Solr at address={} with params {} status_code={}", connectString, request.getParams(), status);
         }
         result = new Result<>(ResultStatus.HANDLED);
         return result;

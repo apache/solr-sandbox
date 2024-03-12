@@ -3,7 +3,7 @@ package org.apache.solr.crossdc;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
 import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
-import org.apache.lucene.util.QuickPatchThreadsFilter;
+import org.apache.lucene.tests.util.QuickPatchThreadsFilter;
 import org.apache.solr.SolrIgnoredThreadsFilter;
 import org.apache.solr.SolrTestCaseJ4;
 import org.apache.solr.client.solrj.SolrClient;
@@ -91,7 +91,7 @@ import static org.apache.solr.crossdc.common.KafkaCrossDcConf.INDEX_UNMIRRORABLE
     System.setProperty("bootstrapServers", kafkaCluster.bootstrapServers());
     System.setProperty(INDEX_UNMIRRORABLE_DOCS, "false");
 
-    solrCluster1 = new SolrCloudTestCase.Builder(1, createTempDir()).addConfig("conf",
+    solrCluster1 = new MiniSolrCloudCluster.Builder(1, createTempDir()).addConfig("conf",
         getFile("src/test/resources/configs/cloud-minimal/conf").toPath()).configure();
 
     CollectionAdminRequest.Create create =
@@ -101,7 +101,7 @@ import static org.apache.solr.crossdc.common.KafkaCrossDcConf.INDEX_UNMIRRORABLE
 
     solrCluster1.getSolrClient().setDefaultCollection(COLLECTION);
 
-    solrCluster2 = new SolrCloudTestCase.Builder(1, createTempDir()).addConfig("conf",
+    solrCluster2 = new MiniSolrCloudCluster.Builder(1, createTempDir()).addConfig("conf",
         getFile("src/test/resources/configs/cloud-minimal/conf").toPath()).configure();
 
     CollectionAdminRequest.Create create2 =
@@ -139,11 +139,11 @@ import static org.apache.solr.crossdc.common.KafkaCrossDcConf.INDEX_UNMIRRORABLE
     Util.printKafkaInfo(kafkaCluster.bootstrapServers(), "SolrCrossDCConsumer");
 
     if (solrCluster1 != null) {
-      solrCluster1.getZkServer().getZkClient().printLayoutToStdOut();
+      solrCluster1.getZkServer().getZkClient().printLayoutToStream(System.out);
       solrCluster1.shutdown();
     }
     if (solrCluster2 != null) {
-      solrCluster2.getZkServer().getZkClient().printLayoutToStdOut();
+      solrCluster2.getZkServer().getZkClient().printLayoutToStream(System.out);
       solrCluster2.shutdown();
     }
 

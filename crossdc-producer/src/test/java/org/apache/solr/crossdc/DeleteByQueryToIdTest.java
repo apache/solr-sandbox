@@ -4,7 +4,7 @@ import com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
-import org.apache.lucene.util.QuickPatchThreadsFilter;
+import org.apache.lucene.tests.util.QuickPatchThreadsFilter;
 import org.apache.solr.SolrIgnoredThreadsFilter;
 import org.apache.solr.SolrTestCaseJ4;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -18,6 +18,7 @@ import org.apache.solr.cloud.SolrCloudTestCase;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.CommonParams;
 import org.apache.solr.common.util.ObjectReleaseTracker;
+import org.apache.solr.crossdc.common.CrossDcConf;
 import org.apache.solr.crossdc.common.KafkaCrossDcConf;
 import org.apache.solr.crossdc.common.MirroredSolrRequest;
 import org.apache.solr.crossdc.consumer.Consumer;
@@ -65,6 +66,7 @@ import java.util.concurrent.CountDownLatch;
   public static void beforeSolrAndKafkaIntegrationTest() throws Exception {
 
     System.setProperty(KafkaCrossDcConf.PORT, "-1");
+    System.setProperty(CrossDcConf.COLLAPSE_UPDATES, CrossDcConf.CollapseUpdates.ALL.name());
     consumer = new Consumer();
     System.setProperty("solr.crossdc.dbq_rows", "1");
 
@@ -86,7 +88,7 @@ import java.util.concurrent.CountDownLatch;
 
     Properties props = new Properties();
 
-    solrCluster1 = new SolrCloudTestCase.Builder(1, createTempDir())
+    solrCluster1 = new MiniSolrCloudCluster.Builder(1, createTempDir())
         .addConfig("conf", getFile("src/test/resources/configs/cloud-minimal/conf").toPath())
         .addConfig("confNoDbq", getFile("src/test/resources/configs/cloud-minimal-no-dbq/conf").toPath())
         .configure();
@@ -97,7 +99,7 @@ import java.util.concurrent.CountDownLatch;
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     props.store(baos, "");
     byte[] data = baos.toByteArray();
-    solrCluster1.getSolrClient().getZkStateReader().getZkClient().makePath("/crossdc.properties", data, true);
+    solrCluster1.getZkClient().makePath("/crossdc.properties", data, true);
 
     CollectionAdminRequest.Create createSource1 =
         CollectionAdminRequest.createCollection(COLLECTION1, "conf", 1, 1);
@@ -110,12 +112,12 @@ import java.util.concurrent.CountDownLatch;
 
     solrCluster1.getSolrClient().setDefaultCollection(COLLECTION1);
 
-    solrCluster2 = new SolrCloudTestCase.Builder(1, createTempDir())
+    solrCluster2 = new MiniSolrCloudCluster.Builder(1, createTempDir())
         .addConfig("conf", getFile("src/test/resources/configs/cloud-minimal/conf").toPath())
         .addConfig("confNoDbq", getFile("src/test/resources/configs/cloud-minimal-no-dbq/conf").toPath())
         .configure();
 
-    solrCluster2.getSolrClient().getZkStateReader().getZkClient().makePath("/crossdc.properties", data, true);
+    solrCluster2.getZkClient().makePath("/crossdc.properties", data, true);
 
     CollectionAdminRequest.Create createTarget1 =
         CollectionAdminRequest.createCollection(COLLECTION1, "conf", 1, 1);
@@ -170,11 +172,11 @@ import java.util.concurrent.CountDownLatch;
     }
 
     if (solrCluster1 != null) {
-      solrCluster1.getZkServer().getZkClient().printLayoutToStdOut();
+      solrCluster1.getZkServer().getZkClient().printLayoutToStream(System.out);
       solrCluster1.shutdown();
     }
     if (solrCluster2 != null) {
-      solrCluster2.getZkServer().getZkClient().printLayoutToStdOut();
+      solrCluster2.getZkServer().getZkClient().printLayoutToStream(System.out);
       solrCluster2.shutdown();
     }
 

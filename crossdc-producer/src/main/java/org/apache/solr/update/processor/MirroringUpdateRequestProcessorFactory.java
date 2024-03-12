@@ -97,7 +97,7 @@ public class MirroringUpdateRequestProcessorFactory extends UpdateRequestProcess
     }
 
 
-    private static class MyCloseHook extends CloseHook {
+    private static class MyCloseHook implements CloseHook {
         private final Closer closer;
 
         public MyCloseHook(Closer closer) {

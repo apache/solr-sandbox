@@ -42,8 +42,12 @@ dependencies {
     testImplementation 'org.hamcrest:hamcrest:2.2'
     testImplementation 'junit:junit:4.13.2'
     testImplementation('org.mockito:mockito-inline:5.1.1')
+    testImplementation 'commons-io:commons-io:2.15.1'
     testImplementation group: 'org.apache.solr', name: 'solr-core', version: "${solrVersion}"
+    testImplementation group: 'org.apache.solr', name: 'solr-solrj', version: "${solrVersion}"
+    testImplementation group: 'org.apache.solr', name: 'solr-solrj-zookeeper', version: "${solrVersion}"
     testImplementation group: 'org.apache.solr', name: 'solr-test-framework', version: "${solrVersion}"
+    testImplementation group: 'org.apache.zookeeper', name: 'zookeeper', version: '3.9.1'
 
     testImplementation group: 'org.slf4j', name: 'slf4j-simple', version: '2.0.9'
     testImplementation "org.apache.kafka:kafka-clients:${kafkaVersion}:test"
