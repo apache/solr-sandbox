@@ -18,6 +18,7 @@ package org.apache.solr.crossdc.common;
 
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.config.SslConfigs;
 import org.apache.kafka.common.config.internals.BrokerSecurityConfigs;
 
@@ -197,6 +198,9 @@ public class KafkaCrossDcConf extends CrossDcConf {
             new ConfigProperty(SslConfigs.SSL_TRUSTMANAGER_ALGORITHM_CONFIG),
             new ConfigProperty(SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG),
             new ConfigProperty(SslConfigs.SSL_SECURE_RANDOM_IMPLEMENTATION_CONFIG),
+
+            new ConfigProperty(SaslConfigs.SASL_MECHANISM),
+            new ConfigProperty(SaslConfigs.SASL_JAAS_CONFIG),
 
             new ConfigProperty(BrokerSecurityConfigs.SSL_CLIENT_AUTH_CONFIG),
 
