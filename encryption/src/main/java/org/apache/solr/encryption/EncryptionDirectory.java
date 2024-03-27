@@ -19,6 +19,7 @@ package org.apache.solr.encryption;
 import org.apache.lucene.index.IndexFileNames;
 import org.apache.lucene.index.SegmentCommitInfo;
 import org.apache.lucene.index.SegmentInfos;
+import org.apache.lucene.store.DataOutput;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FilterDirectory;
 import org.apache.lucene.store.IOContext;
@@ -87,9 +88,6 @@ public class EncryptionDirectory extends FilterDirectory {
   /** Cache of the latest commit user data. */
   protected volatile CommitUserData commitUserData;
 
-  /** Optimization flag to avoid checking encryption when reading a file if we know the index is cleartext. */
-  protected volatile boolean shouldCheckEncryptionWhenReading;
-
   /** Optimization flag to only read the commit user data once after a commit. */
   protected volatile boolean shouldReadCommitUserData;
 
@@ -106,21 +104,11 @@ public class EncryptionDirectory extends FilterDirectory {
     this.encrypterFactory = encrypterFactory;
     this.keySupplier = keySupplier;
     commitUserData = readLatestCommitUserData();
-
-    // If there is no encryption key id parameter in the latest commit user data, then we know the index
-    // is cleartext, so we can skip fast any encryption check. This flag becomes true indefinitely if we
-    // detect an encryption key when opening a file for writing.
-    shouldCheckEncryptionWhenReading = hasKeyIdInCommit(commitUserData.data);
   }
 
   /** Gets the {@link AesCtrEncrypterFactory} used. */
   public AesCtrEncrypterFactory getEncrypterFactory() {
     return encrypterFactory;
-  }
-
-  /** Gets the {@link KeySupplier} used. */
-  public KeySupplier getKeySupplier() {
-    return keySupplier;
   }
 
   @Override
@@ -153,10 +141,13 @@ public class EncryptionDirectory extends FilterDirectory {
     }
     boolean success = false;
     try {
-      String keyRef = getKeyRefForWriting(indexOutput);
+      String keyRef = getActiveKeyRefFromCommit(getLatestCommitData().data);
       if (keyRef != null) {
+        // Get the key secret first. If it fails, we do not write anything.
+        byte[] keySecret = getKeySecret(keyRef);
         // The IndexOutput has to be wrapped to be encrypted with the key.
-        indexOutput = new EncryptingIndexOutput(indexOutput, getKeySecret(keyRef), encrypterFactory);
+        writeEncryptionHeader(keyRef, indexOutput);
+        indexOutput = new EncryptingIndexOutput(indexOutput, keySecret, encrypterFactory);
       }
       success = true;
     } finally {
@@ -168,25 +159,10 @@ public class EncryptionDirectory extends FilterDirectory {
     return indexOutput;
   }
 
-  /**
-   * Gets the active key reference number for writing an index output.
-   * <p>
-   * The active key ref is defined in the user data of the latest commit. If it is present, then this method
-   * writes to the output the {@link #ENCRYPTION_MAGIC} header, followed by the key reference number as a
-   * 4B big-endian int.
-   *
-   * @return the key reference number; or null if none.
-   */
-  protected String getKeyRefForWriting(IndexOutput indexOutput) throws IOException {
-    String keyRef;
-    if ((keyRef = getActiveKeyRefFromCommit(getLatestCommitData().data)) == null) {
-      return null;
-    }
-    shouldCheckEncryptionWhenReading = true;
-    // Write the encryption magic header and the key reference number.
-    writeBEInt(indexOutput, ENCRYPTION_MAGIC);
-    writeBEInt(indexOutput, Integer.parseInt(keyRef));
-    return keyRef;
+  /** Writes the encryption magic header and the key reference number. */
+  private static void writeEncryptionHeader(String keyRef, DataOutput out) throws IOException {
+    writeBEInt(out, ENCRYPTION_MAGIC);
+    writeBEInt(out, Integer.parseInt(keyRef));
   }
 
   /**
@@ -270,10 +246,6 @@ public class EncryptionDirectory extends FilterDirectory {
   @Override
   public IndexInput openInput(String fileName, IOContext context) throws IOException {
     IndexInput indexInput = in.openInput(fileName, context);
-    if (!shouldCheckEncryptionWhenReading) {
-      // Return the IndexInput directly as we know it is not encrypted.
-      return indexInput;
-    }
     boolean success = false;
     try {
       String keyRef = getKeyRefForReading(indexInput);
@@ -299,9 +271,12 @@ public class EncryptionDirectory extends FilterDirectory {
    * If the file is cleartext, it starts with the
    * {@link org.apache.lucene.codecs.CodecUtil#CODEC_MAGIC} header.
    *
-   * @return the key reference number; or null if none.
+   * @return the key reference number; or null if none, meaning the index is not encrypted.
    */
   protected String getKeyRefForReading(IndexInput indexInput) throws IOException {
+    // Always reading the magic number, even for non-encrypted indexes, is not a performance
+    // issue because it will be read immediately again when the Directory is returned, to
+    // check the index header (CodecUtil.checkIndexHeader()).
     long filePointer = indexInput.getFilePointer();
     int magic = readBEInt(indexInput);
     if (magic == ENCRYPTION_MAGIC) {

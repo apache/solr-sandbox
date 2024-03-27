@@ -125,7 +125,7 @@ public class EncryptionTransactionLog extends TransactionLog {
   /**
    * Reads the encryption magic header and the key reference number.
    *
-   * @return The key reference number as a string.
+   * @return The key reference number as a string; or null if the log is not encrypted.
    */
   static String readEncryptionHeader(FileChannel channel, ByteBuffer readBuffer) throws IOException {
     long position = channel.position();
@@ -188,13 +188,14 @@ public class EncryptionTransactionLog extends TransactionLog {
       try {
         String keyRef = getActiveKeyRefFromCommit(directory.getLatestCommitData().data);
         if (keyRef != null) {
+          // Get the key secret first. If it fails, we do not write anything.
+          byte[] keySecret = directory.getKeySecret(keyRef);
           // The output stream has to be wrapped to be encrypted with the key.
-          directory.shouldCheckEncryptionWhenReading = true;
           writeEncryptionHeader(keyRef, outputStream);
           EncryptingOutputStream eos = createEncryptingOutputStream(outputStream,
                                                                     position,
                                                                     ivHolder.iv,
-                                                                    directory.getKeySecret(keyRef),
+                                                                    keySecret,
                                                                     directory.getEncrypterFactory());
           ivHolder.iv = eos.getIv();
           return eos;
@@ -233,18 +234,18 @@ public class EncryptionTransactionLog extends TransactionLog {
     public ChannelFastInputStream open(FileChannel channel, long position) throws IOException {
       EncryptionDirectory directory = directorySupplier.get();
       try {
-        if (directory.shouldCheckEncryptionWhenReading) {
-          String keyRef = readEncryptionHeader(channel, readBuffer);
-          if (keyRef != null) {
-            // The IndexInput has to be wrapped to be decrypted with the key.
-            DecryptingChannelInputStream dcis = createDecryptingChannelInputStream(channel,
-                                                                                  ENCRYPTION_KEY_HEADER_LENGTH,
-                                                                                  position,
-                                                                                  directory.getKeySecret(keyRef),
-                                                                                  directory.getEncrypterFactory());
-            ivHolder.iv = dcis.getIv();
-            return dcis;
-          }
+        String keyRef = readEncryptionHeader(channel, readBuffer);
+        if (keyRef != null) {
+          // The IndexInput has to be wrapped to be decrypted with the key.
+          DecryptingChannelInputStream dcis =
+            createDecryptingChannelInputStream(
+              channel,
+              ENCRYPTION_KEY_HEADER_LENGTH,
+              position,
+              directory.getKeySecret(keyRef),
+              directory.getEncrypterFactory());
+          ivHolder.iv = dcis.getIv();
+          return dcis;
         }
       } finally {
         directorySupplier.release(directory);

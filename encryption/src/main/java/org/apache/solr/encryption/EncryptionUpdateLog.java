@@ -177,9 +177,11 @@ public class EncryptionUpdateLog extends UpdateLog {
                                          directory.getKeySecret(inputKeyRef),
                                          directory.getEncrypterFactory());
     if (activeKeyRef != null) {
+      // Get the key secret first. If it fails, we do not write anything.
+      byte[] keySecret = directory.getKeySecret(activeKeyRef);
       writeEncryptionHeader(activeKeyRef, outputStream);
       outputStream = new EncryptingOutputStream(outputStream,
-                                                directory.getKeySecret(activeKeyRef),
+                                                keySecret,
                                                 directory.getEncrypterFactory());
     }
     byte[] buffer = new byte[REENCRYPTION_BUFFER_SIZE];
