@@ -130,18 +130,6 @@ public class EncryptionUtil {
   }
 
   /**
-   * @return Whether the provided commit user data contain some encryption key ids (active or not).
-   */
-  public static boolean hasKeyIdInCommit(Map<String, String> commitUserData) {
-    for (String entryKey : commitUserData.keySet()) {
-      if (entryKey.startsWith(COMMIT_KEY_ID)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
    * Gets the cookies (key-value pairs) for all the key ids, from the provided commit user data.
    *
    * @return the cookies for all key ids.
