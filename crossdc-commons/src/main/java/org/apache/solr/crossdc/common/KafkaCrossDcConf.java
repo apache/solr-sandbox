@@ -21,6 +21,7 @@ import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.config.SslConfigs;
 import org.apache.kafka.common.config.internals.BrokerSecurityConfigs;
+import org.apache.kafka.common.security.plain.PlainLoginModule;
 
 import java.util.*;
 
@@ -109,6 +110,10 @@ public class KafkaCrossDcConf extends CrossDcConf {
   public static final String MAX_POLL_RECORDS = "maxPollRecords";
 
   public static final String FETCH_MAX_BYTES = "fetchMaxBytes";
+
+  public static final String USERNAME = "userName";
+
+  public static final String PASSWORD = "password";
 
   // The maximum delay between invocations of poll() when using consumer group management. This places
   // an upper bound on the amount of time that the consumer can be idle before fetching more records.
@@ -200,8 +205,8 @@ public class KafkaCrossDcConf extends CrossDcConf {
             new ConfigProperty(SslConfigs.SSL_SECURE_RANDOM_IMPLEMENTATION_CONFIG),
 
             new ConfigProperty(SaslConfigs.SASL_MECHANISM),
-            new ConfigProperty(SaslConfigs.SASL_JAAS_CONFIG),
-
+            new ConfigProperty(USERNAME),
+            new ConfigProperty(PASSWORD),
             new ConfigProperty(BrokerSecurityConfigs.SSL_CLIENT_AUTH_CONFIG),
 
 
@@ -236,10 +241,23 @@ public class KafkaCrossDcConf extends CrossDcConf {
 
   public static void addSecurityProps(KafkaCrossDcConf conf, Properties kafkaConsumerProps) {
     for (ConfigProperty property : SECURITY_CONFIG_PROPERTIES) {
+     if (KafkaCrossDcConf.USERNAME.equals(property.getKey()) || KafkaCrossDcConf.PASSWORD.equals(property.getKey()))
+         continue;
       String val = conf.get(property.getKey());
       if (val != null) {
         kafkaConsumerProps.put(property.getKey(), val);
       }
+    }
+
+    if ("PLAIN".equals(conf.get(SaslConfigs.SASL_MECHANISM))) {
+      var kafkaUsername = conf.get(KafkaCrossDcConf.USERNAME);
+      var kafkaPassword = conf.get(KafkaCrossDcConf.PASSWORD);
+      kafkaConsumerProps.put(SaslConfigs.SASL_JAAS_CONFIG, String.format(
+              "%s required username=\"%s\" " + "password=\"%s\";",
+              PlainLoginModule.class.getName(),
+              kafkaUsername,
+              kafkaPassword
+      ));
     }
   }
 
@@ -262,7 +280,7 @@ public class KafkaCrossDcConf extends CrossDcConf {
     }
     return prop.getValueAsBoolean(properties);
   }
-  
+
   public Map<String,Object> getAdditionalProperties() {
     Map<String, Object> additional = new HashMap<>(properties);
     for (ConfigProperty configProperty : CONFIG_PROPERTIES) {

@@ -120,8 +120,10 @@ public class KafkaCrossDcConsumer extends Consumer.CrossDcConsumer {
 
 
 
-    log.info("Creating Kafka consumer with configuration {}", kafkaConsumerProps);
+    log.debug("Creating Kafka consumer with configuration {}", kafkaConsumerProps);
+    log.info("Creating Kafka consumer.");
     kafkaConsumer = createKafkaConsumer(kafkaConsumerProps);
+    log.info("Created Kafka consumer.");
     partitionManager = new PartitionManager(kafkaConsumer);
     // Create producer for resubmitting failed requests
     log.info("Creating Kafka resubmit producer");

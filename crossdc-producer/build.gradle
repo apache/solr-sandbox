@@ -34,11 +34,11 @@ sourceSets {
 }
 
 dependencies {
-    implementation project(':crossdc-consumer')
     implementation project(path: ':crossdc-commons', configuration: 'shadow')
 
     provided  group: 'org.apache.solr', name: 'solr-core', version: "${solrVersion}"
 
+    testImplementation project(':crossdc-consumer')
     testImplementation 'org.hamcrest:hamcrest:2.2'
     testImplementation 'junit:junit:4.13.2'
     testImplementation('org.mockito:mockito-inline:5.1.1')

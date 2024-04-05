@@ -44,7 +44,7 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
 
     private final KafkaCrossDcConf conf;
     private final Producer<String, MirroredSolrRequest> producer;
-    private final KafkaConsumer<String,MirroredSolrRequest> consumer;
+    private KafkaConsumer<String,MirroredSolrRequest> consumer;
     private final String mainTopic;
     private final String dlqTopic;
 
@@ -52,11 +52,11 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
         // Create Kafka Mirroring Sink
         this.conf = conf;
         this.producer = initProducer();
-        this.consumer = initConsumer();
+        //this.consumer = initConsumer();
         this.mainTopic = conf.get(KafkaCrossDcConf.TOPIC_NAME).split(",")[0];
         this.dlqTopic = conf.get(KafkaCrossDcConf.DLQ_TOPIC_NAME);
 
-        checkTopicsAvailability();
+        //checkTopicsAvailability();
     }
 
     @Override
@@ -130,8 +130,8 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
         // Initialize and return Kafka producer
         Properties kafkaProducerProps = new Properties();
 
-        log.info("Starting CrossDC Producer {}", conf);
-
+        log.debug("Starting CrossDC Producer {}", conf);
+        log.info("Starting CrossDC Producer.");
         kafkaProducerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, conf.get(KafkaCrossDcConf.BOOTSTRAP_SERVERS));
 
         kafkaProducerProps.put(ProducerConfig.ACKS_CONFIG, "all");
@@ -160,7 +160,7 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
         }
 
         ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
-        Thread.currentThread().setContextClassLoader(null);
+        Thread.currentThread().setContextClassLoader(KafkaProducer.class.getClassLoader());
         Producer<String, MirroredSolrRequest> producer;
         try {
             producer = new KafkaProducer<>(kafkaProducerProps);
@@ -185,6 +185,9 @@ public class KafkaMirroringSink implements RequestMirroringSink, Closeable {
         kafkaConsumerProperties.put(ConsumerConfig.FETCH_MAX_BYTES_CONFIG, conf.getInt(KafkaCrossDcConf.FETCH_MAX_BYTES));
         kafkaConsumerProperties.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, conf.getInt(KafkaCrossDcConf.MAX_PARTITION_FETCH_BYTES));
         kafkaConsumerProperties.put(ConsumerConfig.REQUEST_TIMEOUT_MS_CONFIG, conf.getInt(KafkaCrossDcConf.REQUEST_TIMEOUT_MS));
+
+        KafkaCrossDcConf.addSecurityProps(conf, kafkaConsumerProperties);
+
         kafkaConsumerProperties.putAll(conf.getAdditionalProperties());
 
         return new KafkaConsumer<>(kafkaConsumerProperties, new StringDeserializer(), new MirroredSolrRequestSerializer());
