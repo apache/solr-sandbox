@@ -34,7 +34,6 @@ import java.util.UUID;
 
 import static org.apache.solr.encryption.EncryptionDirectoryFactory.PROPERTY_INNER_ENCRYPTION_DIRECTORY_FACTORY;
 import static org.apache.solr.encryption.EncryptionRequestHandler.NO_KEY_ID;
-import static org.apache.solr.encryption.EncryptionTestUtil.EncryptionStatus;
 import static org.apache.solr.encryption.EncryptionUtil.getKeyIdFromCommit;
 import static org.apache.solr.encryption.TestingKeySupplier.KEY_ID_1;
 import static org.apache.solr.encryption.TestingKeySupplier.KEY_ID_2;
@@ -88,7 +87,7 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
   @Test
   public void testEncryptionFromNoKeysToOneKey_NoIndex() throws Exception {
     // Send an encrypt request with a key id on an empty index.
-    encryptAndExpectCompletion(KEY_ID_1);
+    testUtil.encryptAndExpectCompletion(KEY_ID_1);
 
     // Index some documents to create a first segment.
     testUtil.indexDocsAndCommit("weather broadcast");
@@ -104,10 +103,10 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
   @Test
   public void testEncryptionFromNoKeysToOneKeyToNoKeys_NoIndex() throws Exception {
     // Send an encrypt request with a key id on an empty index.
-    encryptAndExpectCompletion(KEY_ID_1);
+    testUtil.encryptAndExpectCompletion(KEY_ID_1);
 
     // Send another encrypt request with no key id, still on the empty index.
-    encryptAndExpectCompletion(NO_KEY_ID);
+    testUtil.encryptAndExpectCompletion(NO_KEY_ID);
 
     // Index some documents to create a first segment.
     testUtil.indexDocsAndCommit("weather broadcast");
@@ -134,7 +133,7 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     forceClearText = false;
 
     // Send an encrypt request with a key id.
-    encryptAndWaitForCompletion(KEY_ID_1);
+    testUtil.encryptAndWaitForCompletion(KEY_ID_1);
 
     // Verify that the segment is encrypted.
     forceClearText = true;
@@ -154,7 +153,7 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     testUtil.indexDocsAndCommit("foggy weather");
 
     // Send an encrypt request with another key id.
-    encryptAndWaitForCompletion(KEY_ID_2);
+    testUtil.encryptAndWaitForCompletion(KEY_ID_2);
 
     // Verify that the segment is encrypted.
     forceClearText = true;
@@ -173,7 +172,7 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     testUtil.indexDocsAndCommit("foggy weather");
 
     // Send an encrypt request with no key id.
-    encryptAndWaitForCompletion(NO_KEY_ID);
+    testUtil.encryptAndWaitForCompletion(NO_KEY_ID);
 
     // Verify that the segment is cleartext.
     forceClearText = true;
@@ -185,7 +184,7 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     testUtil.indexDocsAndCommit("cloudy weather");
 
     // Send an encrypt request with another key id.
-    encryptAndWaitForCompletion(KEY_ID_2);
+    testUtil.encryptAndWaitForCompletion(KEY_ID_2);
 
     // Verify that the segment is encrypted.
     forceClearText = true;
@@ -194,21 +193,6 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     soleKeyIdAllowed = KEY_ID_2;
     testUtil.reloadCores();
     testUtil.assertQueryReturns("weather", 4);
-  }
-
-  private void encryptAndExpectCompletion(String keyId) {
-    encrypt(keyId, true);
-  }
-
-  private void encryptAndWaitForCompletion(String keyId) throws InterruptedException {
-    encrypt(keyId, false);
-    testUtil.waitUntilEncryptionIsComplete(keyId);
-  }
-
-  private void encrypt(String keyId, boolean expectComplete) {
-    EncryptionStatus encryptionStatus = testUtil.encrypt(keyId);
-    assertTrue(encryptionStatus.isSuccess());
-    assertEquals(expectComplete, encryptionStatus.isComplete());
   }
 
   private static void clearMockValues() {

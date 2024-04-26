@@ -45,7 +45,7 @@
   </directoryFactory>
 
   <!-- EncryptionUpdateHandler transfers the encryption key ids from a commit to the next. -->
-  <updateHandler class="org.apache.solr.encryption.EncryptionUpdateHandler">
+  <updateHandler class="${solr.updateHandler:org.apache.solr.encryption.EncryptionUpdateHandler}">
     <!-- EncryptionUpdateLog encrypts transaction logs if the index is encrypted. -->
     <updateLog class="${solr.updateLog:org.apache.solr.encryption.EncryptionUpdateLog}"/>
   </updateHandler>
