@@ -64,8 +64,8 @@ public class EncryptionMergePolicy extends FilterMergePolicy {
     if (!(dir instanceof EncryptionDirectory)) {
       // This may happen if the DirectoryFactory configured is not the EncryptionDirectoryFactory,
       // but this is a misconfiguration. Let's log an error.
-      log.error("{} {} is configured whereas {} is not set; check the DirectoryFactory configuration",
-                ENCRYPTION_LOG_PREFIX, getClass().getName(), EncryptionDirectoryFactory.class.getName());
+      log.error("{} is configured whereas {} is not set; check the DirectoryFactory configuration",
+                getClass().getName(), EncryptionDirectoryFactory.class.getName());
       return super.findForcedMerges(segmentInfos, maxSegmentCount, segmentsToMerge, mergeContext);
     }
     String keyRef = getActiveKeyRefFromCommit(segmentInfos.getUserData());

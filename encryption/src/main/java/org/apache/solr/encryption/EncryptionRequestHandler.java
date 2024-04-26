@@ -195,7 +195,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
       keyId = null;
     }
     EncryptionDirectoryFactory.getFactory(req.getCore());
-    log.debug("{} encrypt request for keyId={}", ENCRYPTION_LOG_PREFIX, keyId);
+    log.debug("Encrypt request for keyId={}", keyId);
     boolean success = false;
     String encryptionState = STATE_PENDING;
     try {
@@ -209,7 +209,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
 
       boolean encryptionComplete = false;
       if (isCommitActiveKeyId(keyId, segmentInfos)) {
-        log.debug("{} provided keyId={} is the current active key id", ENCRYPTION_LOG_PREFIX, keyId);
+        log.debug("Provided keyId={} is the current active key id", keyId);
         if (Boolean.parseBoolean(segmentInfos.getUserData().get(COMMIT_ENCRYPTION_PENDING))) {
           encryptionComplete = areAllSegmentsEncryptedWithKeyId(keyId, req.getCore(), segmentInfos)
             && areAllLogsEncryptedWithKeyId(keyId, req.getCore(), segmentInfos);
@@ -230,12 +230,12 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
         PendingKeyId pendingKeyId = pendingEncryptions.get(req.getCore().getName());
         if (pendingKeyId != null) {
           if (Objects.equals(pendingKeyId.keyId, keyId)) {
-            log.debug("{} ongoing encryption for keyId={}", ENCRYPTION_LOG_PREFIX, keyId);
+            log.debug("Ongoing encryption for keyId={}", keyId);
             encryptionState = STATE_PENDING;
             success = true;
           } else {
-            log.debug("{} core busy encrypting for keyId={} different than requested keyId={}",
-                      ENCRYPTION_LOG_PREFIX, pendingKeyId.keyId, keyId);
+            log.debug("Core busy encrypting for keyId={} different than requested keyId={}",
+                      pendingKeyId.keyId, keyId);
             encryptionState = STATE_BUSY;
           }
           return;
@@ -260,8 +260,8 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
       } else {
         rsp.add(STATUS, STATUS_FAILURE);
       }
-      log.info("{} responding encryption state={} success={} for keyId={}",
-               ENCRYPTION_LOG_PREFIX, encryptionState, success, keyId);
+      log.info("Responding encryption state={} success={} for keyId={}",
+               encryptionState, success, keyId);
       rsp.add(ENCRYPTION_STATE, encryptionState);
     }
   }
@@ -271,7 +271,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
                                              SolrQueryRequest req,
                                              SolrQueryResponse rsp) throws IOException {
     // Commit no change, with the new active key id in the commit user data.
-    log.debug("{} commit on empty index for keyId={}", ENCRYPTION_LOG_PREFIX, keyId);
+    log.debug("Commit on empty index for keyId={}", keyId);
     CommitUpdateCommand commitCmd = new CommitUpdateCommand(req, false);
     commitCmd.commitData = new HashMap<>(segmentInfos.getUserData());
     commitCmd.commitData.remove(COMMIT_ENCRYPTION_PENDING);
@@ -296,7 +296,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
                                         SegmentInfos segmentInfos,
                                         SolrQueryRequest req) throws IOException {
     assert isCommitActiveKeyId(keyId, segmentInfos);
-    log.debug("{} commit encryption complete for keyId={}", ENCRYPTION_LOG_PREFIX, keyId);
+    log.debug("Commit encryption complete for keyId={}", keyId);
     CommitUpdateCommand commitCmd = new CommitUpdateCommand(req, false);
     commitCmd.commitData = new HashMap<>(segmentInfos.getUserData());
     commitCmd.commitData.remove(COMMIT_ENCRYPTION_PENDING);
@@ -319,7 +319,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
                                      SegmentInfos segmentInfos,
                                      SolrQueryRequest req,
                                      SolrQueryResponse rsp) throws IOException {
-    log.debug("{} commit encryption starting for keyId={}", ENCRYPTION_LOG_PREFIX, keyId);
+    log.debug("Commit encryption starting for keyId={}", keyId);
     CommitUpdateCommand commitCmd = new CommitUpdateCommand(req, false);
     commitCmd.commitData = new HashMap<>(segmentInfos.getUserData());
     commitCmd.commitData.put(COMMIT_ENCRYPTION_PENDING, "true");
@@ -328,27 +328,27 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
   }
 
   private void encryptAsync(SolrQueryRequest req, long startTimeMs) {
-    log.debug("{} submitting async encryption", ENCRYPTION_LOG_PREFIX);
+    log.debug("Submitting async encryption");
     executor.submit(() -> {
       try {
         EncryptionUpdateLog updateLog = getEncryptionUpdateLog(req.getCore());
         if (updateLog != null) {
-          log.debug("{} running async update log encryption", ENCRYPTION_LOG_PREFIX);
+          log.debug("Encrypting update log");
           boolean logEncryptionComplete = updateLog.encryptLogs();
-          log.info("{} {} encrypted the update log in {}",
-                   ENCRYPTION_LOG_PREFIX, logEncryptionComplete ? "successfully" : "partially", elapsedTime(startTimeMs));
+          log.info("{} encrypted the update log in {}",
+                   logEncryptionComplete ? "Successfully" : "Partially", elapsedTime(startTimeMs));
         }
 
-        log.debug("{} running async index encryption", ENCRYPTION_LOG_PREFIX);
+        log.debug("Triggering index encryption");
         CommitUpdateCommand commitCmd = new CommitUpdateCommand(req, true);
         // Trigger EncryptionMergePolicy.findForcedMerges() to re-encrypt
         // each segment which is not encrypted with the latest active key id.
         commitCmd.maxOptimizeSegments = Integer.MAX_VALUE;
         req.getCore().getUpdateHandler().commit(commitCmd);
-        log.info("{} successfully encrypted the index in {}", ENCRYPTION_LOG_PREFIX, elapsedTime(startTimeMs));
+        log.info("Successfully triggered index encryption with commit in {}", elapsedTime(startTimeMs));
 
       } catch (IOException e) {
-        log.error("{} exception while encrypting the index after {}", ENCRYPTION_LOG_PREFIX, elapsedTime(startTimeMs), e);
+        log.error("Exception while encrypting the index after {}", elapsedTime(startTimeMs), e);
       } finally {
         synchronized (pendingEncryptionLock) {
           pendingEncryptions.remove(req.getCore().getName());
@@ -368,8 +368,8 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     try {
       EncryptionDirectory dir = (EncryptionDirectory) indexDir;
       List<SegmentCommitInfo> segmentsWithOldKeyId = dir.getSegmentsWithOldKeyId(segmentInfos, keyId);
-      log.debug("{} encryption is pending; {} segments do not have keyId={}",
-                ENCRYPTION_LOG_PREFIX, segmentsWithOldKeyId.size(), keyId);
+      log.debug("Encryption is pending; {} segments do not have keyId={}",
+                segmentsWithOldKeyId.size(), keyId);
       return segmentsWithOldKeyId.isEmpty();
     } finally {
       directoryFactory.release(indexDir);
