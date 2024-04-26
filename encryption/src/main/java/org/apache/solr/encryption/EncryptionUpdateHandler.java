@@ -20,6 +20,7 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.solr.core.SolrCore;
 import org.apache.solr.update.CommitUpdateCommand;
 import org.apache.solr.update.DirectUpdateHandler2;
+import org.apache.solr.update.SplitIndexCommand;
 import org.apache.solr.update.UpdateHandler;
 
 import java.io.IOException;
@@ -57,25 +58,37 @@ public class EncryptionUpdateHandler extends DirectUpdateHandler2 {
     if (!super.shouldCommit(cmd, writer)) {
       return false;
     }
+    cmd.commitData = transferCommitData(cmd.commitData);
+    return true;
+  }
+
+  private Map<String, String> transferCommitData(Map<String, String> commitData) throws IOException {
     // Two cases:
-    // - If cmd.commitData is null, then transfer all the latest commit transferable
+    // - If commitData is null, then transfer all the latest commit transferable
     //   data to the current commit.
-    // - If cmd.commitData is not null, nothing is transferred. It is the caller
+    // - If commitData is not null, nothing is transferred. It is the caller
     //   responsibility to include all the required user data from the latest commit.
     //   That way, the caller can remove some entries.
-    if (cmd.commitData == null) {
+    if (commitData == null) {
       Map<String, String> latestCommitData = readLatestCommit(core).getUserData();
-      Map<String, String> commitData = null;
+      Map<String, String> newCommitData = null;
       for (Map.Entry<String, String> latestCommitEntry : latestCommitData.entrySet()) {
         if (latestCommitEntry.getKey().startsWith(TRANSFERABLE_COMMIT_DATA)) {
-          if (commitData == null) {
-            commitData = new HashMap<>();
+          if (newCommitData == null) {
+            newCommitData = new HashMap<>();
           }
-          commitData.put(latestCommitEntry.getKey(), latestCommitEntry.getValue());
+          newCommitData.put(latestCommitEntry.getKey(), latestCommitEntry.getValue());
         }
       }
-      cmd.commitData = commitData;
+      return newCommitData;
     }
-    return true;
+    return commitData;
+  }
+
+  @Override
+  public void split(SplitIndexCommand cmd) throws IOException {
+    // Transfer the parent core commit data to the sub-shard cores.
+    cmd.commitData = transferCommitData(cmd.commitData);
+    super.split(cmd);
   }
 }

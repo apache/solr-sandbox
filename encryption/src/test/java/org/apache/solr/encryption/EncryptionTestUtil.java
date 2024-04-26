@@ -45,6 +45,7 @@ import static org.apache.solr.encryption.EncryptionRequestHandler.PARAM_KEY_ID;
 import static org.apache.solr.encryption.EncryptionRequestHandler.STATE_COMPLETE;
 import static org.apache.solr.encryption.EncryptionRequestHandler.STATUS;
 import static org.apache.solr.encryption.EncryptionRequestHandler.STATUS_SUCCESS;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -100,7 +101,7 @@ public class EncryptionTestUtil {
    */
   public void assertQueryReturns(String query, int expectedNumResults) throws Exception {
     QueryResponse response = cloudSolrClient.query(collectionName, new SolrQuery(query));
-    Assert.assertEquals(expectedNumResults, response.getResults().size());
+    assertEquals(expectedNumResults, response.getResults().size());
   }
 
   public EncryptionStatus encrypt(String keyId) {
@@ -114,6 +115,21 @@ public class EncryptionTestUtil {
       encryptionStatus.complete &= response.get(ENCRYPTION_STATE).equals(STATE_COMPLETE);
     });
     return encryptionStatus;
+  }
+
+  public void encryptAndExpectCompletion(String keyId) {
+    encryptAndCheck(keyId, true);
+  }
+
+  public void encryptAndWaitForCompletion(String keyId) throws InterruptedException {
+    encryptAndCheck(keyId, false);
+    waitUntilEncryptionIsComplete(keyId);
+  }
+
+  private void encryptAndCheck(String keyId, boolean expectComplete) {
+    EncryptionStatus encryptionStatus = encrypt(keyId);
+    assertTrue(encryptionStatus.isSuccess());
+    assertEquals(expectComplete, encryptionStatus.isComplete());
   }
 
   public void waitUntilEncryptionIsComplete(String keyId) throws InterruptedException {
