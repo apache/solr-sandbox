@@ -301,8 +301,7 @@ public class EncryptionDirectory extends FilterDirectory {
     throws IOException {
     List<SegmentCommitInfo> segmentsWithOldKeyId = null;
     if (log.isDebugEnabled()) {
-      log.debug("{} reading segments {} for key ids different from {}",
-                ENCRYPTION_LOG_PREFIX,
+      log.debug("Reading segments {} for key ids different from {}",
                 segmentInfos.asList().stream().map(i -> i.info.name).collect(Collectors.toList()),
                 activeKeyId);
     }
@@ -312,8 +311,8 @@ public class EncryptionDirectory extends FilterDirectory {
           try (IndexInput fileInput = in.openInput(fileName, IOContext.READ)) {
             String keyRef = getKeyRefForReading(fileInput);
             String keyId = keyRef == null ? null : getKeyIdFromCommit(keyRef, segmentInfos.getUserData());
-            log.debug("{} reading file {} of segment {} => keyId={}",
-                      ENCRYPTION_LOG_PREFIX, fileName, segmentCommitInfo.info.name, keyId);
+            log.debug("Reading file {} of segment {} => keyId={}",
+                      fileName, segmentCommitInfo.info.name, keyId);
             if (!Objects.equals(keyId, activeKeyId)) {
               if (segmentsWithOldKeyId == null) {
                 segmentsWithOldKeyId = new ArrayList<>();

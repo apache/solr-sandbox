@@ -45,7 +45,6 @@ import java.util.Objects;
 import static org.apache.solr.encryption.EncryptionTransactionLog.ENCRYPTION_KEY_HEADER_LENGTH;
 import static org.apache.solr.encryption.EncryptionTransactionLog.readEncryptionHeader;
 import static org.apache.solr.encryption.EncryptionTransactionLog.writeEncryptionHeader;
-import static org.apache.solr.encryption.EncryptionUtil.ENCRYPTION_LOG_PREFIX;
 import static org.apache.solr.encryption.EncryptionUtil.getActiveKeyRefFromCommit;
 import static org.apache.solr.encryption.EncryptionUtil.getKeyIdFromCommit;
 
@@ -76,7 +75,7 @@ public class EncryptionUpdateLog extends UpdateLog {
     try {
       encryptLogs();
     } catch (IOException e) {
-      log.error("{} exception while encrypting old transaction logs", ENCRYPTION_LOG_PREFIX, e);
+      log.error("Exception while encrypting old transaction logs", e);
     }
   }
 
@@ -114,7 +113,7 @@ public class EncryptionUpdateLog extends UpdateLog {
       try {
         encryptLogs();
       } catch (IOException e) {
-        log.error("{} exception while encrypting old transaction logs", ENCRYPTION_LOG_PREFIX, e);
+        log.error("Exception while encrypting old transaction logs", e);
       }
     }
   }

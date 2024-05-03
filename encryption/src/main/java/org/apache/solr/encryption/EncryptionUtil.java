@@ -36,9 +36,6 @@ public class EncryptionUtil {
 
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  /** Log prefix for encryption, to ease log search. */
-  public static final String ENCRYPTION_LOG_PREFIX = "Encryption:";
-
   /**
    * Crypto parameter prefix, in the commit user data.
    * It includes the {@link EncryptionUpdateHandler#TRANSFERABLE_COMMIT_DATA} prefix to be transferred from a
@@ -177,7 +174,7 @@ public class EncryptionUtil {
       for (Integer keyRef : inactiveKeyRefs.subList(0, inactiveKeyRefs.size() - INACTIVE_KEY_IDS_TO_KEEP)) {
         commitUserData.remove(COMMIT_KEY_ID + keyRef);
         commitUserData.remove(COMMIT_KEY_COOKIE + keyRef);
-        log.info("{} removing inactive key ref={}", ENCRYPTION_LOG_PREFIX, keyRef);
+        log.info("Removing inactive key ref={}", keyRef);
       }
     }
   }
