@@ -68,4 +68,14 @@
     </mergePolicyFactory>
   </indexConfig>
 
+  <backup>
+    <!-- Encryption backup repository delegates to another backup repository. -->
+    <repository name="encryptionBackupRepository" class="org.apache.solr.encryption.EncryptionBackupRepository" default="true">
+      <str name="delegateRepoName">localBackupRepository</str>
+    </repository>
+    <repository name="localBackupRepository" class="org.apache.solr.core.backup.repository.LocalFileSystemRepository">
+      <str name="location">/solr/backup_data</str>
+    </repository>
+  </backup>
+
 </config>
