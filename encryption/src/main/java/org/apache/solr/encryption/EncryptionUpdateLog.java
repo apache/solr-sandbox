@@ -39,7 +39,9 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 
 import static org.apache.solr.encryption.EncryptionTransactionLog.ENCRYPTION_KEY_HEADER_LENGTH;
@@ -93,13 +95,24 @@ public class EncryptionUpdateLog extends UpdateLog {
    */
   public synchronized boolean encryptLogs() throws IOException {
     boolean allLogsEncrypted = true;
-    for (TransactionLog log : logs) {
-      EncryptionTransactionLog encLog = (EncryptionTransactionLog) log;
-      if (encLog.refCount() <= 1) {
-        // The log is only owned by this update log. We can encrypt it.
-        encryptLog(encLog);
-      } else {
-        allLogsEncrypted = false;
+    List<TransactionLog> tmpLogs = new ArrayList<>(logs.size());
+    while (!logs.isEmpty()) {
+      tmpLogs.add(logs.pollFirst());
+    }
+    try {
+      for (int i = 0; i < tmpLogs.size(); i++) {
+        TransactionLog log = tmpLogs.get(i);
+        EncryptionTransactionLog encLog = (EncryptionTransactionLog) log;
+        if (encLog.refCount() <= 1) {
+          // The log is only owned by this update log. We can encrypt it.
+          tmpLogs.set(i, encryptLog(encLog));
+        } else {
+          allLogsEncrypted = false;
+        }
+      }
+    } finally {
+      for (TransactionLog log : tmpLogs) {
+        logs.offerLast(log);
       }
     }
     shouldEncryptOldLogs = !allLogsEncrypted;
@@ -137,7 +150,8 @@ public class EncryptionUpdateLog extends UpdateLog {
     return true;
   }
 
-  protected void encryptLog(EncryptionTransactionLog log) throws IOException {
+  protected EncryptionTransactionLog encryptLog(EncryptionTransactionLog log) throws IOException {
+    assert log.refCount() <= 1;
     if (Files.size(log.path()) > 0) {
       EncryptionDirectory directory = directorySupplier.get();
       try {
@@ -146,20 +160,22 @@ public class EncryptionUpdateLog extends UpdateLog {
           String inputKeyRef = readEncryptionHeader(inputChannel, ByteBuffer.allocate(4));
           String activeKeyRef = getActiveKeyRefFromCommit(directory.getLatestCommitData().data);
           if (!Objects.equals(inputKeyRef, activeKeyRef)) {
-            Path newLog = log.path().resolveSibling(log.path().getFileName() + ".enc");
-            try (OutputStream outputStream = new FileOutputStream(newLog.toFile())) {
+            Path newLogPath = log.path().resolveSibling(log.path().getFileName() + ".enc");
+            try (OutputStream outputStream = new FileOutputStream(newLogPath.toFile())) {
               reencrypt(inputChannel, inputKeyRef, outputStream, activeKeyRef, directory);
             }
             Path backupLog = log.path().resolveSibling(log.path().getFileName() + ".bak");
             Files.move(log.path(), backupLog);
-            Files.move(newLog, log.path());
+            Files.move(newLogPath, log.path());
             Files.delete(backupLog);
+            log = log.reopen();
           }
         }
       } finally {
         directorySupplier.release(directory);
       }
     }
+    return log;
   }
 
   protected void reencrypt(FileChannel inputChannel,
@@ -191,7 +207,7 @@ public class EncryptionUpdateLog extends UpdateLog {
     outputStream.flush();
   }
 
-  private static class DirectorySupplier implements EncryptionDirectorySupplier {
+  protected static class DirectorySupplier implements EncryptionDirectorySupplier {
 
     private SolrCore core;
 

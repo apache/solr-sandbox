@@ -80,6 +80,25 @@ public class EncryptionTransactionLog extends TransactionLog {
           channelInputStreamOpener);
   }
 
+  /**
+   * Closes this transaction log and reopens it.
+   * This method must only be called if {@link #refCount()} is 1.
+   * @return The new transaction log.
+   */
+  public EncryptionTransactionLog reopen() {
+    if (refCount() > 1) {
+      throw new IllegalStateException("Cannot reopen a transaction log still in use");
+    } else if (refCount() > 0) {
+      deleteOnClose = false;
+      decref();
+    }
+    return new EncryptionTransactionLog(
+            tlog,
+            globalStringList,
+            true,
+            ((EncryptionChannelInputStreamOpener) channelInputStreamOpener).directorySupplier);
+  }
+
   public Path path() {
     return tlog;
   }
@@ -156,7 +175,7 @@ public class EncryptionTransactionLog extends TransactionLog {
   }
 
   /** Supplies and releases {@link EncryptionDirectory}. */
-  protected interface EncryptionDirectorySupplier {
+  public interface EncryptionDirectorySupplier {
 
     EncryptionDirectory get();
 
