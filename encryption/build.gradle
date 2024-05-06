@@ -33,8 +33,8 @@ sourceSets {
 }
 
 dependencies {
-    implementation 'org.apache.solr:solr-core:9.3.0'
-    implementation 'org.apache.lucene:lucene-core:9.7.0'
+    implementation 'org.apache.solr:solr-core:9.6.0'
+    implementation 'org.apache.lucene:lucene-core:9.10.0'
     implementation 'com.google.code.findbugs:jsr305:3.0.2'
 
     // commons-io and commons-codec are only required by the tool class
@@ -42,8 +42,8 @@ dependencies {
     implementation 'commons-io:commons-io:2.11.0'
     implementation 'commons-codec:commons-codec:1.16.0'
 
-    testImplementation 'org.apache.solr:solr-test-framework:9.3.0'
-    testImplementation 'org.apache.lucene:lucene-test-framework:9.7.0'
+    testImplementation 'org.apache.solr:solr-test-framework:9.6.0'
+    testImplementation 'org.apache.lucene:lucene-test-framework:9.10.0'
 }
 
 test {
