@@ -185,8 +185,9 @@ public class EncryptionUpdateLog extends UpdateLog {
           Files.move(log.path(), backupLog);
           Files.move(newLogPath, log.path());
           Files.delete(backupLog);
-          // To make sure we don't write anymore to the transaction log output stream.
-          // Reading the transaction log is ok because it will open new input streams.
+          // Toggle to readonly mode to make sure we don't write anymore to the transaction
+          // log output stream. Reading the transaction log is ok because it will open new
+          // input streams.
           log.readOnly();
         }
       }
