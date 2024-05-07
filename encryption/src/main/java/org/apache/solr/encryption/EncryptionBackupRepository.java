@@ -31,14 +31,17 @@ import static org.apache.solr.core.backup.repository.AbstractBackupRepository.PA
 
 /**
  * Encryption {@link org.apache.solr.core.backup.repository.BackupRepository} that delegates
- * to another {@link org.apache.solr.core.backup.repository.BackupRepository} and intercepts
- * index files copy to check their checksum in the decrypted from, but to copy them in their
- * encrypted form.
+ * to another {@link org.apache.solr.core.backup.repository.BackupRepository}.
+ * It ensures the encrypted files are copied encrypted, but still verifies their checksum before the copy.
+ * It also ensures the files are copied encrypted when restored (not double encrypted).
  */
 public class EncryptionBackupRepository extends DelegatingBackupRepository {
 
+  protected boolean shouldVerifyChecksum = true;
+
   @Override
   public void init(NamedList<?> args) {
+    shouldVerifyChecksum = getBooleanConfig(args, PARAM_VERIFY_CHECKSUM, true);
     if (delegate != null) {
       delegate.init(args);
     }
@@ -46,8 +49,11 @@ public class EncryptionBackupRepository extends DelegatingBackupRepository {
 
   @Override
   protected NamedList<?> getDelegateInitArgs(NamedList<?> initArgs) {
-    NamedList<Object> newInitArgs = new NamedList<>(initArgs.size() + 1);
+    // Enable checksum verification only if both this repository and its delegate enable it.
+    shouldVerifyChecksum &= getBooleanConfig(initArgs, PARAM_VERIFY_CHECKSUM, true);
+
     // Ensure the delegate does not verify the checksum, otherwise it would fail since we back up encrypted files.
+    NamedList<Object> newInitArgs = new NamedList<>(initArgs.size() + 1);
     newInitArgs.add(PARAM_VERIFY_CHECKSUM, Boolean.FALSE.toString());
     newInitArgs.addAll(initArgs);
     return newInitArgs;
@@ -57,8 +63,10 @@ public class EncryptionBackupRepository extends DelegatingBackupRepository {
   public void copyIndexFileFrom(
           Directory sourceDir, String sourceFileName, Directory destDir, String destFileName)
           throws IOException {
-    // Read and verify the checksum with the potentially decrypting directory.
-    verifyChecksum(sourceDir, sourceFileName);
+    if (shouldVerifyChecksum) {
+      // Read and verify the checksum with the potentially decrypting directory.
+      verifyChecksum(sourceDir, sourceFileName);
+    }
     // Copy the index file with the unwrapped (delegate) directory to keep encryption.
     super.copyIndexFileFrom(FilterDirectory.unwrap(sourceDir), sourceFileName, destDir, destFileName);
   }
@@ -67,8 +75,10 @@ public class EncryptionBackupRepository extends DelegatingBackupRepository {
   public void copyIndexFileFrom(
           Directory sourceDir, String sourceFileName, URI destUri, String destFileName)
           throws IOException {
-    // Read and verify the checksum with the potentially decrypting directory.
-    verifyChecksum(sourceDir, sourceFileName);
+    if (shouldVerifyChecksum) {
+      // Read and verify the checksum with the potentially decrypting directory.
+      verifyChecksum(sourceDir, sourceFileName);
+    }
     // Copy the index file with the unwrapped (delegate) directory to keep encryption.
     super.copyIndexFileFrom(FilterDirectory.unwrap(sourceDir), sourceFileName, destUri, destFileName);
   }
@@ -94,5 +104,10 @@ public class EncryptionBackupRepository extends DelegatingBackupRepository {
           throws IOException {
     // Copy the index file with the unwrapped (delegate) directory to avoid encrypting twice.
     super.copyIndexFileTo(sourceRepo, sourceFileName, FilterDirectory.unwrap(destDir), destFileName);
+  }
+
+  protected static boolean getBooleanConfig(NamedList<?> args, String param, boolean defaultValue) {
+    Object value = args.get(param);
+    return value == null ? defaultValue : Boolean.parseBoolean(value.toString());
   }
 }

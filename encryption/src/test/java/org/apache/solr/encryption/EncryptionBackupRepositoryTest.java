@@ -17,7 +17,6 @@ import org.apache.solr.encryption.crypto.CipherAesCtrEncrypter;
 import org.apache.solr.encryption.crypto.LightAesCtrEncrypter;
 import org.apache.solr.schema.FieldType;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -30,6 +29,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.apache.lucene.codecs.CodecUtil.FOOTER_MAGIC;
+import static org.apache.lucene.codecs.CodecUtil.writeBEInt;
+import static org.apache.lucene.codecs.CodecUtil.writeBELong;
+import static org.apache.solr.core.backup.repository.AbstractBackupRepository.PARAM_VERIFY_CHECKSUM;
 import static org.apache.solr.core.backup.repository.DelegatingBackupRepository.PARAM_DELEGATE_REPOSITORY_NAME;
 import static org.apache.solr.encryption.EncryptionDirectory.ENCRYPTION_MAGIC;
 import static org.apache.solr.encryption.EncryptionUtil.COMMIT_ACTIVE_KEY;
@@ -67,18 +70,10 @@ public class EncryptionBackupRepositoryTest extends AbstractBackupRepositoryTest
     }
 
     /**
-     * Ignore this inherited test. Instead, test how encrypted files are checked and copied,
-     * as this relies on the same mechanism.
-     */
-    @Ignore
-    @Override
-    public void testCanDisableChecksumVerification() {
-    }
-
-    /**
      * Tests a backup of an encrypted file.
      * The checksum is verified in the decrypted form of the file, otherwise it fails.
      * The backup copy is kept in its encrypted form, and not decrypted by the {@link EncryptionDirectory}.
+     * The restored copy is not encrypted, otherwise it would be double encrypted.
      */
     @Test
     public void testEncryptedBackup() throws Exception {
@@ -147,6 +142,83 @@ public class EncryptionBackupRepositoryTest extends AbstractBackupRepositoryTest
                     assertEquals(ENCRYPTION_MAGIC, readCodecMagic(restoreFileName, fsSourceDir));
                     // Check the restored file checksum to ensure it can be decrypted properly.
                     verifyChecksum(encSourceDir, restoreFileName);
+                }
+            }
+        }
+    }
+
+    /**
+     * Override the test method to check that we can disable the checksum verification of the delegate
+     * {@link BackupRepository}.
+     */
+    @Override
+    public void testCanDisableChecksumVerification() throws Exception {
+        // Given two BackupRepository plugins, and one of them has checksum verification disabled:
+        // - A LocalFileSystemRepository plugin.
+        // - An EncryptionBackupRepository that delegates to the previous one.
+        String localRepoName = "localRepo";
+        String encryptionRepoName = "encryptionRepo";
+        boolean localRepoVerifyChecksum = random().nextBoolean();
+        boolean encryptionRepoVerifyChecksum = !localRepoVerifyChecksum && random().nextBoolean();
+        NamedList<Object> localRepoArgs = new NamedList<>();
+        localRepoArgs.add(PARAM_VERIFY_CHECKSUM, Boolean.toString(localRepoVerifyChecksum));
+        NamedList<Object> encryptionRepoArgs = new NamedList<>();
+        encryptionRepoArgs.add(PARAM_DELEGATE_REPOSITORY_NAME, localRepoName);
+        encryptionRepoArgs.add(PARAM_VERIFY_CHECKSUM, Boolean.toString(encryptionRepoVerifyChecksum));
+        PluginInfo[] plugins =
+                new PluginInfo[]{
+                        getPluginInfo(localRepoName, LocalFileSystemRepository.class, false, localRepoArgs),
+                        getPluginInfo(encryptionRepoName, EncryptionBackupRepository.class, true, encryptionRepoArgs),
+                };
+        Collections.shuffle(Arrays.asList(plugins), random());
+
+
+        // Given an encrypted file on the local disk with an invalid checksum.
+        Path sourcePath = createTempDir().toAbsolutePath();
+        AesCtrEncrypterFactory encrypterFactory = random().nextBoolean() ? CipherAesCtrEncrypter.FACTORY : LightAesCtrEncrypter.FACTORY;
+        KeySupplier keySupplier = new TestingKeySupplier.Factory().create();
+        try (Directory fsSourceDir = FSDirectory.open(sourcePath);
+             Directory encSourceDir = new TestEncryptionDirectory(fsSourceDir, encrypterFactory, keySupplier);
+             Directory destinationDir = FSDirectory.open(createTempDir().toAbsolutePath())) {
+            String fileName = "source-file";
+            String content = "content";
+            try (IndexOutput out = encSourceDir.createOutput(fileName, IOContext.DEFAULT)) {
+                byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
+                out.writeBytes(bytes, bytes.length);
+                // Instead of writing the checksum with CodecUtil.writeFooter(), write a footer with an
+                // invalid checksum.
+                writeBEInt(out, FOOTER_MAGIC);
+                writeBEInt(out, 0);
+                writeBELong(out, 1);
+            }
+
+            BackupRepositoryFactory repoFactory = new BackupRepositoryFactory(plugins);
+            try (SolrResourceLoader resourceLoader = new SolrResourceLoader(sourcePath)) {
+
+                // When we copy the encrypted file with the EncryptionBackupRepository,
+                // then it succeeds because the checksum is not verified,
+                // and the file is copied in encrypted form.
+                String destinationFolder = "destination-folder";
+                copyFileToRepo(encSourceDir, fileName, encryptionRepoName, destinationFolder, repoFactory, resourceLoader);
+                // Check the copy starts with the encryption magic, not the regular codec magic, this means it is encrypted.
+                assertEquals(ENCRYPTION_MAGIC, readCodecMagic(fileName, encryptionRepoName, destinationFolder, repoFactory, resourceLoader));
+                copyFileToDir(
+                        encSourceDir, fileName, destinationDir, encryptionRepoName, repoFactory, resourceLoader);
+                // Check the copy starts with the encryption magic, not the regular codec magic, this means it is encrypted.
+                assertEquals(ENCRYPTION_MAGIC, readCodecMagic(fileName, destinationDir));
+
+                // When we restore the encrypted copy with the EncryptionBackupRepository,
+                // then the file is restored in its encrypted form.
+                try (BackupRepository repo = repoFactory.newInstance(resourceLoader, encryptionRepoName)) {
+                    URI repoDir = repo.resolve(getBaseUri(), destinationFolder);
+                    String restoreFileName = "restore-file";
+                    repo.copyIndexFileTo(repoDir, fileName, encSourceDir, restoreFileName);
+                    // Check the restored file starts with the encryption magic, not the regular codec magic, this means it is encrypted.
+                    assertEquals(ENCRYPTION_MAGIC, readCodecMagic(restoreFileName, fsSourceDir));
+                    // Expect an exception when verifying the checksum of the restored file.
+                    expectThrows(
+                            CorruptIndexException.class,
+                            () -> verifyChecksum(encSourceDir, restoreFileName));
                 }
             }
         }
