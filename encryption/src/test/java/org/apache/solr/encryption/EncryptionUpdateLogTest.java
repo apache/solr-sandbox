@@ -117,6 +117,10 @@ public class EncryptionUpdateLogTest extends SolrCloudTestCase {
     assertEquals(0, reencryptionCallCount.get());
 
     resetCounters();
+    // Add a doc with multivalued field to trigger AtomicUpdateDocumentMerger.isAtomicUpdate()
+    // in DistributedUpdateProcessor.getUpdateDocument(),
+    // which then calls RealTimeGetComponent.getInputDocument(),
+    // which looks into the update log.
     solrClient.add(collectionName, sdoc("id", "1", "multi", map("add", "test")));
     assertEquals(0, encryptedLogWriteCount.get());
     assertEquals(1, encryptedLogReadCount.get());
@@ -151,6 +155,7 @@ public class EncryptionUpdateLogTest extends SolrCloudTestCase {
     assertEquals(0, reencryptionCallCount.get());
 
     resetCounters();
+    // Add a doc with multivalued field to trigger update log lookup.
     solrClient.add(collectionName, sdoc("id", "2", "multi", map("add", "test")));
     assertEquals(0, encryptedLogWriteCount.get());
     assertEquals(toKeyId.equals(NO_KEY_ID) ? 0 : 1, encryptedLogReadCount.get());

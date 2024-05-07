@@ -81,22 +81,16 @@ public class EncryptionTransactionLog extends TransactionLog {
   }
 
   /**
-   * Closes this transaction log and reopens it.
+   * Makes this transaction log readonly.
    * This method must only be called if {@link #refCount()} is 1.
-   * @return The new transaction log.
    */
-  public EncryptionTransactionLog reopen() {
+  public void readOnly() throws IOException {
     if (refCount() > 1) {
-      throw new IllegalStateException("Cannot reopen a transaction log still in use");
-    } else if (refCount() > 0) {
-      deleteOnClose = false;
-      decref();
+      throw new IllegalStateException("Cannot make a transaction log readonly while it is still in use");
     }
-    return new EncryptionTransactionLog(
-            tlog,
-            globalStringList,
-            true,
-            ((EncryptionChannelInputStreamOpener) channelInputStreamOpener).directorySupplier);
+    // From that point, we don't expect any writes to reach the underlying OutputStream.
+    // Flush is ok if it actually does not write anything.
+    os.close();
   }
 
   public Path path() {
