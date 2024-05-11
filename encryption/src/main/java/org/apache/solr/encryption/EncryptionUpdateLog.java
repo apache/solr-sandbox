@@ -35,8 +35,11 @@ import java.io.OutputStream;
 import java.lang.invoke.MethodHandles;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.CopyOption;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -178,12 +181,12 @@ public class EncryptionUpdateLog extends UpdateLog {
         String inputKeyRef = readEncryptionHeader(inputChannel, ByteBuffer.allocate(4));
         if (!Objects.equals(inputKeyRef, activeKeyRef)) {
           Path newLogPath = log.path().resolveSibling(log.path().getFileName() + ".enc");
-          try (OutputStream outputStream = new FileOutputStream(newLogPath.toFile())) {
+          try (OutputStream outputStream = Files.newOutputStream(newLogPath, StandardOpenOption.CREATE)) {
             reencrypt(inputChannel, inputKeyRef, outputStream, activeKeyRef, directory);
           }
           Path backupLog = log.path().resolveSibling(log.path().getFileName() + ".bak");
-          Files.move(log.path(), backupLog);
-          Files.move(newLogPath, log.path());
+          Files.move(log.path(), backupLog, StandardCopyOption.REPLACE_EXISTING);
+          Files.move(newLogPath, log.path(), StandardCopyOption.REPLACE_EXISTING);
           Files.delete(backupLog);
           // Toggle to readonly mode to make sure we don't write anymore to the transaction
           // log output stream. Reading the transaction log is ok because it will open new
