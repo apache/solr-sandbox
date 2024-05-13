@@ -78,6 +78,12 @@ the specified folder.
         </mergePolicyFactory>
     </indexConfig>
 
+    <backup>
+        <repository name="encryptionBackupRepository" class="org.apache.solr.encryption.EncryptionBackupRepository" default="true">
+            <str name="delegateRepoName">yourBackupRepository</str>
+        </repository>
+    </backup>
+
 </config>
 ```
 
@@ -103,6 +109,9 @@ logs.
 
 `EncryptionMergePolicyFactory` is a wrapper above a delegate MergePolicyFactory (e.g. the standard
 `TieredMergePolicyFactory`) to ensure all index segments are re-written (re-encrypted).
+
+`EncryptionBackupRepository` ensures the encrypted files are copied encrypted to a delegate `BackupRepository`,
+but still verifies their checksum before the copy. It requires that you define a delegate `BackupRepository`
 
 ## Calling EncryptionRequestHandler
 
