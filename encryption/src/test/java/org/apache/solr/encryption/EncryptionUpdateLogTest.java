@@ -111,28 +111,32 @@ public class EncryptionUpdateLogTest extends SolrCloudTestCase {
     assertTrue(encryptionStatus.isComplete());
 
     resetCounters();
-    testUtil.indexDocsAndCommit("doc0");
+    solrClient.add(collectionName, sdoc("id", "1", "text", "test"));
     assertEquals(NUM_REPLICAS, encryptedLogWriteCount.get());
     assertEquals(0, encryptedLogReadCount.get());
     assertEquals(0, reencryptionCallCount.get());
 
     resetCounters();
-    testUtil.reloadCores();
+    // Add a doc with multivalued field to trigger AtomicUpdateDocumentMerger.isAtomicUpdate()
+    // in DistributedUpdateProcessor.getUpdateDocument(),
+    // which then calls RealTimeGetComponent.getInputDocument(),
+    // which looks into the update log.
+    solrClient.add(collectionName, sdoc("id", "1", "multi", map("add", "test")));
     assertEquals(0, encryptedLogWriteCount.get());
-    assertEquals(NUM_REPLICAS, encryptedLogReadCount.get());
+    assertEquals(1, encryptedLogReadCount.get());
     assertEquals(0, reencryptionCallCount.get());
+
+    solrClient.commit(collectionName);
   }
 
   private void checkEncryptionFromOneKeyToAnotherKey(String fromKeyId, String toKeyId) throws Exception {
     checkEncryptionFromNoKeysToOneKey(fromKeyId);
 
-    for (int i = 1 ; i <= 3; i++) {
-      resetCounters();
-      testUtil.indexDocsAndCommit("doc" + i);
-      assertEquals(NUM_REPLICAS, encryptedLogWriteCount.get());
-      assertEquals(0, encryptedLogReadCount.get());
-      assertEquals(0, reencryptionCallCount.get());
-    }
+    resetCounters();
+    solrClient.add(collectionName, sdoc("id", "1", "text", "test"));
+    assertEquals(NUM_REPLICAS, encryptedLogWriteCount.get());
+    assertEquals(0, encryptedLogReadCount.get());
+    assertEquals(0, reencryptionCallCount.get());
 
     resetCounters();
     EncryptionStatus encryptionStatus = testUtil.encrypt(toKeyId);
@@ -140,12 +144,21 @@ public class EncryptionUpdateLogTest extends SolrCloudTestCase {
     testUtil.waitUntilEncryptionIsComplete(toKeyId);
     assertEquals(0, encryptedLogWriteCount.get());
     assertEquals(0, encryptedLogReadCount.get());
-    assertEquals(4 * NUM_REPLICAS, reencryptionCallCount.get());
+    // There are two transaction logs, the old one before the commit in checkEncryptionFromNoKeysToOneKey
+    // and the current one. So we expect each transaction log to be encrypted on all 2 replicas.
+    assertEquals(2 * NUM_REPLICAS, reencryptionCallCount.get());
 
     resetCounters();
-    testUtil.reloadCores();
+    solrClient.add(collectionName, sdoc("id", "2", "text", "test"));
+    assertEquals(toKeyId.equals(NO_KEY_ID) ? 0 : NUM_REPLICAS, encryptedLogWriteCount.get());
+    assertEquals(0, encryptedLogReadCount.get());
+    assertEquals(0, reencryptionCallCount.get());
+
+    resetCounters();
+    // Add a doc with multivalued field to trigger update log lookup.
+    solrClient.add(collectionName, sdoc("id", "2", "multi", map("add", "test")));
     assertEquals(0, encryptedLogWriteCount.get());
-    assertEquals(4 * NUM_REPLICAS, encryptedLogReadCount.get());
+    assertEquals(toKeyId.equals(NO_KEY_ID) ? 0 : 1, encryptedLogReadCount.get());
     assertEquals(0, reencryptionCallCount.get());
   }
 

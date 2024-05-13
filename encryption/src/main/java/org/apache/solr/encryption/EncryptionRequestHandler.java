@@ -336,7 +336,10 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
           log.debug("Encrypting update log");
           boolean logEncryptionComplete = updateLog.encryptLogs();
           log.info("{} encrypted the update log in {}",
-                   logEncryptionComplete ? "Successfully" : "Partially", elapsedTime(startTimeMs));
+                  logEncryptionComplete ? "Successfully" : "Partially", elapsedTime(startTimeMs));
+          // If the logs encryption is not complete, it means some logs are currently in use.
+          // The encryption will be automatically be retried after the next commit which should
+          // release the old transaction log and make it ready for encryption.
         }
 
         log.debug("Triggering index encryption");
@@ -379,7 +382,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
   private boolean areAllLogsEncryptedWithKeyId(String keyId, SolrCore core, SegmentInfos segmentInfos)
     throws IOException {
     EncryptionUpdateLog updateLog = getEncryptionUpdateLog(core);
-    return updateLog == null || updateLog.areAllLogsEncryptedWithKeyId(keyId, segmentInfos);
+    return updateLog == null || updateLog.areAllLogsEncryptedWithKeyId(keyId, segmentInfos.getUserData());
   }
 
   private EncryptionUpdateLog getEncryptionUpdateLog(SolrCore core) {

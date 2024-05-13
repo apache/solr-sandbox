@@ -80,6 +80,19 @@ public class EncryptionTransactionLog extends TransactionLog {
           channelInputStreamOpener);
   }
 
+  /**
+   * Makes this transaction log readonly.
+   * This method must only be called if {@link #refCount()} is 1.
+   */
+  public void readOnly() throws IOException {
+    if (refCount() > 1) {
+      throw new IllegalStateException("Cannot make a transaction log readonly while it is still in use");
+    }
+    // From that point, we don't expect any writes to reach the underlying OutputStream.
+    // Flush is ok if it actually does not write anything.
+    os.close();
+  }
+
   public Path path() {
     return tlog;
   }
@@ -156,7 +169,7 @@ public class EncryptionTransactionLog extends TransactionLog {
   }
 
   /** Supplies and releases {@link EncryptionDirectory}. */
-  protected interface EncryptionDirectorySupplier {
+  public interface EncryptionDirectorySupplier {
 
     EncryptionDirectory get();
 
