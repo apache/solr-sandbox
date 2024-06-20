@@ -27,6 +27,8 @@ public abstract class CrossDcConf {
     public static final String COLLAPSE_UPDATES = "collapseUpdates";
     public static final String MAX_COLLAPSE_RECORDS = "maxCollapseRecords";
 
+    public static final String SOLR_HTTP2_ENABLED = "solrHttp2Enabled";
+
     /**
      * Option to expand Delete-By-Query requests on the producer side.
      */

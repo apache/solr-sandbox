@@ -22,22 +22,17 @@ import com.codahale.metrics.servlets.ThreadDumpServlet;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.cloud.SolrZkClient;
 import org.apache.solr.crossdc.common.ConfUtil;
-import org.apache.solr.crossdc.common.ConfigProperty;
-import org.apache.solr.crossdc.common.CrossDcConf;
 import org.apache.solr.crossdc.common.KafkaCrossDcConf;
 import org.apache.solr.crossdc.common.SensitivePropRedactionUtils;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
 import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -76,6 +71,8 @@ public class Consumer {
         try (SolrZkClient client = new SolrZkClient.Builder().withUrl(zkConnectString).withTimeout(15000, TimeUnit.MILLISECONDS).build()) {
             // update properties, potentially also from ZK
             ConfUtil.fillProperties(client, properties);
+        } catch (Exception e) {
+            log.info("Failed to fetch properties from ZK.", e);
         }
 
         ConfUtil.verifyProperties(properties);
@@ -104,8 +101,8 @@ public class Consumer {
 
         // Start consumer thread
 
-        log.info("Starting CrossDC Consumer {}", conf);
-
+        log.debug("Starting CrossDC Consumer {}", conf);
+        log.info("Starting CrossDC Consumer.");
         ExecutorService consumerThreadExecutor = Executors.newSingleThreadExecutor();
         consumerThreadExecutor.submit(crossDcConsumer);
 
