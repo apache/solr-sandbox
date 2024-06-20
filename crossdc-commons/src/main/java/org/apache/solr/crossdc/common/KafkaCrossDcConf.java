@@ -164,6 +164,7 @@ public class KafkaCrossDcConf extends CrossDcConf {
 
             // Consumer only zkConnectString
             new ConfigProperty(ZK_CONNECT_STRING, null),
+            new ConfigProperty(SOLR_HTTP2_ENABLED, "false"),
             new ConfigProperty(FETCH_MIN_BYTES, DEFAULT_FETCH_MIN_BYTES),
             new ConfigProperty(FETCH_MAX_BYTES, DEFAULT_FETCH_MAX_BYTES),
             new ConfigProperty(FETCH_MAX_WAIT_MS, DEFAULT_FETCH_MAX_WAIT_MS),
