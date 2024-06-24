@@ -65,7 +65,7 @@ public class EncryptionBackupRepositoryTest extends AbstractBackupRepositoryTest
     }
 
     @Override
-    protected URI getBaseUri() throws URISyntaxException {
+    protected URI getBaseUri() {
         return baseUri;
     }
 
@@ -112,6 +112,7 @@ public class EncryptionBackupRepositoryTest extends AbstractBackupRepositoryTest
                 // When we copy the encrypted file with the LocalFileSystemRepository,
                 // then it fails because the encrypted checksum is invalid.
                 String destinationFolder = "destination-folder";
+                deleteRepoDirIfExists(encryptionRepoName, destinationFolder, repoFactory, resourceLoader);
                 expectThrows(
                         CorruptIndexException.class,
                         () -> copyFileToRepo(fsSourceDir, fileName, localRepoName, destinationFolder, repoFactory, resourceLoader));
@@ -199,6 +200,7 @@ public class EncryptionBackupRepositoryTest extends AbstractBackupRepositoryTest
                 // then it succeeds because the checksum is not verified,
                 // and the file is copied in encrypted form.
                 String destinationFolder = "destination-folder";
+                deleteRepoDirIfExists(encryptionRepoName, destinationFolder, repoFactory, resourceLoader);
                 copyFileToRepo(encSourceDir, fileName, encryptionRepoName, destinationFolder, repoFactory, resourceLoader);
                 // Check the copy starts with the encryption magic, not the regular codec magic, this means it is encrypted.
                 assertEquals(ENCRYPTION_MAGIC, readCodecMagic(fileName, encryptionRepoName, destinationFolder, repoFactory, resourceLoader));
@@ -231,6 +233,20 @@ public class EncryptionBackupRepositoryTest extends AbstractBackupRepositoryTest
         attrs.put(FieldType.CLASS_NAME, repoClass.getName());
         attrs.put("default", Boolean.toString(isDefault));
         return new PluginInfo("repository", attrs, initArgs, null);
+    }
+
+    private void deleteRepoDirIfExists(
+            String repoName,
+            String destinationFolder,
+            BackupRepositoryFactory repoFactory,
+            SolrResourceLoader resourceLoader)
+            throws IOException {
+        try (BackupRepository repo = repoFactory.newInstance(resourceLoader, repoName)) {
+            URI destinationDir = repo.resolve(getBaseUri(), destinationFolder);
+            if (repo.exists(destinationDir)) {
+                repo.deleteDirectory(destinationDir);
+            }
+        }
     }
 
     private void copyFileToRepo(

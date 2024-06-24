@@ -57,7 +57,16 @@ public class EncryptionDirectoryFactory extends MMapDirectoryFactory {
   //  Right now, EncryptionDirectoryFactory extends MMapDirectoryFactory. And we hope we will
   //  refactor later.
 
+  /**
+   * Required Solr config parameter to define the {@link KeySupplier.Factory} class used
+   * to create the {@link KeySupplier}.
+   */
   public static final String PARAM_KEY_SUPPLIER_FACTORY = "keySupplierFactory";
+  /**
+   * Optional Solr config parameter to set the {@link AesCtrEncrypterFactory} class used
+   * to create the {@link org.apache.solr.encryption.crypto.AesCtrEncrypter}.
+   * The default is {@link CipherAesCtrEncrypter}.
+   */
   public static final String PARAM_ENCRYPTER_FACTORY = "encrypterFactory";
   /**
    * Visible for tests only - Property defining the class name of the inner encryption directory factory.

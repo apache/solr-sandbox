@@ -58,7 +58,7 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     System.setProperty(PROPERTY_INNER_ENCRYPTION_DIRECTORY_FACTORY, MockFactory.class.getName());
     EncryptionTestUtil.setInstallDirProperty();
     cluster = new MiniSolrCloudCluster.Builder(2, createTempDir())
-      .addConfig("config", EncryptionTestUtil.getConfigPath("collection1"))
+      .addConfig("config", EncryptionTestUtil.getRandomConfigPath())
       .configure();
   }
 
@@ -74,7 +74,11 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     solrClient = cluster.getSolrClient();
     CollectionAdminRequest.createCollection(collectionName, 2, 2).process(solrClient);
     cluster.waitForActiveCollection(collectionName, 2, 4);
-    testUtil = new EncryptionTestUtil(solrClient, collectionName);
+    testUtil = createEncryptionTestUtil(solrClient, collectionName);
+  }
+
+  protected EncryptionTestUtil createEncryptionTestUtil(CloudSolrClient solrClient, String collectionName) {
+    return new EncryptionTestUtil(solrClient, collectionName);
   }
 
   @Override

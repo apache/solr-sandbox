@@ -91,7 +91,7 @@ public class EncryptionHeavyLoadTest extends SolrCloudTestCase {
   public static void beforeClass() throws Exception {
     EncryptionTestUtil.setInstallDirProperty();
     cluster = new MiniSolrCloudCluster.Builder(2, createTempDir())
-      .addConfig("config", EncryptionTestUtil.getConfigPath("collection1"))
+      .addConfig("config", EncryptionTestUtil.getRandomConfigPath())
       .configure();
   }
 

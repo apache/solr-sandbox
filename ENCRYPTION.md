@@ -91,13 +91,15 @@ the specified folder.
 
 `keySupplierFactory` is a required parameter to specify your implementation of
 `org.apache.solr.encryption.KeySupplier.Factory`. This class is used to define your `KeySupplier`.
+You may use here the `org.apache.solr.encryption.kms.KmsKeySupplier` with your implementation of the
+`org.apache.solr.encryption.kms.KmsClient`. See more details in the `KmsKeySupplier` section below.
 
 `encrypterFactory` is an optional parameter to specify the `org.apache.solr.encryption.crypto.AesCtrEncrypterFactory`
 to use. By default `CipherAesCtrEncrypter$Factory` is used. You can change to `LightAesCtrEncrypter$Factory` for a
 more lightweight and efficient implementation (+10% perf), but it calls an internal com.sun.crypto.provider.AESCrypt()
 constructor which either logs a JDK warning (Illegal reflective access) with JDK 16 and below, or with JDK 17 and above
 requires to open the access to the com.sun.crypto.provider package with the jvm arg
-`--add-opens=java.base/com.sun.crypto.provider=ALL-UNNAMED`.
+`--add-opens=java.base/com.sun.crypto.provider=ALL-UNNAMED`. Both support encrypting files up to 17 TB.
 
 `EncryptionUpdateHandler` replaces the standard `DirectUpdateHandler2` (which it extends) to store persistently the
 encryption key id in the commit metadata. It supports all the configuration parameters of `DirectUpdateHandler2`.
@@ -105,13 +107,28 @@ encryption key id in the commit metadata. It supports all the configuration para
 `EncryptionUpdateLog` replaces the standard `UpdateLog` (which it extends) to support the encryption of the update
 logs.
 
-`EncryptionRequestHandler` receives (re)encryption requests. See its dedicated section below for its usage.
+`EncryptionRequestHandler` receives (re)encryption requests. See its dedicated `EncryptionRequestHandler` section below
+for its usage.
 
 `EncryptionMergePolicyFactory` is a wrapper above a delegate MergePolicyFactory (e.g. the standard
 `TieredMergePolicyFactory`) to ensure all index segments are re-written (re-encrypted).
 
 `EncryptionBackupRepository` ensures the encrypted files are copied encrypted to a delegate `BackupRepository`,
 but still verifies their checksum before the copy. It requires that you define a delegate `BackupRepository`
+
+## Getting keys from a Key Management System with KmsKeySupplier
+
+If you have a Key Management System to manage the encryption key lifecycle, then you can use the
+`org.apache.solr.encryption.kms.KmsKeySupplier`. In this case, it requires that the Solr client sends some key blob
+to the `EncryptionRequestHandler` in addition to the key id. The key blob contains an encrypted form of the key secret
+and enough data for your KMS to decrypt it and provide the clear-text key secret. The key blob is stored in the
+metadata of each index file. And when needed, the `KmsKeySupplier` calls your KMS with your `KmsClient` to decrypt the
+key blob and store the key secret in an in-memory key cache with automatic wiping of the cache entries after some short
+duration.
+
+`KmsKeySupplier` requires to define `KmsEncryptionRequestHandler` as the `EncryptionRequestHandler`. It requires
+the parameters `tenantId` and `encryptionKeyBlob` to be sent in the `SolrQueryRequest` when calling
+`KmsEncryptionRequestHandler`.
 
 ## Calling EncryptionRequestHandler
 

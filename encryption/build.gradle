@@ -37,8 +37,13 @@ dependencies {
     implementation 'org.apache.lucene:lucene-core:9.10.0'
     implementation 'com.google.code.findbugs:jsr305:3.0.2'
 
-    // commons-io and commons-codec are only required by the tool class
-    // CharStreamEncrypter, which is not used for the index encryption.
+    // Optional, used by the KmsKeySupplier.
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
+    implementation 'io.opentracing:opentracing-util:0.33.0'
+
+    // Optional, commons-io and commons-codec are only required by the
+    // tool class CharStreamEncrypter, which is not used for the index
+    // encryption.
     implementation 'commons-io:commons-io:2.11.0'
     implementation 'commons-codec:commons-codec:1.16.0'
 

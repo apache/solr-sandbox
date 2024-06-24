@@ -44,7 +44,7 @@ public class AesCtrUtil {
   public static boolean checkAesKey(byte[] key) {
     if (key.length != 16 && key.length != 24 && key.length != 32) {
       // AES requires either 128, 192 or 256 bits keys.
-      throw new IllegalArgumentException("Invalid AES key length; it must be either 128, 192 or 256 bits long");
+      throw new IllegalArgumentException("Invalid AES key length " + key.length + "; it must be either 128, 192 or 256 bits long");
     }
     return true;
   }

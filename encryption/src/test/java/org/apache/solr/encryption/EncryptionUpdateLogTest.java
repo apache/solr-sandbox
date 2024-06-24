@@ -63,7 +63,7 @@ public class EncryptionUpdateLogTest extends SolrCloudTestCase {
     EncryptionTestUtil.setInstallDirProperty();
     System.setProperty("solr.updateLog", TestingEncryptionUpdateLog.class.getName());
     cluster = new MiniSolrCloudCluster.Builder(NUM_SHARDS, createTempDir())
-      .addConfig("config", EncryptionTestUtil.getConfigPath("collection1"))
+      .addConfig("config", EncryptionTestUtil.getRandomConfigPath())
       .configure();
   }
 

@@ -1,0 +1,82 @@
+<?xml version="1.0" ?>
+
+<!--
+ Licensed to the Apache Software Foundation (ASF) under one or more
+ contributor license agreements.  See the NOTICE file distributed with
+ this work for additional information regarding copyright ownership.
+ The ASF licenses this file to You under the Apache License, Version 2.0
+ (the "License"); you may not use this file except in compliance with
+ the License.  You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<!-- solrconfig.xml that enables the index and update log encryption, and uses the KmsKeySupplier. -->
+
+<config>
+
+  <dataDir>${solr.data.dir:}</dataDir>
+
+  <schemaFactory class="ClassicIndexSchemaFactory"/>
+
+  <luceneMatchVersion>${tests.luceneMatchVersion:LATEST}</luceneMatchVersion>
+
+  <requestHandler name="/select" class="solr.SearchHandler">
+    <lst name="defaults">
+      <str name="echoParams">explicit</str>
+      <str name="indent">true</str>
+      <str name="df">text</str>
+    </lst>
+  </requestHandler>
+
+  <!-- EncryptionDirectoryFactory opens index files with EncryptionDirectory. -->
+  <directoryFactory name="DirectoryFactory"
+                    class="org.apache.solr.encryption.EncryptionDirectoryFactory">
+    <!-- KeySupplier provides encryption keys. -->
+    <str name="keySupplierFactory">org.apache.solr.encryption.kms.KmsKeySupplier$Factory</str>
+    <str name="kmsClientFactory">org.apache.solr.encryption.kms.TestingKmsClient$Factory</str>
+    <!-- AesCtrEncrypter implements the encryption transformation AES/CTR/NoPadding. -->
+    <str name="encrypterFactory">org.apache.solr.encryption.crypto.LightAesCtrEncrypter$Factory</str>
+  </directoryFactory>
+
+  <!-- EncryptionUpdateHandler transfers the encryption key ids from a commit to the next. -->
+  <updateHandler class="${solr.updateHandler:org.apache.solr.encryption.EncryptionUpdateHandler}">
+    <!-- EncryptionUpdateLog encrypts transaction logs if the index is encrypted. -->
+    <updateLog class="${solr.updateLog:org.apache.solr.encryption.EncryptionUpdateLog}"/>
+  </updateHandler>
+
+  <!-- Encryption handler can be called to trigger the encryption of the index and update log. -->
+  <requestHandler name="/admin/encrypt" class="org.apache.solr.encryption.kms.KmsEncryptionRequestHandler"/>
+
+  <indexConfig>
+    <mergeScheduler class="${solr.mscheduler:org.apache.lucene.index.ConcurrentMergeScheduler}"/>
+
+    <!-- Chain of MergePolicy factories:
+         - EncryptionMergePolicy detects when a force-merge is triggered with a special max
+           number of segments equal to Integer.MAX_VALUE, in this case it merges (rewrites)
+           individually each segment which is not encrypted with the latest active key id.
+         - TieredMergePolicy is the standard merge policy.
+    -->
+    <mergePolicyFactory class="org.apache.solr.encryption.EncryptionMergePolicyFactory">
+      <str name="wrapped.prefix">delegate</str>
+      <str name="delegate.class">org.apache.solr.index.TieredMergePolicyFactory</str>
+    </mergePolicyFactory>
+  </indexConfig>
+
+  <backup>
+    <!-- Encryption backup repository delegates to another backup repository. -->
+    <repository name="encryptionBackupRepository" class="org.apache.solr.encryption.EncryptionBackupRepository" default="true">
+      <str name="delegateRepoName">localBackupRepository</str>
+    </repository>
+    <repository name="localBackupRepository" class="org.apache.solr.core.backup.repository.LocalFileSystemRepository">
+      <str name="location">/solr/backup_data</str>
+    </repository>
+  </backup>
+
+</config>

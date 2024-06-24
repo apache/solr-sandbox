@@ -16,9 +16,9 @@
  */
 package org.apache.solr.encryption;
 
-import org.apache.lucene.index.IndexFileNames;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.core.CoreContainer;
+import org.apache.solr.encryption.kms.KmsKeySupplier;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -26,7 +26,6 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -46,74 +45,17 @@ public class TestingKeySupplier implements KeySupplier {
   public static final byte[] KEY_SECRET_1 = "12345678901234567890123456789012".getBytes(StandardCharsets.UTF_8);
   public static final byte[] KEY_SECRET_2 = "34567890123456789012345678901234".getBytes(StandardCharsets.UTF_8);
   public static final byte[] KEY_SECRET_3 = "78901234567890123456789012345678".getBytes(StandardCharsets.UTF_8);
-  private static final Map<String, byte[]> KEY_SECRETS = Map.of(KEY_ID_1, KEY_SECRET_1,
+  public static final Map<String, byte[]> KEY_SECRETS = Map.of(KEY_ID_1, KEY_SECRET_1,
                                                                 KEY_ID_2, KEY_SECRET_2,
                                                                 KEY_ID_3, KEY_SECRET_3);
 
   private static final String KEY_BLOB_PARAM = "keyBlob";
 
-  /**
-   * File name extensions/suffixes that do NOT need to be encrypted because it lacks user/external data.
-   * Other files should be encrypted.
-   * There is some human judgement here as some files may contain vague clues as to the shape of the data.
-   */
-  private static final Set<String> CLEARTEXT_EXTENSIONS = Set.of(
-    "doc",    // Document number, frequencies, and skip data
-    "pos",    // Positions
-    "pay",    // Payloads and offsets
-    "dvm",    // Doc values metadata
-    "fdm",    // Stored fields metadata
-    "fdx",    // Stored fields index
-    "nvd",    // Norms data
-    "nvm",    // Norms metadata
-    "fnm",    // Field Infos
-    "si",     // Segment Infos
-    "cfe"     // Compound file entries
-    );
-  // Extensions known to contain sensitive user data, and thus that need to be encrypted:
-  // tip    - BlockTree terms index (FST)
-  // tim    - BlockTree terms
-  // tmd    - BlockTree metadata (contains first and last term)
-  // fdt    - Stored fields data
-  // dvd    - Doc values data
-  // cfs    - Compound file (contains all the above files data)
-
-  // Cleartext temporary files:
-  private static final String TMP_EXTENSION = "tmp";
-  private static final String TMP_DOC_IDS = "-doc_ids"; // FieldsIndexWriter
-  private static final String TMP_FILE_POINTERS = "file_pointers"; // FieldsIndexWriter
-
   private TestingKeySupplier() {}
 
   @Override
   public boolean shouldEncrypt(String fileName) {
-    String extension = IndexFileNames.getExtension(fileName);
-    if (extension == null) {
-      // segments and pending_segments are never passed as parameter of this method.
-      assert !fileName.startsWith(IndexFileNames.SEGMENTS) && !fileName.startsWith(IndexFileNames.PENDING_SEGMENTS);
-    } else if (CLEARTEXT_EXTENSIONS.contains(extension)) {
-      // The file extension tells us it does not need to be encrypted.
-      return false;
-    } else if (extension.equals(TMP_EXTENSION)) {
-      // We know some tmp files do not need to be encrypted.
-      int tmpCounterIndex = fileName.lastIndexOf('_');
-      assert tmpCounterIndex != -1;
-      if (endsWith(fileName, TMP_DOC_IDS, tmpCounterIndex)
-      || endsWith(fileName, TMP_FILE_POINTERS, tmpCounterIndex)) {
-        return false;
-      }
-    }
-    // By default, all other files should be encrypted.
-    return true;
-  }
-
-  private static boolean endsWith(String s, String suffix, int endIndex) {
-    // Inspired from JDK String where endsWith calls startsWith.
-    // Here we look for [suffix] from index [endIndex - suffix.length()].
-    // This is equivalent to
-    // s.substring(0, endIndex).endsWith(suffix)
-    // without creating a substring.
-    return s.startsWith(suffix, endIndex - suffix.length());
+    return KmsKeySupplier.shouldEncryptFile(fileName);
   }
 
   @Override
