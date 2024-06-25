@@ -121,7 +121,6 @@ public class TestingKeySupplier implements KeySupplier {
 
     @Override
     public void init(NamedList<?> args, CoreContainer coreContainer) {
-      // Do nothing.
     }
 
     @Override

@@ -33,6 +33,7 @@ import org.apache.solr.common.params.CoreAdminParams;
 import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.common.util.RetryUtil;
+import org.apache.solr.encryption.kms.TestingKmsClient;
 import org.junit.Assert;
 
 import java.io.IOException;
@@ -58,6 +59,7 @@ public class EncryptionTestUtil {
 
   public static final String TENANT_ID = "tenantIdSolr";
   public static final String KEY_BLOB = "{" +
+          "\"keyId\":\"%s\"," +
           "\"keyVersion\":\"0-a-4-a-2\"," +
           "\"cipherBlob\":\"a+K/8+p+l0\"," +
           "\"iv\":\"A/k\"," +
@@ -123,7 +125,7 @@ public class EncryptionTestUtil {
     assertEquals(expectedNumResults, response.getResults().size());
   }
 
-  public EncryptionStatus encrypt(String keyId) {
+  public EncryptionStatus encrypt(String keyId) throws Exception {
     ModifiableSolrParams params = new ModifiableSolrParams();
     params.set(PARAM_KEY_ID, keyId);
     params.set(PARAM_TENANT_ID, TENANT_ID);
@@ -138,20 +140,26 @@ public class EncryptionTestUtil {
     return encryptionStatus;
   }
 
-  protected String generateKeyBlob(String keyId) {
-    return "keyId=\"" + keyId + "\"" + KEY_BLOB;
+  private String generateKeyBlob(String keyId) throws Exception {
+    return TestingKmsClient.singleton == null ?
+            generateMockKeyBlob(keyId)
+            : TestingKmsClient.singleton.generateKeyBlob(keyId, TENANT_ID);
   }
 
-  public void encryptAndExpectCompletion(String keyId) {
+  public static String generateMockKeyBlob(String keyId) {
+    return String.format(KEY_BLOB, keyId);
+  }
+
+  public void encryptAndExpectCompletion(String keyId) throws Exception {
     encryptAndCheck(keyId, true);
   }
 
-  public void encryptAndWaitForCompletion(String keyId) throws InterruptedException {
+  public void encryptAndWaitForCompletion(String keyId) throws Exception {
     encryptAndCheck(keyId, false);
     waitUntilEncryptionIsComplete(keyId);
   }
 
-  private void encryptAndCheck(String keyId, boolean expectComplete) {
+  private void encryptAndCheck(String keyId, boolean expectComplete) throws Exception {
     EncryptionStatus encryptionStatus = encrypt(keyId);
     assertTrue(encryptionStatus.isSuccess());
     assertEquals(expectComplete, encryptionStatus.isComplete());

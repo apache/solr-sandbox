@@ -124,7 +124,7 @@ public class KmsKeySupplierTest extends SolrTestCaseJ4 {
             // Expected.
         }
 
-        // Verify that any SKB exception is propagated.
+        // Verify that any KMS exception is propagated.
         try {
             kmsClient.simulatedException = new Exception("Test");
             keySupplier.getKeySecret("k1", cookieSupplier);
@@ -273,6 +273,7 @@ public class KmsKeySupplierTest extends SolrTestCaseJ4 {
 
         @Override
         public void init(NamedList<?> args, CoreContainer coreContainer) {
+            coreContainer.getObjectCache().remove(KEY_SUPPLIER);
             super.init(args, coreContainer);
             this.coreContainer = coreContainer;
         }

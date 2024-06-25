@@ -118,7 +118,7 @@ but still verifies their checksum before the copy. It requires that you define a
 
 ## Getting keys from a Key Management System with KmsKeySupplier
 
-If you have a Key Management System to manage the encryption key lifecycle, then you can use the
+If you have a Key Management System to manage the encryption keys lifecycle, then you can use the
 `org.apache.solr.encryption.kms.KmsKeySupplier`. In this case, it requires that the Solr client sends some key blob
 to the `EncryptionRequestHandler` in addition to the key id. The key blob contains an encrypted form of the key secret
 and enough data for your KMS to decrypt it and provide the clear-text key secret. The key blob is stored in the
@@ -129,6 +129,22 @@ duration.
 `KmsKeySupplier` requires to define `KmsEncryptionRequestHandler` as the `EncryptionRequestHandler`. It requires
 the parameters `tenantId` and `encryptionKeyBlob` to be sent in the `SolrQueryRequest` when calling
 `KmsEncryptionRequestHandler`.
+
+*solrconfig.xml*
+
+```xml
+<config>
+
+    <directoryFactory name="DirectoryFactory"
+                      class="org.apache.solr.encryption.EncryptionDirectoryFactory">
+        <str name="keySupplierFactory">org.apache.solr.encryption.kms.KmsKeySupplier$Factory</str>
+        <str name="kmsClientFactory">com.yourApp.YourKmsClient$Factory</str>
+    </directoryFactory>
+
+    <requestHandler name="/admin/encrypt" class="org.apache.solr.encryption.kms.KmsEncryptionRequestHandler"/>
+
+</config>
+```
 
 ## Calling EncryptionRequestHandler
 
@@ -176,10 +192,10 @@ chosen because it is simpler.
 
 The performance benchmark was run in LUCENE-9379. Here is the summary:
 
-- An OS-level encryption is better and faster.
-- If really it’s not possible, expect an average of -20% perf impact on most queries, -60% on multi-term queries.
+- An OS-level encryption is faster.
+- Otherwise, expect an average of -20% perf impact on most queries, -60% on multi-term queries.
 - You can use the `LightAesCtrEncrypter$Factory` to get +10% perf. This is a simple config change. See the
-solrconfig.xml configuration section above.
+`solrconfig.xml` configuration section above.
 - You can make the Lucene Codec store its FST on heap and expect +15% perf, at the price of more Java heap usage. This
 requires a code change. See `org.apache.lucene.util.fst.FSTStore` implementations and usage in
 `org.apache.lucene.codecs.lucene90.blocktree.FieldReader`.
@@ -188,5 +204,5 @@ requires a code change. See `org.apache.lucene.util.fst.FSTStore` implementation
 
 The `org.apache.solr.encryption.crypto` package contains utility classes to stream encryption/decryption with the
 `AES/CTR/NoPadding` transformation.
-`CharStreamEncrypter` can encrypt a character stream to a base 64 encoding compatible with JSON, with a small
-buffer.
+`CharStreamEncrypter` can encrypt a character stream to a base 64 encoding compatible with JSON, and requires only a
+small work buffer.

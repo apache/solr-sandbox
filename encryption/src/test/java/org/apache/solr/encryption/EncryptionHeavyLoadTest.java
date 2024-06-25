@@ -28,7 +28,6 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,7 +54,6 @@ import static org.apache.solr.encryption.TestingKeySupplier.KEY_ID_3;
  * files are decrypted correctly when refreshing the index searcher after each
  * commit.
  */
-@RunWith(com.carrotsearch.randomizedtesting.RandomizedRunner.class)
 public class EncryptionHeavyLoadTest extends SolrCloudTestCase {
 
   // Change the test duration manually to run longer, e.g. 20 minutes.
@@ -211,7 +209,7 @@ public class EncryptionHeavyLoadTest extends SolrCloudTestCase {
     return random.nextFloat() <= PROBABILITY_OF_WAITING_ENCRYPTION_COMPLETION;
   }
 
-  private EncryptionStatus sendEncryptionRequests(String keyId) {
+  private EncryptionStatus sendEncryptionRequests(String keyId) throws Exception {
     EncryptionStatus encryptionStatus = testUtil.encrypt(keyId);
     print("encrypt keyId=" + keyId + " => response success=" + encryptionStatus.isSuccess() + " complete=" + encryptionStatus.isComplete());
     return encryptionStatus;
