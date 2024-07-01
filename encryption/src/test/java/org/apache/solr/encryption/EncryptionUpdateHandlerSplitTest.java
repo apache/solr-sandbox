@@ -50,7 +50,7 @@ public class EncryptionUpdateHandlerSplitTest extends SolrCloudTestCase {
     System.setProperty("solr.updateHandler", TestEncryptionUpdateHandler.class.getName());
     EncryptionTestUtil.setInstallDirProperty();
     cluster = new MiniSolrCloudCluster.Builder(2, createTempDir())
-      .addConfig("config", EncryptionTestUtil.getConfigPath("collection1"))
+      .addConfig("config", EncryptionTestUtil.getRandomConfigPath())
       .configure();
   }
 

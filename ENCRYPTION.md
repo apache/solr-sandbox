@@ -91,13 +91,15 @@ the specified folder.
 
 `keySupplierFactory` is a required parameter to specify your implementation of
 `org.apache.solr.encryption.KeySupplier.Factory`. This class is used to define your `KeySupplier`.
+You may use here the `org.apache.solr.encryption.kms.KmsKeySupplier` with your implementation of the
+`org.apache.solr.encryption.kms.KmsClient`. See more details in the `KmsKeySupplier` section below.
 
 `encrypterFactory` is an optional parameter to specify the `org.apache.solr.encryption.crypto.AesCtrEncrypterFactory`
 to use. By default `CipherAesCtrEncrypter$Factory` is used. You can change to `LightAesCtrEncrypter$Factory` for a
 more lightweight and efficient implementation (+10% perf), but it calls an internal com.sun.crypto.provider.AESCrypt()
 constructor which either logs a JDK warning (Illegal reflective access) with JDK 16 and below, or with JDK 17 and above
 requires to open the access to the com.sun.crypto.provider package with the jvm arg
-`--add-opens=java.base/com.sun.crypto.provider=ALL-UNNAMED`.
+`--add-opens=java.base/com.sun.crypto.provider=ALL-UNNAMED`. Both support encrypting files up to 17 TB.
 
 `EncryptionUpdateHandler` replaces the standard `DirectUpdateHandler2` (which it extends) to store persistently the
 encryption key id in the commit metadata. It supports all the configuration parameters of `DirectUpdateHandler2`.
@@ -105,13 +107,44 @@ encryption key id in the commit metadata. It supports all the configuration para
 `EncryptionUpdateLog` replaces the standard `UpdateLog` (which it extends) to support the encryption of the update
 logs.
 
-`EncryptionRequestHandler` receives (re)encryption requests. See its dedicated section below for its usage.
+`EncryptionRequestHandler` receives (re)encryption requests. See its dedicated `EncryptionRequestHandler` section below
+for its usage.
 
 `EncryptionMergePolicyFactory` is a wrapper above a delegate MergePolicyFactory (e.g. the standard
 `TieredMergePolicyFactory`) to ensure all index segments are re-written (re-encrypted).
 
 `EncryptionBackupRepository` ensures the encrypted files are copied encrypted to a delegate `BackupRepository`,
 but still verifies their checksum before the copy. It requires that you define a delegate `BackupRepository`
+
+## Getting keys from a Key Management System with KmsKeySupplier
+
+If you have a Key Management System to manage the encryption keys lifecycle, then you can use the
+`org.apache.solr.encryption.kms.KmsKeySupplier`. In this case, it requires that the Solr client sends some key blob
+to the `EncryptionRequestHandler` in addition to the key id. The key blob contains an encrypted form of the key secret
+and enough data for your KMS to decrypt it and provide the clear-text key secret. The key blob is stored in the
+metadata of each index file. And when needed, the `KmsKeySupplier` calls your KMS with your `KmsClient` to decrypt the
+key blob and store the key secret in an in-memory key cache with automatic wiping of the cache entries after some short
+duration.
+
+`KmsKeySupplier` requires to define `KmsEncryptionRequestHandler` as the `EncryptionRequestHandler`. It requires
+the parameters `tenantId` and `encryptionKeyBlob` to be sent in the `SolrQueryRequest` when calling
+`KmsEncryptionRequestHandler`.
+
+*solrconfig.xml*
+
+```xml
+<config>
+
+    <directoryFactory name="DirectoryFactory"
+                      class="org.apache.solr.encryption.EncryptionDirectoryFactory">
+        <str name="keySupplierFactory">org.apache.solr.encryption.kms.KmsKeySupplier$Factory</str>
+        <str name="kmsClientFactory">com.yourApp.YourKmsClient$Factory</str>
+    </directoryFactory>
+
+    <requestHandler name="/admin/encrypt" class="org.apache.solr.encryption.kms.KmsEncryptionRequestHandler"/>
+
+</config>
+```
 
 ## Calling EncryptionRequestHandler
 
@@ -159,10 +192,10 @@ chosen because it is simpler.
 
 The performance benchmark was run in LUCENE-9379. Here is the summary:
 
-- An OS-level encryption is better and faster.
-- If really it’s not possible, expect an average of -20% perf impact on most queries, -60% on multi-term queries.
+- An OS-level encryption is faster.
+- Otherwise, expect an average of -20% perf impact on most queries, -60% on multi-term queries.
 - You can use the `LightAesCtrEncrypter$Factory` to get +10% perf. This is a simple config change. See the
-solrconfig.xml configuration section above.
+`solrconfig.xml` configuration section above.
 - You can make the Lucene Codec store its FST on heap and expect +15% perf, at the price of more Java heap usage. This
 requires a code change. See `org.apache.lucene.util.fst.FSTStore` implementations and usage in
 `org.apache.lucene.codecs.lucene90.blocktree.FieldReader`.
@@ -171,5 +204,5 @@ requires a code change. See `org.apache.lucene.util.fst.FSTStore` implementation
 
 The `org.apache.solr.encryption.crypto` package contains utility classes to stream encryption/decryption with the
 `AES/CTR/NoPadding` transformation.
-`CharStreamEncrypter` can encrypt a character stream to a base 64 encoding compatible with JSON, with a small
-buffer.
+`CharStreamEncrypter` can encrypt a character stream to a base 64 encoding compatible with JSON, and requires only a
+small work buffer.

@@ -33,6 +33,7 @@ import org.apache.solr.common.params.CoreAdminParams;
 import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.common.util.RetryUtil;
+import org.apache.solr.encryption.kms.TestingKmsClient;
 import org.junit.Assert;
 
 import java.io.IOException;
@@ -40,11 +41,14 @@ import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import static org.apache.lucene.tests.util.LuceneTestCase.random;
 import static org.apache.solr.encryption.EncryptionRequestHandler.ENCRYPTION_STATE;
 import static org.apache.solr.encryption.EncryptionRequestHandler.PARAM_KEY_ID;
 import static org.apache.solr.encryption.EncryptionRequestHandler.STATE_COMPLETE;
 import static org.apache.solr.encryption.EncryptionRequestHandler.STATUS;
 import static org.apache.solr.encryption.EncryptionRequestHandler.STATUS_SUCCESS;
+import static org.apache.solr.encryption.kms.KmsEncryptionRequestHandler.PARAM_ENCRYPTION_KEY_BLOB;
+import static org.apache.solr.encryption.kms.KmsEncryptionRequestHandler.PARAM_TENANT_ID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -52,6 +56,16 @@ import static org.junit.Assert.assertTrue;
  * Utility methods for encryption tests.
  */
 public class EncryptionTestUtil {
+
+  public static final String TENANT_ID = "tenantIdSolr";
+  public static final String KEY_BLOB = "{" +
+          "\"keyId\":\"%s\"," +
+          "\"keyVersion\":\"0-a-4-a-2\"," +
+          "\"cipherBlob\":\"a+K/8+p+l0\"," +
+          "\"iv\":\"A/k\"," +
+          "\"algorithm\":\"AES-GCM\"," +
+          "\"auth\":\"Q-Z\"," +
+          "}";
 
   private final CloudSolrClient cloudSolrClient;
   private final String collectionName;
@@ -84,6 +98,13 @@ public class EncryptionTestUtil {
   }
 
   /**
+   * Gets the path of random sub-dir of the encryption module test config.
+   */
+  public static Path getRandomConfigPath() {
+    return getConfigPath(random().nextBoolean() ? "collection1" : "kms");
+  }
+
+  /**
    * Adds one doc per provided text, and commits.
    */
   public void indexDocsAndCommit(String... texts) throws Exception {
@@ -104,9 +125,11 @@ public class EncryptionTestUtil {
     assertEquals(expectedNumResults, response.getResults().size());
   }
 
-  public EncryptionStatus encrypt(String keyId) {
+  public EncryptionStatus encrypt(String keyId) throws Exception {
     ModifiableSolrParams params = new ModifiableSolrParams();
     params.set(PARAM_KEY_ID, keyId);
+    params.set(PARAM_TENANT_ID, TENANT_ID);
+    params.set(PARAM_ENCRYPTION_KEY_BLOB, generateKeyBlob(keyId));
     GenericSolrRequest encryptRequest = new GenericSolrRequest(SolrRequest.METHOD.GET, "/admin/encrypt", params);
     EncryptionStatus encryptionStatus = new EncryptionStatus();
     forAllReplicas(replica -> {
@@ -117,16 +140,26 @@ public class EncryptionTestUtil {
     return encryptionStatus;
   }
 
-  public void encryptAndExpectCompletion(String keyId) {
+  private String generateKeyBlob(String keyId) throws Exception {
+    return TestingKmsClient.singleton == null ?
+            generateMockKeyBlob(keyId)
+            : TestingKmsClient.singleton.generateKeyBlob(keyId, TENANT_ID);
+  }
+
+  public static String generateMockKeyBlob(String keyId) {
+    return String.format(KEY_BLOB, keyId);
+  }
+
+  public void encryptAndExpectCompletion(String keyId) throws Exception {
     encryptAndCheck(keyId, true);
   }
 
-  public void encryptAndWaitForCompletion(String keyId) throws InterruptedException {
+  public void encryptAndWaitForCompletion(String keyId) throws Exception {
     encryptAndCheck(keyId, false);
     waitUntilEncryptionIsComplete(keyId);
   }
 
-  private void encryptAndCheck(String keyId, boolean expectComplete) {
+  private void encryptAndCheck(String keyId, boolean expectComplete) throws Exception {
     EncryptionStatus encryptionStatus = encrypt(keyId);
     assertTrue(encryptionStatus.isSuccess());
     assertEquals(expectComplete, encryptionStatus.isComplete());
