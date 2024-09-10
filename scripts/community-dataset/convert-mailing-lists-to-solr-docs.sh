@@ -2,29 +2,35 @@
 
 set -eu
 
-# Usage: ./convert-mailing-lists-to-solr-docs.sh <mbox-data-directory> <solr-doc-output-dir>
+# Usage: ./convert-mailing-lists-to-solr-docs.sh [<mbox-data-directory>] [<solr-doc-output-dir>]
+#   <mbox-data-directory> and <solr-doc-output-dir> are both optional, but
+#   <mbox-data-directory> must be specified if <solr-doc-output-dir> is.
 
-if [[ -z ${1:-} ]]; then
-  echo "'mbox-directory' argument is required but was not provided; exiting"
-  exit 1
+# Determine mbox dir (must already exist and contain mbox data)
+DEFAULT_MBOX_LOCATION="output/mbox-data"
+MBOX_DIRECTORY="${1:-}"
+if [[ -z "$MBOX_DIRECTORY" ]]; then
+  MBOX_DIRECTORY="$DEFAULT_MBOX_LOCATION"
 fi
-if [[ -z ${2:-} ]]; then
-  echo "'solr-doc-output-dir' argument is required but was not provided; exiting"
-  exit 1
+
+# Determine doc output dir (may not exist)
+DEFAULT_DOC_OUTPUT_DIR="output/solr-data"
+DOC_OUTPUT_DIR="${2:-}"
+if [[ -z ${DOC_OUTPUT_DIR} ]]; then
+  DOC_OUTPUT_DIR=$DEFAULT_DOC_OUTPUT_DIR
 fi
 
-MBOX_DIRECTORY=$1
-SOLR_DOC_OUTPUT_DIRECTORY=$2
-
-if [[ -d $SOLR_DOC_OUTPUT_DIRECTORY ]]; then
-  echo "Output directory [$SOLR_DOC_OUTPUT_DIRECTORY] already exists; clearing it out and continuing..."
-  rm -rf $SOLR_DOC_OUTPUT_DIRECTORY
+# Ensure doc output dir exists
+if [[ -d $DOC_OUTPUT_DIR ]]; then
+  echo "Output directory [$DOC_OUTPUT_DIR] already exists; clearing it out and continuing..."
+  rm -rf $DOC_OUTPUT_DIR
 fi
-mkdir -p $SOLR_DOC_OUTPUT_DIRECTORY
+mkdir -p $DOC_OUTPUT_DIR
 
+# Iterate over mbox files and convert
 for filepath in $(find $MBOX_DIRECTORY -name "*.mbox")
 do
-  python3 convert-mbox-to-solr-docs.py $filepath $SOLR_DOC_OUTPUT_DIRECTORY
+  python3 convert-mbox-to-solr-docs.py $filepath $DOC_OUTPUT_DIR
 done
 
-echo "Solr documents now available in $SOLR_DOC_OUTPUT_DIRECTORY; use Solr's 'bin/post' to upload as desired!"
+echo "Solr documents now available in $DOC_OUTPUT_DIR; use 'bin/post' (or 'bin/solr post' depending on your Solr version) to upload!"

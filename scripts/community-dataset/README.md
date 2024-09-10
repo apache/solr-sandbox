@@ -8,12 +8,11 @@ All created documents rely on dynamic field suffixes, and should work with Solr'
 Run the following to download and prepare mailing list data for Solr ingestion:
 
 ```
-export MBOX_OUTPUT_DIR="/fill/in/with/dir"
-export SOLR_DOC_OUTPUT_DIR="/fill/in/with/other/dir"
-./download-mailing-lists.sh $MBOX_OUTPUT_DIR
-./convert-mailing-lists-to-solr-docs.sh $MBOX_OUTPUT_DIR $SOLR_DOC_OUTPUT_DIR
+./download-mailing-lists.sh
+./convert-mailing-lists-to-solr-docs.sh
 ```
 
+This invocation will create a series of JSON files at `output/solr-data` directory, ready to be indexed with `bin/solr post`.
 Currently, the created documents reflect email metadata only.
 Email content itself isn't captured for search, though nothing precludes that if users wish to make the requisite changes to `convert-mbox-to-solr-docs.py`.
 
@@ -51,11 +50,11 @@ Run the snippet below to download and prepare git-commit data for Solr ingestion
 Preparing git data can take a good bit longer than other sources described here, so consider a coffee while it runs.
 
 ```
-export COMMIT_OUTPUT_DIR="/fill/in/with/dir"
-export SOLR_DOC_OUTPUT_DIR="/fill/in/with/other/dir"
-./download-git-repositories.sh $COMMIT_OUTPUT_DIR
-./convert-git-repositories-to-solr-docs.sh $COMMIT_OUTPUT_DIR $SOLR_DOC_OUTPUT_DIR
+./download-git-repositories.sh
+./convert-git-repositories-to-solr-docs.sh
 ```
+
+This invocation will create a series of JSON files at `output/solr-data` directory, ready to be indexed with `bin/solr post`.
 
 ### Example Git Data Queries
 

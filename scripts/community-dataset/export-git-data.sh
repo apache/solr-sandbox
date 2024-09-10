@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 # Usage: ./export-git-data.sh <repository-path> <solr-doc-output-dir>
 
