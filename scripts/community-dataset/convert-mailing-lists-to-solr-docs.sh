@@ -4,13 +4,6 @@ set -eu
 
 # Usage: ./convert-mailing-lists-to-solr-docs.sh <mbox-data-directory> <solr-doc-output-dir>
 
-# TODO - pretty lazy, make more resilient and remove
-current_dir=$(basename `pwd`)
-if [[ "solr-datasets" != $current_dir ]]; then
-  echo "Script intended to be run from the repo root dir; exiting"
-  exit 1
-fi
-
 if [[ -z ${1:-} ]]; then
   echo "'mbox-directory' argument is required but was not provided; exiting"
   exit 1
