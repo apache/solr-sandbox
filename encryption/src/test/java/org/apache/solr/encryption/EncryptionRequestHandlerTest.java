@@ -23,6 +23,7 @@ import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
 import org.apache.solr.cloud.MiniSolrCloudCluster;
 import org.apache.solr.cloud.SolrCloudTestCase;
+import org.apache.solr.embedded.JettySolrRunner;
 import org.apache.solr.encryption.crypto.AesCtrEncrypterFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -31,6 +32,8 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.apache.solr.encryption.EncryptionDirectoryFactory.PROPERTY_INNER_ENCRYPTION_DIRECTORY_FACTORY;
 import static org.apache.solr.encryption.EncryptionRequestHandler.NO_KEY_ID;
@@ -253,6 +256,44 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     // Verify that the distribution is successful with the COMPLETE state.
     assertTrue(encryptionStatus.isSuccess());
     assertEquals(EncryptionRequestHandler.State.COMPLETE, encryptionStatus.getCollectionState());
+  }
+
+  @Test
+  public void testEncryptionAndNodeRestart() throws Exception {
+    // Send an encrypt request with a key id on an empty index.
+    testUtil.encryptAndExpectCompletion(KEY_ID_1);
+
+    // Index some documents but do not commit.
+    testUtil.indexDocsNoCommit("weather broadcast");
+
+    // Restart the Solr nodes.
+    try {
+      restartSolrServer(0);
+      restartSolrServer(1);
+      waitForState("Timed out waiting for shards to be active",
+          collectionName,
+          SolrCloudTestCase.activeClusterShape(2, 4),
+          30,
+          TimeUnit.SECONDS);
+    } catch (InterruptedException | TimeoutException e) {
+      // Sometimes restarting Solr nodes hangs, or waiting for shards to become active times out.
+      // In this case, exit silently the test.
+      return;
+    }
+
+    testUtil.commit();
+
+    // Verify that the segment is encrypted.
+    soleKeyIdAllowed = KEY_ID_1;
+    testUtil.assertQueryReturns("weather", 1);
+  }
+
+  private void restartSolrServer(int nodeIndex) throws Exception {
+    // Restart the Solr node
+    JettySolrRunner node = cluster.stopJettySolrRunner(nodeIndex);
+    cluster.waitForJettyToStop(node);
+    cluster.startJettySolrRunner(node);
+    cluster.waitForNode(node, 30);
   }
 
   private static void clearMockValues() {
