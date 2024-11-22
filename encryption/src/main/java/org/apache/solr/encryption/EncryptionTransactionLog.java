@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Path;
 import java.util.Collection;
 
@@ -140,28 +139,33 @@ public class EncryptionTransactionLog extends TransactionLog {
    *
    * @return The key reference number as a string; or null if the log is not encrypted.
    */
-  static String readEncryptionHeader(FileChannel channel, ByteBuffer readBuffer) throws IOException {
-    long position = channel.position();
-    if (position != 0) {
-      channel.position(0);
-    }
-    int magic = readBEInt(channel, readBuffer);
+  static String readEncryptionHeader(FileChannel channel) throws IOException {
+    int magic = readBEInt(channel, 0L, false);
     String keyRef = null;
     if (magic == ENCRYPTION_MAGIC) {
       // This file is encrypted.
       // Read the key reference that follows.
-      keyRef = Integer.toString(readBEInt(channel, readBuffer));
+      keyRef = Integer.toString(readBEInt(channel, 4L, true));
     }
-    channel.position(position);
     return keyRef;
   }
 
-  private static int readBEInt(ReadableByteChannel channel, ByteBuffer readBuffer) throws IOException {
-    readBuffer.clear();
-    int n = channel.read(readBuffer);
-    if (n != 4) {
-      throw new EOFException();
+  private static int readBEInt(FileChannel channel, long position, boolean requireAllBytes) throws IOException {
+    ByteBuffer readBuffer = ByteBuffer.allocate(4);
+    // Read 4 bytes.
+    int bytesRead = channel.read(readBuffer, position);
+    if (bytesRead < 4) {
+      if (requireAllBytes) {
+        throw new EOFException(
+            bytesRead == -1 || bytesRead == 0
+                ? "Header is empty; no data read."
+                : "Incomplete header; expected 4 bytes, but only read " + bytesRead + " bytes.");
+      } else {
+        // If not requiring all bytes, just return 0.
+        return 0;
+      }
     }
+    // Convert the 4 bytes to an integer in big-endian order
     return ((readBuffer.get(0) & 0xFF) << 24)
       | ((readBuffer.get(1) & 0xFF) << 16)
       | ((readBuffer.get(2) & 0xFF) << 8)
@@ -234,20 +238,18 @@ public class EncryptionTransactionLog extends TransactionLog {
 
     protected final EncryptionDirectorySupplier directorySupplier;
     protected final IvHolder ivHolder;
-    protected final ByteBuffer readBuffer;
 
     protected EncryptionChannelInputStreamOpener(
       EncryptionDirectorySupplier directorySupplier, IvHolder ivHolder) {
       this.directorySupplier = directorySupplier;
       this.ivHolder = ivHolder;
-      readBuffer = ByteBuffer.allocate(4);
     }
 
     @Override
     public ChannelFastInputStream open(FileChannel channel, long position) throws IOException {
       EncryptionDirectory directory = directorySupplier.get();
       try {
-        String keyRef = readEncryptionHeader(channel, readBuffer);
+        String keyRef = readEncryptionHeader(channel);
         if (keyRef != null) {
           // The IndexInput has to be wrapped to be decrypted with the key.
           DecryptingChannelInputStream dcis =

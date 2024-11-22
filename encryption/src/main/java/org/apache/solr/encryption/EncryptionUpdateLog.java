@@ -29,15 +29,11 @@ import org.apache.solr.update.UpdateLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.invoke.MethodHandles;
-import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.file.CopyOption;
 import java.nio.file.Files;
-import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
@@ -140,10 +136,9 @@ public class EncryptionUpdateLog extends UpdateLog {
           throws IOException {
     List<TransactionLog> allLogs = getAllLogs();
     if (!allLogs.isEmpty()) {
-      ByteBuffer readBuffer = ByteBuffer.allocate(4);
       for (TransactionLog log : allLogs) {
         try (FileChannel logChannel = FileChannel.open(((EncryptionTransactionLog) log).path(), StandardOpenOption.READ)) {
-          String logKeyRef = readEncryptionHeader(logChannel, readBuffer);
+          String logKeyRef = readEncryptionHeader(logChannel);
           String logKeyId = logKeyRef == null ? null : getKeyIdFromCommit(logKeyRef, commitUserData);
           if (!Objects.equals(logKeyId, keyId)) {
             return false;
@@ -178,7 +173,7 @@ public class EncryptionUpdateLog extends UpdateLog {
     assert log.refCount() <= 1;
     if (Files.size(log.path()) > 0) {
       try (FileChannel inputChannel = FileChannel.open(log.path(), StandardOpenOption.READ)) {
-        String inputKeyRef = readEncryptionHeader(inputChannel, ByteBuffer.allocate(4));
+        String inputKeyRef = readEncryptionHeader(inputChannel);
         if (!Objects.equals(inputKeyRef, activeKeyRef)) {
           Path newLogPath = log.path().resolveSibling(log.path().getFileName() + ".enc");
           try (OutputStream outputStream = Files.newOutputStream(newLogPath, StandardOpenOption.CREATE)) {
