@@ -108,12 +108,26 @@ public class EncryptionTestUtil {
    * Adds one doc per provided text, and commits.
    */
   public void indexDocsAndCommit(String... texts) throws Exception {
+    indexDocsNoCommit(texts);
+    commit();
+  }
+
+  /**
+   * Adds one doc per provided text, but does not commit.
+   */
+  public void indexDocsNoCommit(String... texts) throws Exception {
     for (String text : texts) {
       SolrInputDocument doc = new SolrInputDocument();
       doc.addField("id", Integer.toString(docId++));
       doc.addField("text", text);
       cloudSolrClient.add(collectionName, doc);
     }
+  }
+
+  /**
+   * Commits.
+   */
+  public void commit() throws Exception {
     cloudSolrClient.commit(collectionName);
   }
 

@@ -23,6 +23,7 @@ import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
 import org.apache.solr.cloud.MiniSolrCloudCluster;
 import org.apache.solr.cloud.SolrCloudTestCase;
+import org.apache.solr.embedded.JettySolrRunner;
 import org.apache.solr.encryption.crypto.AesCtrEncrypterFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -197,6 +198,32 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     soleKeyIdAllowed = KEY_ID_2;
     testUtil.reloadCores();
     testUtil.assertQueryReturns("weather", 4);
+  }
+
+  @Test
+  public void testEncryptionAndNodeRestart() throws Exception {
+    // Send an encrypt request with a key id on an empty index.
+    testUtil.encryptAndExpectCompletion(KEY_ID_1);
+
+    // Index some documents but do not commit.
+    testUtil.indexDocsNoCommit("weather broadcast");
+
+    // Restart the Solr nodes.
+    restartSolrServer(0);
+    restartSolrServer(1);
+
+    testUtil.commit();
+
+    // Verify that the segment is encrypted.
+    testUtil.assertQueryReturns("weather", 1);
+  }
+
+  private void restartSolrServer(int nodeIndex) throws Exception {
+    // Restart the Solr node
+    JettySolrRunner node = cluster.stopJettySolrRunner(nodeIndex);
+    cluster.waitForJettyToStop(node);
+    cluster.startJettySolrRunner(node);
+    cluster.waitForNode(node, 30);
   }
 
   private static void clearMockValues() {
