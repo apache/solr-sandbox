@@ -42,9 +42,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import static org.apache.lucene.tests.util.LuceneTestCase.random;
+import static org.apache.solr.common.params.CommonParams.DISTRIB;
 import static org.apache.solr.encryption.EncryptionRequestHandler.ENCRYPTION_STATE;
 import static org.apache.solr.encryption.EncryptionRequestHandler.PARAM_KEY_ID;
-import static org.apache.solr.encryption.EncryptionRequestHandler.STATE_COMPLETE;
 import static org.apache.solr.encryption.EncryptionRequestHandler.STATUS;
 import static org.apache.solr.encryption.EncryptionRequestHandler.STATUS_SUCCESS;
 import static org.apache.solr.encryption.kms.KmsEncryptionRequestHandler.PARAM_ENCRYPTION_KEY_BLOB;
@@ -70,10 +70,23 @@ public class EncryptionTestUtil {
   private final CloudSolrClient cloudSolrClient;
   private final String collectionName;
   private int docId;
+  private Boolean shouldDistributeRequests;
 
   public EncryptionTestUtil(CloudSolrClient cloudSolrClient, String collectionName) {
     this.cloudSolrClient = cloudSolrClient;
     this.collectionName = collectionName;
+  }
+
+  public boolean shouldDistributeEncryptRequest() {
+    if (shouldDistributeRequests == null) {
+      setShouldDistributeRequests(random().nextBoolean());
+    }
+    return shouldDistributeRequests;
+  }
+
+  public EncryptionTestUtil setShouldDistributeRequests(Boolean shouldDistributeRequests) {
+    this.shouldDistributeRequests = shouldDistributeRequests;
+    return this;
   }
 
   /**
@@ -130,13 +143,29 @@ public class EncryptionTestUtil {
     params.set(PARAM_KEY_ID, keyId);
     params.set(PARAM_TENANT_ID, TENANT_ID);
     params.set(PARAM_ENCRYPTION_KEY_BLOB, generateKeyBlob(keyId));
+    if (shouldDistributeEncryptRequest()) {
+      return encryptDistrib(params);
+    }
     GenericSolrRequest encryptRequest = new GenericSolrRequest(SolrRequest.METHOD.GET, "/admin/encrypt", params);
     EncryptionStatus encryptionStatus = new EncryptionStatus();
     forAllReplicas(replica -> {
       NamedList<Object> response = requestCore(encryptRequest, replica);
+      EncryptionRequestHandler.State state = EncryptionRequestHandler.State.fromValue(response.get(ENCRYPTION_STATE).toString());
       encryptionStatus.success &= response.get(STATUS).equals(STATUS_SUCCESS);
-      encryptionStatus.complete &= response.get(ENCRYPTION_STATE).equals(STATE_COMPLETE);
-    });
+      encryptionStatus.complete &= state == EncryptionRequestHandler.State.COMPLETE;
+    }, false);
+    return encryptionStatus;
+  }
+
+  private EncryptionStatus encryptDistrib(ModifiableSolrParams params) throws SolrServerException, IOException {
+    params.set(DISTRIB, "true");
+    GenericSolrRequest encryptRequest = new GenericSolrRequest(SolrRequest.METHOD.GET, "/admin/encrypt", params);
+    NamedList<Object> response = cloudSolrClient.request(encryptRequest, collectionName);
+    EncryptionRequestHandler.State state = EncryptionRequestHandler.State.fromValue(response.get(ENCRYPTION_STATE).toString());
+    EncryptionStatus encryptionStatus = new EncryptionStatus();
+    encryptionStatus.success = response.get(STATUS).equals(STATUS_SUCCESS);
+    encryptionStatus.complete = state == EncryptionRequestHandler.State.COMPLETE;
+    encryptionStatus.collectionState = state;
     return encryptionStatus;
   }
 
@@ -201,7 +230,7 @@ public class EncryptionTestUtil {
         } catch (IOException e) {
           throw new RuntimeException(e);
         }
-      });
+      }, shouldDistributeEncryptRequest());
     } catch (SolrException e) {
       throw new CoreReloadException("The index cannot be reloaded. There is probably an issue with the encryption key ids.", e);
     }
@@ -220,10 +249,14 @@ public class EncryptionTestUtil {
   }
 
   /** Processes the given {@code action} for all replicas of the collection defined in the constructor. */
-  public void forAllReplicas(Consumer<Replica> action) {
+  public void forAllReplicas(Consumer<Replica> action, boolean onlyLeaders) {
     for (Slice slice : cloudSolrClient.getClusterState().getCollection(collectionName).getSlices()) {
-      for (Replica replica : slice.getReplicas()) {
-        action.accept(replica);
+      if (onlyLeaders) {
+        action.accept(slice.getLeader());
+      } else {
+        for (Replica replica : slice.getReplicas()) {
+          action.accept(replica);
+        }
       }
     }
   }
@@ -251,6 +284,7 @@ public class EncryptionTestUtil {
 
     private boolean success;
     private boolean complete;
+    private EncryptionRequestHandler.State collectionState;
 
     private EncryptionStatus() {
       this.success = true;
@@ -263,6 +297,10 @@ public class EncryptionTestUtil {
 
     public boolean isComplete() {
       return complete;
+    }
+
+    public EncryptionRequestHandler.State getCollectionState() {
+      return collectionState;
     }
   }
 }

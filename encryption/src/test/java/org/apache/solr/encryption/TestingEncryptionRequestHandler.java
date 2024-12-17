@@ -22,12 +22,45 @@ import org.apache.solr.response.SolrQueryResponse;
 import java.io.IOException;
 import java.util.Map;
 
+import static org.apache.solr.common.params.CommonParams.DISTRIB;
+
 /**
  * {@link EncryptionRequestHandler} for tests. Builds a mock key cookie.
  */
 public class TestingEncryptionRequestHandler extends EncryptionRequestHandler {
 
   public static final Map<String, String> MOCK_COOKIE_PARAMS = Map.of("testParam", "testValue");
+
+  public static volatile String mockedDistributedResponseStatus;
+  public static volatile State mockedDistributedResponseState;
+  public static volatile Boolean isDistributionTimeout;
+
+  public static void clearMockedValues() {
+    mockedDistributedResponseStatus = null;
+    mockedDistributedResponseState = null;
+    isDistributionTimeout = null;
+  }
+
+  @Override
+  public void handleRequestBody(SolrQueryRequest req, SolrQueryResponse rsp) throws Exception {
+    if (!req.getParams().getBool(DISTRIB, false)) {
+      if (mockedDistributedResponseStatus != null || mockedDistributedResponseState != null) {
+        if (mockedDistributedResponseStatus != null) {
+          rsp.add(STATUS, mockedDistributedResponseStatus);
+        }
+        if (mockedDistributedResponseState != null) {
+          rsp.add(ENCRYPTION_STATE, mockedDistributedResponseState.value);
+        }
+        return;
+      }
+    }
+    super.handleRequestBody(req, rsp);
+  }
+
+  @Override
+  boolean isTimeout(long maxTimeNs) {
+    return isDistributionTimeout == null ? super.isTimeout(maxTimeNs) : isDistributionTimeout;
+  }
 
   @Override
   protected Map<String, String> buildKeyCookie(String keyId,

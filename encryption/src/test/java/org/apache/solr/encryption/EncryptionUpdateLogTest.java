@@ -112,7 +112,8 @@ public class EncryptionUpdateLogTest extends SolrCloudTestCase {
 
     resetCounters();
     solrClient.add(collectionName, sdoc("id", "1", "text", "test"));
-    assertEquals(NUM_REPLICAS, encryptedLogWriteCount.get());
+    // If the encrypt request is distributed, we expect only the leader to encrypt its update log.
+    assertEquals(testUtil.shouldDistributeEncryptRequest() ? 1 : NUM_REPLICAS, encryptedLogWriteCount.get());
     assertEquals(0, encryptedLogReadCount.get());
     assertEquals(0, reencryptionCallCount.get());
 
@@ -134,7 +135,8 @@ public class EncryptionUpdateLogTest extends SolrCloudTestCase {
 
     resetCounters();
     solrClient.add(collectionName, sdoc("id", "1", "text", "test"));
-    assertEquals(NUM_REPLICAS, encryptedLogWriteCount.get());
+    // If the encrypt request is distributed, we expect only the leader to encrypt its update log.
+    assertEquals(testUtil.shouldDistributeEncryptRequest() ? 1 : NUM_REPLICAS, encryptedLogWriteCount.get());
     assertEquals(0, encryptedLogReadCount.get());
     assertEquals(0, reencryptionCallCount.get());
 
@@ -145,12 +147,13 @@ public class EncryptionUpdateLogTest extends SolrCloudTestCase {
     assertEquals(0, encryptedLogWriteCount.get());
     assertEquals(0, encryptedLogReadCount.get());
     // There are two transaction logs, the old one before the commit in checkEncryptionFromNoKeysToOneKey
-    // and the current one. So we expect each transaction log to be encrypted on all 2 replicas.
-    assertEquals(2 * NUM_REPLICAS, reencryptionCallCount.get());
+    // and the current one. So we expect each transaction log to be encrypted on either all replicas,
+    // or only the leader.
+    assertEquals(2 * (testUtil.shouldDistributeEncryptRequest() ? 1 : NUM_REPLICAS), reencryptionCallCount.get());
 
     resetCounters();
     solrClient.add(collectionName, sdoc("id", "2", "text", "test"));
-    assertEquals(toKeyId.equals(NO_KEY_ID) ? 0 : NUM_REPLICAS, encryptedLogWriteCount.get());
+    assertEquals(toKeyId.equals(NO_KEY_ID) ? 0 : (testUtil.shouldDistributeEncryptRequest() ? 1 : NUM_REPLICAS), encryptedLogWriteCount.get());
     assertEquals(0, encryptedLogReadCount.get());
     assertEquals(0, reencryptionCallCount.get());
 

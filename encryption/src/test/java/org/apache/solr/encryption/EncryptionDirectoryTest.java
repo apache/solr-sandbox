@@ -80,7 +80,8 @@ public class EncryptionDirectoryTest extends SolrCloudTestCase {
     solrClient = cluster.getSolrClient();
     CollectionAdminRequest.createCollection(collectionName, 2, 2).process(solrClient);
     cluster.waitForActiveCollection(collectionName, 2, 4);
-    testUtil = new EncryptionTestUtil(solrClient, collectionName);
+    testUtil = new EncryptionTestUtil(solrClient, collectionName)
+        .setShouldDistributeRequests(false);
   }
 
   @Override
@@ -236,7 +237,7 @@ public class EncryptionDirectoryTest extends SolrCloudTestCase {
       UpdateRequest request = new UpdateRequest();
       request.setAction(UpdateRequest.ACTION.OPTIMIZE, true, true, 1);
       testUtil.requestCore(request, replica);
-    });
+    }, false);
   }
 
   public static class MockFactory implements EncryptionDirectoryFactory.InnerFactory {
