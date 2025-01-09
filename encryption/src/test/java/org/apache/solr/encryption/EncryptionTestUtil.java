@@ -31,6 +31,7 @@ import org.apache.solr.common.cloud.Replica;
 import org.apache.solr.common.cloud.Slice;
 import org.apache.solr.common.params.CoreAdminParams;
 import org.apache.solr.common.params.ModifiableSolrParams;
+import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.common.util.RetryUtil;
 import org.apache.solr.encryption.kms.TestingKmsClient;
@@ -148,17 +149,17 @@ public class EncryptionTestUtil {
     }
     GenericSolrRequest encryptRequest = new GenericSolrRequest(SolrRequest.METHOD.GET, "/admin/encrypt", params);
     EncryptionStatus encryptionStatus = new EncryptionStatus();
-    forAllReplicas(replica -> {
+    forAllReplicas(false, replica -> {
       NamedList<Object> response = requestCore(encryptRequest, replica);
       EncryptionRequestHandler.State state = EncryptionRequestHandler.State.fromValue(response.get(ENCRYPTION_STATE).toString());
       encryptionStatus.success &= response.get(STATUS).equals(STATUS_SUCCESS);
       encryptionStatus.complete &= state == EncryptionRequestHandler.State.COMPLETE;
-    }, false);
+    });
     return encryptionStatus;
   }
 
-  private EncryptionStatus encryptDistrib(ModifiableSolrParams params) throws SolrServerException, IOException {
-    params.set(DISTRIB, "true");
+  private EncryptionStatus encryptDistrib(SolrParams params) throws SolrServerException, IOException {
+    params = SolrParams.wrapDefaults(params, new ModifiableSolrParams().set(DISTRIB, "true"));
     GenericSolrRequest encryptRequest = new GenericSolrRequest(SolrRequest.METHOD.GET, "/admin/encrypt", params);
     NamedList<Object> response = cloudSolrClient.request(encryptRequest, collectionName);
     EncryptionRequestHandler.State state = EncryptionRequestHandler.State.fromValue(response.get(ENCRYPTION_STATE).toString());
@@ -216,7 +217,7 @@ public class EncryptionTestUtil {
    */
   public void reloadCores() throws Exception {
     try {
-      forAllReplicas(replica -> {
+      forAllReplicas(shouldDistributeEncryptRequest(), replica -> {
         try {
           CoreAdminRequest req = new CoreAdminRequest();
           req.setBasePath(replica.getBaseUrl());
@@ -230,7 +231,7 @@ public class EncryptionTestUtil {
         } catch (IOException e) {
           throw new RuntimeException(e);
         }
-      }, shouldDistributeEncryptRequest());
+      });
     } catch (SolrException e) {
       throw new CoreReloadException("The index cannot be reloaded. There is probably an issue with the encryption key ids.", e);
     }
@@ -249,7 +250,7 @@ public class EncryptionTestUtil {
   }
 
   /** Processes the given {@code action} for all replicas of the collection defined in the constructor. */
-  public void forAllReplicas(Consumer<Replica> action, boolean onlyLeaders) {
+  public void forAllReplicas(boolean onlyLeaders, Consumer<Replica> action) {
     for (Slice slice : cloudSolrClient.getClusterState().getCollection(collectionName).getSlices()) {
       if (onlyLeaders) {
         action.accept(slice.getLeader());

@@ -233,11 +233,11 @@ public class EncryptionDirectoryTest extends SolrCloudTestCase {
    * {@link EncryptionRequestHandler}, but this test is designed to work independently.
    */
   private void optimizeCommit() {
-    testUtil.forAllReplicas(replica -> {
+    testUtil.forAllReplicas(false, replica -> {
       UpdateRequest request = new UpdateRequest();
       request.setAction(UpdateRequest.ACTION.OPTIMIZE, true, true, 1);
       testUtil.requestCore(request, replica);
-    }, false);
+    });
   }
 
   public static class MockFactory implements EncryptionDirectoryFactory.InnerFactory {

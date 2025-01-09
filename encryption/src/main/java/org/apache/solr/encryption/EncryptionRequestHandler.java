@@ -49,11 +49,16 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
@@ -148,7 +153,9 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     /** Another encryption for a different key id is ongoing on the same Solr core; cannot start a new encryption until it finishes. */
     BUSY("busy", 3),
     /** At least one distributed encryption request failed for a shard (can only be returned when {@link org.apache.solr.common.params.CommonParams#DISTRIB} is set). */
-    ERROR("error", 4);
+    ERROR("error", 4),
+    /** The request distribution was interrupted (can only be returned when {@link org.apache.solr.common.params.CommonParams#DISTRIB} is set). */
+    INTERRUPTED("interrupted", 5);
 
     public final String value;
     private final int priority;
@@ -170,6 +177,8 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
           return BUSY;
         case "error":
           return ERROR;
+        case "interrupted":
+          return INTERRUPTED;
         default:
           throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "Unsupported encryption state '" + value + "'");
       }
@@ -355,35 +364,52 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
       }
       try (SolrClientHolder solrClient = getHttpSolrClient(req)) {
         ModifiableSolrParams params = createDistributedRequestParams(req, rsp, keyId);
-        for (Slice slice : docCollection.getActiveSlices()) {
-          if (isTimeout(maxTimeNs)) {
-            log.warn("Timeout distributing encryption request for keyId={} collection={}", keyId, collectionName);
-            if (collectionState == null || State.TIMEOUT.priority > collectionState.priority) {
-              collectionState = State.TIMEOUT;
-            }
-            break;
-          }
+        Collection<Slice> slices = docCollection.getActiveSlices();
+        Collection<Callable<State>> encryptRequests = new ArrayList<>(slices.size());
+        final String collectionNameFinal = collectionName;
+        for (Slice slice : slices) {
           Replica replica = slice.getLeader();
           if (replica == null) {
             log.error("No leader found for shard {}", slice.getName());
             collectionState = State.ERROR;
             continue;
           }
-          State state = sendEncryptionRequestWithRetry(replica, params, solrClient.getClient(), keyId, collectionName);
-          if (collectionState == null || state.priority > collectionState.priority) {
-            collectionState = state;
+          encryptRequests.add(() -> sendEncryptionRequestWithRetry(replica, params, solrClient.getClient(), keyId, collectionNameFinal));
+        }
+        try {
+          List<Future<State>> responses = timeAllowedMs <= 0 ?
+              executor.invokeAll(encryptRequests)
+              : executor.invokeAll(encryptRequests, timeAllowedMs, TimeUnit.MILLISECONDS);
+          if (isTimeout(maxTimeNs)) {
+            log.warn("Timeout distributing encryption request for keyId={} collection={}", keyId, collectionName);
+            if (collectionState == null || State.TIMEOUT.priority > collectionState.priority) {
+              collectionState = State.TIMEOUT;
+            }
           }
+          for (Future<State> response : responses) {
+            State state;
+            try {
+              state = response.get();
+            } catch (ExecutionException e) {
+              collectionState = State.ERROR;
+              break;
+            }
+            if (collectionState == null || state.priority > collectionState.priority) {
+              collectionState = state;
+            }
+          }
+        } catch (InterruptedException e) {
+          collectionState = State.INTERRUPTED;
         }
         success = collectionState == null || collectionState.isSuccess();
       }
     } finally {
-      if (success) {
-        rsp.add(STATUS, STATUS_SUCCESS);
-      } else {
-        rsp.add(STATUS, STATUS_FAILURE);
-      }
+      String statusValue = success ? STATUS_SUCCESS : STATUS_FAILURE;
+      rsp.add(STATUS, statusValue);
+      rsp.addToLog(STATUS, statusValue);
       if (collectionState != null) {
         rsp.add(ENCRYPTION_STATE, collectionState.value);
+        rsp.addToLog(ENCRYPTION_STATE, collectionState.value);
       }
       if (log.isInfoEnabled()) {
         long timeMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeNs);
