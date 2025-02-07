@@ -205,7 +205,9 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
   @Test
   public void testDistributionTimeout() throws Exception {
     // Ensure the next distributed requests will time out.
-    testUtil.setShouldDistributeRequests(true);
+    testUtil
+        .setShouldDistributeRequests(true)
+        .setDistributionTimeoutMs(1); // any value > 0 will trigger the mock timeout.
     TestingEncryptionRequestHandler.isDistributionTimeout = true;
 
     // Send an encrypt request with a key id on an empty index.

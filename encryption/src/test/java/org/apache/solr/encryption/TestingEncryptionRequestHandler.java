@@ -16,11 +16,13 @@
  */
 package org.apache.solr.encryption;
 
+import org.apache.solr.common.util.TimeSource;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.response.SolrQueryResponse;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.apache.solr.common.params.CommonParams.DISTRIB;
 
@@ -31,14 +33,41 @@ public class TestingEncryptionRequestHandler extends EncryptionRequestHandler {
 
   public static final Map<String, String> MOCK_COOKIE_PARAMS = Map.of("testParam", "testValue");
 
+  private static final TimeSource TIMEOUT_TIME_SOURCE = new TimeSource() {
+    @Override
+    public long getTimeNs() {
+      return Long.MAX_VALUE;
+    }
+
+    @Override
+    public long getEpochTimeNs() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public long[] getTimeAndEpochNs() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void sleep(long ms) throws InterruptedException {
+      NANO_TIME.sleep(ms);
+    }
+
+    @Override
+    public long convertDelay(TimeUnit fromUnit, long delay, TimeUnit toUnit) {
+      return NANO_TIME.convertDelay(fromUnit, delay, toUnit);
+    }
+  };
+
   public static volatile String mockedDistributedResponseStatus;
   public static volatile State mockedDistributedResponseState;
-  public static volatile Boolean isDistributionTimeout;
+  public static volatile boolean isDistributionTimeout;
 
   public static void clearMockedValues() {
     mockedDistributedResponseStatus = null;
     mockedDistributedResponseState = null;
-    isDistributionTimeout = null;
+    isDistributionTimeout = false;
   }
 
   @Override
@@ -58,8 +87,8 @@ public class TestingEncryptionRequestHandler extends EncryptionRequestHandler {
   }
 
   @Override
-  boolean isTimeout(long maxTimeNs) {
-    return isDistributionTimeout == null ? super.isTimeout(maxTimeNs) : isDistributionTimeout;
+  protected TimeSource getTimeSource() {
+    return isDistributionTimeout ? TIMEOUT_TIME_SOURCE : super.getTimeSource();
   }
 
   @Override

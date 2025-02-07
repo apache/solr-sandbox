@@ -52,9 +52,8 @@ public class KmsEncryptionRequestHandler extends EncryptionRequestHandler {
 
   @Override
   protected ModifiableSolrParams createDistributedRequestParams(SolrQueryRequest req, SolrQueryResponse rsp, String keyId) {
-    ModifiableSolrParams params = super.createDistributedRequestParams(req, rsp, keyId);
-    params.add(PARAM_TENANT_ID, getRequiredRequestParam(req, PARAM_TENANT_ID, rsp));
-    params.add(PARAM_ENCRYPTION_KEY_BLOB, getRequiredRequestParam(req, PARAM_ENCRYPTION_KEY_BLOB, rsp));
-    return params;
+    return super.createDistributedRequestParams(req, rsp, keyId)
+        .set(PARAM_TENANT_ID, getRequiredRequestParam(req, PARAM_TENANT_ID, rsp))
+        .set(PARAM_ENCRYPTION_KEY_BLOB, getRequiredRequestParam(req, PARAM_ENCRYPTION_KEY_BLOB, rsp));
   }
 }

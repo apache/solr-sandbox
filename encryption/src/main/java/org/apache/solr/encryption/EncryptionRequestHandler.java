@@ -21,18 +21,16 @@ import org.apache.lucene.index.SegmentInfos;
 import org.apache.lucene.store.Directory;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.CloudHttp2SolrClient;
-import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.impl.Http2SolrClient;
 import org.apache.solr.client.solrj.request.GenericSolrRequest;
+import org.apache.solr.client.solrj.response.SimpleSolrResponse;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.cloud.DocCollection;
 import org.apache.solr.common.cloud.Replica;
 import org.apache.solr.common.cloud.Slice;
 import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.util.ExecutorUtil;
-import org.apache.solr.common.util.NamedList;
-import org.apache.solr.core.CoreContainer;
+import org.apache.solr.common.util.TimeSource;
 import org.apache.solr.core.DirectoryFactory;
 import org.apache.solr.core.SolrCore;
 import org.apache.solr.handler.RequestHandlerBase;
@@ -43,6 +41,7 @@ import org.apache.solr.security.PermissionNameProvider;
 import org.apache.solr.update.CommitUpdateCommand;
 import org.apache.solr.update.UpdateHandler;
 import org.apache.solr.update.UpdateLog;
+import org.apache.solr.util.TimeOut;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,6 +55,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -258,7 +258,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
 
   @Override
   public void handleRequestBody(SolrQueryRequest req, SolrQueryResponse rsp) throws Exception {
-    long startTimeNs = System.nanoTime();
+    long startTimeNs = getTimeSource().getTimeNs();
     String keyId = req.getParams().get(PARAM_KEY_ID);
     if (keyId == null || keyId.isEmpty()) {
       rsp.add(STATUS, STATUS_FAILURE);
@@ -323,7 +323,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
       }
       try {
         commitEncryptionStart(keyId, segmentInfos, req, rsp);
-        encryptAsync(req, startTimeNs);
+        encryptAsync(req);
         success = true;
       } finally {
         if (!success) {
@@ -334,75 +334,72 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
       }
 
     } finally {
-      if (success) {
-        rsp.add(STATUS, STATUS_SUCCESS);
-      } else {
-        rsp.add(STATUS, STATUS_FAILURE);
-      }
+      String statusValue = success ? STATUS_SUCCESS : STATUS_FAILURE;
+      rsp.add(STATUS, statusValue);
+      rsp.addToLog(STATUS, statusValue);
       rsp.add(ENCRYPTION_STATE, state.value);
-      long timeMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeNs);
+      rsp.addToLog(ENCRYPTION_STATE, state.value);
       log.info("Responding encryption state={} success={} for keyId={} timeMs={}",
-          state.value, success, keyId, timeMs);
+          state.value, success, keyId, elapsedTimeMs(startTimeNs));
     }
   }
 
   private void distributeRequest(SolrQueryRequest req, SolrQueryResponse rsp, String keyId, long startTimeNs) {
     boolean success = false;
-    String collectionName = null;
     State collectionState = null;
     long timeAllowedMs = req.getParams().getLong(TIME_ALLOWED, 0);
-    long maxTimeNs = timeAllowedMs <= 0 ? Long.MAX_VALUE : startTimeNs + timeAllowedMs;
+    TimeOut timeOut = timeAllowedMs <= 0 ? null : new TimeOut(timeAllowedMs, TimeUnit.MILLISECONDS, getTimeSource());
     try {
-      collectionName = req.getCore().getCoreDescriptor().getCollectionName();
+      String collectionName = req.getCore().getCoreDescriptor().getCollectionName();
       if (collectionName == null) {
         throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "Parameter " + DISTRIB + " can only be used in Solr Cloud mode.");
       }
-      log.debug("Encrypt request distributed for keyId={} collection={}", keyId, collectionName);
+      log.debug("Encrypt request distributed for keyId={}", keyId);
       DocCollection docCollection = req.getCore().getCoreContainer().getZkController().getZkStateReader().getCollection(collectionName);
       if (docCollection == null) {
         throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "Parameter " + DISTRIB + " present but collection '" + collectionName + "' not found.");
       }
-      try (SolrClientHolder solrClient = getHttpSolrClient(req)) {
-        ModifiableSolrParams params = createDistributedRequestParams(req, rsp, keyId);
-        Collection<Slice> slices = docCollection.getActiveSlices();
-        Collection<Callable<State>> encryptRequests = new ArrayList<>(slices.size());
-        final String collectionNameFinal = collectionName;
-        for (Slice slice : slices) {
-          Replica replica = slice.getLeader();
-          if (replica == null) {
-            log.error("No leader found for shard {}", slice.getName());
-            collectionState = State.ERROR;
-            continue;
-          }
-          encryptRequests.add(() -> sendEncryptionRequestWithRetry(replica, params, solrClient.getClient(), keyId, collectionNameFinal));
+      ModifiableSolrParams params = createDistributedRequestParams(req, rsp, keyId);
+      Collection<Slice> slices = docCollection.getActiveSlices();
+      Collection<Callable<State>> encryptRequests = new ArrayList<>(slices.size());
+      // Use the update-only http client, considering encryption is an update as we indeed create new Lucene segments.
+      Http2SolrClient solrClient = req.getCoreContainer().getUpdateShardHandler().getUpdateOnlyHttpClient();
+      for (Slice slice : slices) {
+        Replica replica = slice.getLeader();
+        if (replica == null) {
+          log.error("No leader found for shard {}", slice.getName());
+          collectionState = State.ERROR;
+          continue;
         }
-        try {
-          List<Future<State>> responses = timeAllowedMs <= 0 ?
-              executor.invokeAll(encryptRequests)
-              : executor.invokeAll(encryptRequests, timeAllowedMs, TimeUnit.MILLISECONDS);
-          if (isTimeout(maxTimeNs)) {
-            log.warn("Timeout distributing encryption request for keyId={} collection={}", keyId, collectionName);
+        encryptRequests.add(() -> sendEncryptionRequestWithRetry(replica, req.getPath(), params, solrClient, keyId));
+      }
+      try {
+        List<Future<State>> responses = timeOut == null ?
+            executor.invokeAll(encryptRequests)
+            : executor.invokeAll(encryptRequests, timeOut.timeLeft(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
+        for (Future<State> response : responses) {
+          State state;
+          try {
+            state = response.get();
+          } catch (ExecutionException e) {
+            log.error("Error distributing encryption request for keyId={}", keyId, e);
+            collectionState = State.ERROR;
+            break;
+          } catch (CancellationException e) {
+            log.warn("Cancelled distributing encryption request for keyId={}", keyId, e);
             if (collectionState == null || State.TIMEOUT.priority > collectionState.priority) {
               collectionState = State.TIMEOUT;
             }
+            break;
           }
-          for (Future<State> response : responses) {
-            State state;
-            try {
-              state = response.get();
-            } catch (ExecutionException e) {
-              collectionState = State.ERROR;
-              break;
-            }
-            if (collectionState == null || state.priority > collectionState.priority) {
-              collectionState = state;
-            }
+          if (collectionState == null || state.priority > collectionState.priority) {
+            collectionState = state;
           }
-        } catch (InterruptedException e) {
-          collectionState = State.INTERRUPTED;
         }
-        success = collectionState == null || collectionState.isSuccess();
+      } catch (InterruptedException e) {
+        collectionState = State.INTERRUPTED;
       }
+      success = collectionState == null || collectionState.isSuccess();
     } finally {
       String statusValue = success ? STATUS_SUCCESS : STATUS_FAILURE;
       rsp.add(STATUS, statusValue);
@@ -412,39 +409,28 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
         rsp.addToLog(ENCRYPTION_STATE, collectionState.value);
       }
       if (log.isInfoEnabled()) {
-        long timeMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeNs);
-        log.info("Responding encryption distributed state={} success={} for keyId={} collection={} timeMs={}",
-            (collectionState == null ? null : collectionState.value), success, keyId, collectionName, timeMs);
+        log.info("Responding encryption distributed state={} success={} for keyId={} timeMs={}",
+            (collectionState == null ? null : collectionState.value), success, keyId, elapsedTimeMs(startTimeNs));
       }
     }
   }
 
-  private SolrClientHolder getHttpSolrClient(SolrQueryRequest req) {
-    CoreContainer coreContainer = req.getCore().getCoreContainer();
-    CloudSolrClient cloudSolrClient = coreContainer.getSolrClientCache().getCloudSolrClient(coreContainer.getZkController().getZkClient().getZkServerAddress());
-    if (cloudSolrClient instanceof CloudHttp2SolrClient) {
-      return new SolrClientHolder(((CloudHttp2SolrClient) cloudSolrClient).getHttpClient(), false);
-    }
-    return new SolrClientHolder(new Http2SolrClient.Builder().build(), true);
-  }
-
   protected ModifiableSolrParams createDistributedRequestParams(SolrQueryRequest req, SolrQueryResponse rsp, String keyId) {
-    ModifiableSolrParams params = new ModifiableSolrParams();
-    params.set(PARAM_KEY_ID, keyId == null ? NO_KEY_ID : keyId);
-    return params;
+    return new ModifiableSolrParams().set(PARAM_KEY_ID, keyId == null ? NO_KEY_ID : keyId);
   }
 
-  boolean isTimeout(long maxTimeNs) {
-    return System.nanoTime() > maxTimeNs;
-  }
-
-  private State sendEncryptionRequestWithRetry(Replica replica, ModifiableSolrParams params, Http2SolrClient httpSolrClient, String keyId, String collection) {
+  private State sendEncryptionRequestWithRetry(
+      Replica replica,
+      String requestPath,
+      ModifiableSolrParams params,
+      Http2SolrClient httpSolrClient,
+      String keyId) {
     for (int numAttempts = 0; numAttempts < DISTRIBUTION_MAX_ATTEMPTS; numAttempts++) {
       try {
-        NamedList<Object> response = sendEncryptionRequest(replica, params, httpSolrClient);
-        Object responseStatus = response.get(STATUS);
-        Object responseState = response.get(ENCRYPTION_STATE);
-        log.info("Encryption state {} status {} for replica {} keyId {} collection={}", responseStatus, responseState, replica.getName(), keyId, collection);
+        SimpleSolrResponse response = sendEncryptionRequest(replica, requestPath, params, httpSolrClient);
+        Object responseStatus = response.getResponse().get(STATUS);
+        Object responseState = response.getResponse().get(ENCRYPTION_STATE);
+        log.info("Encryption state {} status {} for replica {} keyId {} in {} ms", responseStatus, responseState, replica.getName(), keyId, response.getElapsedTime());
         if (responseState != null) {
           return State.fromValue(responseState.toString());
         }
@@ -452,18 +438,17 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
         log.error("Error occurred while sending encryption request", e);
       }
     }
-    throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "Failed encryption request to replica " + replica.getName() + " for keyId " + keyId + " collection " + collection);
+    throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "Failed encryption request to replica " + replica.getName() + " for keyId " + keyId);
   }
 
-  private NamedList<Object> sendEncryptionRequest(Replica replica, ModifiableSolrParams params, Http2SolrClient httpSolrClient)
+  private SimpleSolrResponse sendEncryptionRequest(
+      Replica replica,
+      String requestPath,
+      ModifiableSolrParams params,
+      Http2SolrClient httpSolrClient)
       throws SolrServerException, IOException {
-    GenericSolrRequest request = new GenericSolrRequest(SolrRequest.METHOD.POST, getPath(), params);
-    request.setBasePath(replica.getCoreUrl());
-    return httpSolrClient.request(request);
-  }
-
-  protected String getPath() {
-    return "/admin/encrypt";
+    GenericSolrRequest distributedRequest = new GenericSolrRequest(SolrRequest.METHOD.POST, requestPath, params);
+    return httpSolrClient.requestWithBaseUrl(replica.getCoreUrl(), replica.getCollection(), distributedRequest);
   }
 
   private void commitEmptyIndexForEncryption(@Nullable String keyId,
@@ -527,31 +512,33 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     req.getCore().getUpdateHandler().commit(commitCmd);
   }
 
-  private void encryptAsync(SolrQueryRequest req, long startTimeNs) {
+  private void encryptAsync(SolrQueryRequest req) {
     log.debug("Submitting async encryption");
     executor.submit(() -> {
       try {
         EncryptionUpdateLog updateLog = getEncryptionUpdateLog(req.getCore());
         if (updateLog != null) {
           log.debug("Encrypting update log");
+          long startTimeNs = getTimeSource().getTimeNs();
           boolean logEncryptionComplete = updateLog.encryptLogs();
-          log.info("{} encrypted the update log in {}",
-                  logEncryptionComplete ? "Successfully" : "Partially", elapsedTime(startTimeNs));
+          log.info("{} encrypted the update log in {} ms",
+                  logEncryptionComplete ? "Successfully" : "Partially", elapsedTimeMs(startTimeNs));
           // If the logs encryption is not complete, it means some logs are currently in use.
           // The encryption will be automatically be retried after the next commit which should
           // release the old transaction log and make it ready for encryption.
         }
 
         log.debug("Triggering index encryption");
+        long startTimeNs = getTimeSource().getTimeNs();
         CommitUpdateCommand commitCmd = new CommitUpdateCommand(req, true);
         // Trigger EncryptionMergePolicy.findForcedMerges() to re-encrypt
         // each segment which is not encrypted with the latest active key id.
         commitCmd.maxOptimizeSegments = Integer.MAX_VALUE;
         req.getCore().getUpdateHandler().commit(commitCmd);
-        log.info("Successfully triggered index encryption with commit in {}", elapsedTime(startTimeNs));
+        log.info("Successfully triggered index encryption with commit in {} ms", elapsedTimeMs(startTimeNs));
 
       } catch (IOException e) {
-        log.error("Exception while encrypting the index after {}", elapsedTime(startTimeNs), e);
+        log.error("Exception while encrypting the index", e);
       } finally {
         synchronized (pendingEncryptionLock) {
           pendingEncryptions.remove(req.getCore().getName());
@@ -605,8 +592,13 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     return Objects.equals(keyId, activeKeyId);
   }
 
-  private static String elapsedTime(long startTimeNs) {
-    return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeNs) + " ms";
+  private long elapsedTimeMs(long startTimeNs) {
+    return getTimeSource().convertDelay(TimeUnit.NANOSECONDS, getTimeSource().getTimeNs() - startTimeNs, TimeUnit.MILLISECONDS);
+  }
+
+  // For testing.
+  protected TimeSource getTimeSource() {
+    return TimeSource.NANO_TIME;
   }
 
   /**
@@ -618,28 +610,6 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
 
     PendingKeyId(@Nullable String keyId) {
       this.keyId = keyId;
-    }
-  }
-
-  private static class SolrClientHolder implements AutoCloseable {
-
-    final Http2SolrClient httpSolrClient;
-    final boolean shouldClose;
-
-    SolrClientHolder(Http2SolrClient httpSolrClient, boolean shouldClose) {
-      this.httpSolrClient = httpSolrClient;
-      this.shouldClose = shouldClose;
-    }
-
-    Http2SolrClient getClient() {
-      return httpSolrClient;
-    }
-
-    @Override
-    public void close() {
-      if (shouldClose) {
-        httpSolrClient.close();
-      }
     }
   }
 }
