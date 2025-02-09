@@ -340,7 +340,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
       rsp.add(ENCRYPTION_STATE, state.value);
       rsp.addToLog(ENCRYPTION_STATE, state.value);
       log.info("Responding encryption state={} success={} for keyId={} timeMs={}",
-          state.value, success, keyId, elapsedTimeMs(startTimeNs));
+          state.value, success, keyId, toMs(elapsedTimeNs(startTimeNs)));
     }
   }
 
@@ -362,8 +362,6 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
       ModifiableSolrParams params = createDistributedRequestParams(req, rsp, keyId);
       Collection<Slice> slices = docCollection.getActiveSlices();
       Collection<Callable<State>> encryptRequests = new ArrayList<>(slices.size());
-      // Use the update-only http client, considering encryption is an update as we indeed create new Lucene segments.
-      Http2SolrClient solrClient = req.getCoreContainer().getUpdateShardHandler().getUpdateOnlyHttpClient();
       for (Slice slice : slices) {
         Replica replica = slice.getLeader();
         if (replica == null) {
@@ -371,7 +369,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
           collectionState = State.ERROR;
           continue;
         }
-        encryptRequests.add(() -> sendEncryptionRequestWithRetry(replica, req.getPath(), params, solrClient, keyId));
+        encryptRequests.add(() -> sendEncryptionRequestWithRetry(replica, req, params, keyId));
       }
       try {
         List<Future<State>> responses = timeOut == null ?
@@ -410,7 +408,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
       }
       if (log.isInfoEnabled()) {
         log.info("Responding encryption distributed state={} success={} for keyId={} timeMs={}",
-            (collectionState == null ? null : collectionState.value), success, keyId, elapsedTimeMs(startTimeNs));
+            (collectionState == null ? null : collectionState.value), success, keyId, toMs(elapsedTimeNs(startTimeNs)));
       }
     }
   }
@@ -421,13 +419,12 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
 
   private State sendEncryptionRequestWithRetry(
       Replica replica,
-      String requestPath,
+      SolrQueryRequest req,
       ModifiableSolrParams params,
-      Http2SolrClient httpSolrClient,
       String keyId) {
     for (int numAttempts = 0; numAttempts < DISTRIBUTION_MAX_ATTEMPTS; numAttempts++) {
       try {
-        SimpleSolrResponse response = sendEncryptionRequest(replica, requestPath, params, httpSolrClient);
+        SimpleSolrResponse response = sendEncryptionRequest(replica, req, params);
         Object responseStatus = response.getResponse().get(STATUS);
         Object responseState = response.getResponse().get(ENCRYPTION_STATE);
         log.info("Encryption state {} status {} for replica {} keyId {} in {} ms", responseStatus, responseState, replica.getName(), keyId, response.getElapsedTime());
@@ -443,12 +440,13 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
 
   private SimpleSolrResponse sendEncryptionRequest(
       Replica replica,
-      String requestPath,
-      ModifiableSolrParams params,
-      Http2SolrClient httpSolrClient)
+      SolrQueryRequest req,
+      ModifiableSolrParams params)
       throws SolrServerException, IOException {
-    GenericSolrRequest distributedRequest = new GenericSolrRequest(SolrRequest.METHOD.POST, requestPath, params);
-    return httpSolrClient.requestWithBaseUrl(replica.getCoreUrl(), replica.getCollection(), distributedRequest);
+    // Use the update-only http client, considering encryption is an update as we indeed create new Lucene segments.
+    Http2SolrClient solrClient = req.getCoreContainer().getUpdateShardHandler().getUpdateOnlyHttpClient();
+    GenericSolrRequest distributedRequest = new GenericSolrRequest(SolrRequest.METHOD.POST, req.getPath(), params);
+    return solrClient.requestWithBaseUrl(replica.getCoreUrl(), null, distributedRequest);
   }
 
   private void commitEmptyIndexForEncryption(@Nullable String keyId,
@@ -522,7 +520,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
           long startTimeNs = getTimeSource().getTimeNs();
           boolean logEncryptionComplete = updateLog.encryptLogs();
           log.info("{} encrypted the update log in {} ms",
-                  logEncryptionComplete ? "Successfully" : "Partially", elapsedTimeMs(startTimeNs));
+                  logEncryptionComplete ? "Successfully" : "Partially", toMs(elapsedTimeNs(startTimeNs)));
           // If the logs encryption is not complete, it means some logs are currently in use.
           // The encryption will be automatically be retried after the next commit which should
           // release the old transaction log and make it ready for encryption.
@@ -535,7 +533,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
         // each segment which is not encrypted with the latest active key id.
         commitCmd.maxOptimizeSegments = Integer.MAX_VALUE;
         req.getCore().getUpdateHandler().commit(commitCmd);
-        log.info("Successfully triggered index encryption with commit in {} ms", elapsedTimeMs(startTimeNs));
+        log.info("Successfully triggered index encryption with commit in {} ms", toMs(elapsedTimeNs(startTimeNs)));
 
       } catch (IOException e) {
         log.error("Exception while encrypting the index", e);
@@ -592,8 +590,12 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     return Objects.equals(keyId, activeKeyId);
   }
 
-  private long elapsedTimeMs(long startTimeNs) {
-    return getTimeSource().convertDelay(TimeUnit.NANOSECONDS, getTimeSource().getTimeNs() - startTimeNs, TimeUnit.MILLISECONDS);
+  private long elapsedTimeNs(long startTimeNs) {
+    return getTimeSource().getTimeNs() - startTimeNs;
+  }
+
+  private static long toMs(long ns) {
+    return TimeUnit.NANOSECONDS.toMillis(ns);
   }
 
   // For testing.
