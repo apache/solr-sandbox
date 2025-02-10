@@ -282,9 +282,14 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     }
 
     testUtil.commit();
+    testUtil.waitUntilEncryptionIsComplete(KEY_ID_1);
 
     // Verify that the segment is encrypted.
+    forceClearText = true;
+    testUtil.assertCannotReloadCores();
+    forceClearText = false;
     soleKeyIdAllowed = KEY_ID_1;
+    testUtil.reloadCores();
     testUtil.assertQueryReturns("weather", 1);
   }
 
