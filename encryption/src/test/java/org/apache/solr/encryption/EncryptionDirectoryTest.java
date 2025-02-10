@@ -30,7 +30,10 @@ import org.junit.Test;
 import org.apache.solr.encryption.crypto.AesCtrEncrypterFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -44,15 +47,10 @@ import static org.apache.solr.encryption.TestingKeySupplier.KEY_SECRET_2;
 
 /**
  * Tests {@link EncryptionDirectory}.
- * <p>
- * This test class ignores the DirectoryFactory defined in solrconfig.xml to use
- * {@link EncryptionDirectoryFactory}.
  */
 public class EncryptionDirectoryTest extends SolrCloudTestCase {
 
   private static final String COLLECTION_PREFIX = EncryptionDirectoryTest.class.getSimpleName() + "-collection-";
-
-  private static MockEncryptionDirectory mockDir;
 
   private String collectionName;
   private CloudSolrClient solrClient;
@@ -80,14 +78,13 @@ public class EncryptionDirectoryTest extends SolrCloudTestCase {
     solrClient = cluster.getSolrClient();
     CollectionAdminRequest.createCollection(collectionName, 2, 2).process(solrClient);
     cluster.waitForActiveCollection(collectionName, 2, 4);
-    testUtil = new EncryptionTestUtil(solrClient, collectionName);
+    testUtil = new EncryptionTestUtil(solrClient, collectionName)
+        .setShouldDistributeRequests(false);
   }
 
   @Override
   public void tearDown() throws Exception {
-    if (mockDir != null) {
-      mockDir.clearMockValues();
-    }
+    MockFactory.clearMockValues();
     CollectionAdminRequest.deleteCollection(collectionName).process(solrClient);
     super.tearDown();
   }
@@ -106,7 +103,7 @@ public class EncryptionDirectoryTest extends SolrCloudTestCase {
    */
   private void indexAndEncryptOneSegment() throws Exception {
     // Start with no key ids defined in the latest commit metadata.
-    mockDir.clearMockValues();
+    MockFactory.clearMockValues();
     // Create 2 index segments without encryption.
     testUtil.indexDocsAndCommit("weather broadcast");
     testUtil.indexDocsAndCommit("sunny weather");
@@ -120,23 +117,23 @@ public class EncryptionDirectoryTest extends SolrCloudTestCase {
 
     // Set the encryption key id in the commit user data,
     // and run an optimized commit to rewrite the index, now encrypted.
-    mockDir.setKeysInCommitUserData(KEY_ID_1);
+    MockFactory.setKeysInCommitUserData(KEY_ID_1);
     optimizeCommit();
 
     // Verify that without key id, we cannot decrypt the index anymore.
-    mockDir.forceClearText = true;
+    MockFactory.forceClearText = true;
     testUtil.assertCannotReloadCores();
     // Verify that with a wrong key id, we cannot decrypt the index.
-    mockDir.forceClearText = false;
-    mockDir.forceKeySecret = KEY_SECRET_2;
+    MockFactory.forceClearText = false;
+    MockFactory.forceKeySecret = KEY_SECRET_2;
     testUtil.assertCannotReloadCores();
     // Verify that with the right key id, we can decrypt the index and search it.
-    mockDir.forceKeySecret = null;
-    mockDir.expectedKeySecret = KEY_SECRET_1;
+    MockFactory.forceKeySecret = null;
+    MockFactory.expectedKeySecrets = List.of(KEY_SECRET_1);
     testUtil.reloadCores();
     testUtil.assertQueryReturns("weather", 2);
     testUtil.assertQueryReturns("sunny", 1);
-    mockDir.clearMockValues();
+    MockFactory.clearMockValues();
   }
 
   /**
@@ -156,24 +153,24 @@ public class EncryptionDirectoryTest extends SolrCloudTestCase {
     indexAndEncryptOneSegment();
 
     // Create 1 new segment with the same encryption key id.
-    mockDir.setKeysInCommitUserData(KEY_ID_1);
+    MockFactory.setKeysInCommitUserData(KEY_ID_1);
     testUtil.indexDocsAndCommit("foggy weather");
     testUtil.indexDocsAndCommit("boo");
 
     // Verify that without key id, we cannot decrypt the index.
-    mockDir.forceClearText = true;
+    MockFactory.forceClearText = true;
     testUtil.assertCannotReloadCores();
     // Verify that with a wrong key id, we cannot decrypt the index.
-    mockDir.forceClearText = false;
-    mockDir.forceKeySecret = KEY_SECRET_2;
+    MockFactory.forceClearText = false;
+    MockFactory.forceKeySecret = KEY_SECRET_2;
     testUtil.assertCannotReloadCores();
     // Verify that with the right key id, we can decrypt the index and search it.
-    mockDir.forceKeySecret = null;
-    mockDir.expectedKeySecret = KEY_SECRET_1;
+    MockFactory.forceKeySecret = null;
+    MockFactory.expectedKeySecrets = List.of(KEY_SECRET_1);
     testUtil.reloadCores();
     testUtil.assertQueryReturns("weather", 3);
     testUtil.assertQueryReturns("sunny", 1);
-    mockDir.clearMockValues();
+    MockFactory.clearMockValues();
   }
 
   /**
@@ -186,19 +183,19 @@ public class EncryptionDirectoryTest extends SolrCloudTestCase {
 
     // Set the new encryption key id in the commit user data,
     // and run an optimized commit to rewrite the index, now encrypted with the new key.
-    mockDir.setKeysInCommitUserData(KEY_ID_1, KEY_ID_2);
+    MockFactory.setKeysInCommitUserData(KEY_ID_1, KEY_ID_2);
     optimizeCommit();
 
     // Verify that without key id, we cannot decrypt the index.
-    mockDir.forceClearText = true;
+    MockFactory.forceClearText = true;
     testUtil.assertCannotReloadCores();
     // Verify that with a wrong key id, we cannot decrypt the index.
-    mockDir.forceClearText = false;
-    mockDir.forceKeySecret = KEY_SECRET_1;
+    MockFactory.forceClearText = false;
+    MockFactory.forceKeySecret = KEY_SECRET_1;
     testUtil.assertCannotReloadCores();
     // Verify that with the right key id, we can decrypt the index and search it.
-    mockDir.forceKeySecret = null;
-    mockDir.expectedKeySecret = KEY_SECRET_2;
+    MockFactory.forceKeySecret = null;
+    MockFactory.expectedKeySecrets = List.of(KEY_SECRET_1, KEY_SECRET_2);
     testUtil.reloadCores();
     testUtil.assertQueryReturns("weather", 3);
     testUtil.assertQueryReturns("sunny", 1);
@@ -214,11 +211,11 @@ public class EncryptionDirectoryTest extends SolrCloudTestCase {
 
     // Remove the active key parameter from the commit user data,
     // and run an optimized commit to rewrite the index, now cleartext with no keys.
-    mockDir.setKeysInCommitUserData(KEY_ID_1, null);
+    MockFactory.setKeysInCommitUserData(KEY_ID_1, null);
     optimizeCommit();
 
     // Verify that without key id, we can reload the index because it is not encrypted.
-    mockDir.forceClearText = true;
+    MockFactory.forceClearText = true;
     testUtil.reloadCores();
     testUtil.assertQueryReturns("weather", 3);
     testUtil.assertQueryReturns("sunny", 1);
@@ -232,7 +229,7 @@ public class EncryptionDirectoryTest extends SolrCloudTestCase {
    * {@link EncryptionRequestHandler}, but this test is designed to work independently.
    */
   private void optimizeCommit() {
-    testUtil.forAllReplicas(replica -> {
+    testUtil.forAllReplicas(false, replica -> {
       UpdateRequest request = new UpdateRequest();
       request.setAction(UpdateRequest.ACTION.OPTIMIZE, true, true, 1);
       testUtil.requestCore(request, replica);
@@ -240,20 +237,41 @@ public class EncryptionDirectoryTest extends SolrCloudTestCase {
   }
 
   public static class MockFactory implements EncryptionDirectoryFactory.InnerFactory {
+
+    static final List<MockEncryptionDirectory> mockDirs = new ArrayList<>();
+
+    static boolean forceClearText;
+    static byte[] forceKeySecret;
+    static List<byte[]> expectedKeySecrets;
+
+    static void clearMockValues() {
+      forceClearText = false;
+      forceKeySecret = null;
+      expectedKeySecrets = null;
+      for (MockEncryptionDirectory mockDir : mockDirs) {
+        mockDir.clearMockValues();
+      }
+    }
+
+    static void setKeysInCommitUserData(String... keyIds) throws IOException {
+      for (MockEncryptionDirectory mockDir : mockDirs) {
+        mockDir.setKeysInCommitUserData(keyIds);
+      }
+    }
+
     @Override
     public EncryptionDirectory create(Directory delegate,
                                       AesCtrEncrypterFactory encrypterFactory,
                                       KeySupplier keySupplier) throws IOException {
-      return mockDir = new MockEncryptionDirectory(delegate, encrypterFactory, keySupplier);
+      MockEncryptionDirectory mockDir = new MockEncryptionDirectory(delegate, encrypterFactory, keySupplier);
+      mockDirs.add(mockDir);
+      return mockDir;
     }
   }
 
   private static class MockEncryptionDirectory extends EncryptionDirectory {
 
     final KeySupplier keySupplier;
-    boolean forceClearText;
-    byte[] forceKeySecret;
-    byte[] expectedKeySecret;
 
     MockEncryptionDirectory(Directory delegate, AesCtrEncrypterFactory encrypterFactory, KeySupplier keySupplier)
       throws IOException {
@@ -263,9 +281,6 @@ public class EncryptionDirectoryTest extends SolrCloudTestCase {
 
     void clearMockValues() {
       commitUserData = new CommitUserData(commitUserData.segmentFileName, Map.of());
-      forceClearText = false;
-      forceKeySecret = null;
-      expectedKeySecret = null;
     }
 
     /**
@@ -285,7 +300,7 @@ public class EncryptionDirectoryTest extends SolrCloudTestCase {
 
     @Override
     public IndexInput openInput(String fileName, IOContext context) throws IOException {
-      return forceClearText ? in.openInput(fileName, context) : super.openInput(fileName, context);
+      return MockFactory.forceClearText ? in.openInput(fileName, context) : super.openInput(fileName, context);
     }
 
     @Override
@@ -298,12 +313,19 @@ public class EncryptionDirectoryTest extends SolrCloudTestCase {
 
     @Override
     protected byte[] getKeySecret(String keyRef) throws IOException {
-      if (forceKeySecret != null) {
-        return forceKeySecret;
+      if (MockFactory.forceKeySecret != null) {
+        return MockFactory.forceKeySecret;
       }
       byte[] keySecret = super.getKeySecret(keyRef);
-      if (expectedKeySecret != null) {
-        assertArrayEquals(expectedKeySecret, keySecret);
+      if (MockFactory.expectedKeySecrets != null) {
+        boolean keySecretMatches = false;
+        for (byte[] expectedKeySecret : MockFactory.expectedKeySecrets) {
+          if (Arrays.equals(expectedKeySecret, keySecret)) {
+            keySecretMatches = true;
+            break;
+          }
+        }
+        assertTrue(keySecretMatches);
       }
       return keySecret;
     }

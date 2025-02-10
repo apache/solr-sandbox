@@ -33,22 +33,22 @@ sourceSets {
 }
 
 dependencies {
-    implementation 'org.apache.solr:solr-core:9.6.0'
-    implementation 'org.apache.lucene:lucene-core:9.10.0'
+    implementation 'org.apache.solr:solr-core:9.8.0'
+    implementation 'org.apache.lucene:lucene-core:9.11.1'
     implementation 'com.google.code.findbugs:jsr305:3.0.2'
 
-    // Optional, used by the KmsKeySupplier.
-    implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
+    // Optional, used by the KmsKeySupplier example.
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.2.0'
     implementation 'io.opentracing:opentracing-util:0.33.0'
 
     // Optional, commons-io and commons-codec are only required by the
     // tool class CharStreamEncrypter, which is not used for the index
     // encryption.
-    implementation 'commons-io:commons-io:2.11.0'
-    implementation 'commons-codec:commons-codec:1.16.0'
+    implementation 'commons-io:commons-io:2.18.0'
+    implementation 'commons-codec:commons-codec:1.18.0'
 
-    testImplementation 'org.apache.solr:solr-test-framework:9.6.0'
-    testImplementation 'org.apache.lucene:lucene-test-framework:9.10.0'
+    testImplementation 'org.apache.solr:solr-test-framework:9.8.0'
+    testImplementation 'org.apache.lucene:lucene-test-framework:9.11.1'
 }
 
 test {

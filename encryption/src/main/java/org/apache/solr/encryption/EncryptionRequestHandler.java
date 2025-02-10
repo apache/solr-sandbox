@@ -19,8 +19,18 @@ package org.apache.solr.encryption;
 import org.apache.lucene.index.SegmentCommitInfo;
 import org.apache.lucene.index.SegmentInfos;
 import org.apache.lucene.store.Directory;
+import org.apache.solr.client.solrj.SolrRequest;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.Http2SolrClient;
+import org.apache.solr.client.solrj.request.GenericSolrRequest;
+import org.apache.solr.client.solrj.response.SimpleSolrResponse;
 import org.apache.solr.common.SolrException;
+import org.apache.solr.common.cloud.DocCollection;
+import org.apache.solr.common.cloud.Replica;
+import org.apache.solr.common.cloud.Slice;
+import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.util.ExecutorUtil;
+import org.apache.solr.common.util.TimeSource;
 import org.apache.solr.core.DirectoryFactory;
 import org.apache.solr.core.SolrCore;
 import org.apache.solr.handler.RequestHandlerBase;
@@ -31,19 +41,29 @@ import org.apache.solr.security.PermissionNameProvider;
 import org.apache.solr.update.CommitUpdateCommand;
 import org.apache.solr.update.UpdateHandler;
 import org.apache.solr.update.UpdateLog;
+import org.apache.solr.util.TimeOut;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
+import static org.apache.solr.common.params.CommonParams.DISTRIB;
+import static org.apache.solr.common.params.CommonParams.TIME_ALLOWED;
 import static org.apache.solr.encryption.CommitUtil.readLatestCommit;
 import static org.apache.solr.encryption.EncryptionUtil.*;
 
@@ -55,21 +75,30 @@ import static org.apache.solr.encryption.EncryptionUtil.*;
  * value {@link #NO_KEY_ID} must be provided.
  * <p>
  * The encryption processing is asynchronous. The request returns immediately with two response
- * parameters. {@link #ENCRYPTION_STATE} parameter with values {@link #STATE_PENDING},
- * {@link #STATE_COMPLETE}, or {@link #STATE_BUSY}. And {@link #STATUS} parameter with values
+ * parameters. {@link #ENCRYPTION_STATE} parameter with values {@link State#PENDING},
+ * {@link State#COMPLETE}, or {@link State#BUSY}. And {@link #STATUS} parameter with values
  * {@link #STATUS_SUCCESS} or {@link #STATUS_FAILURE}.
  * <p>
  * The expected usage of this handler is to first send an encryption request with a key id, and
- * receive a response with {@link #STATUS_SUCCESS} and a {@link #STATE_PENDING}. If the caller needs
+ * receive a response with {@link #STATUS_SUCCESS} and a {@link State#PENDING}. If the caller needs
  * to know when the encryption is complete, it can (optionally) repeatedly send the same encryption
  * request with the same key id, until it receives a response with {@link #STATUS_SUCCESS} and a
- * {@link #STATE_COMPLETE}.
+ * {@link State#COMPLETE}.
  * <p>
- * If the handler returns a response with {@link #STATE_BUSY}, it means that another encryption for a
+ * If the handler returns a response with {@link State#BUSY}, it means that another encryption for a
  * different key id is ongoing on the same Solr core. It cannot start a new encryption until it finishes.
  * <p>
  * If the handler returns a response with {@link #STATUS_FAILURE}, it means the request did not succeed
  * and should be retried by the caller (there should be error logs).
+ * <p>
+ * The caller can provide the additional parameter {@link org.apache.solr.common.params.CommonParams#DISTRIB} with
+ * value "true". In this case, this handler will distribute the encryption request to all the leader replicas of
+ * all the shards of the collection, ensuring they all encrypt their index shard. The response {@link #ENCRYPTION_STATE}
+ * will be {@link State#COMPLETE} only when all the shards return {@link State#COMPLETE}. So the caller may repeatedly
+ * send the same encryption request with {@link org.apache.solr.common.params.CommonParams#DISTRIB} "true"
+ * to know when the whole collection encryption is complete. In addition, the caller can set the
+ * {@link org.apache.solr.common.params.CommonParams#TIME_ALLOWED} parameter to define a timeout for the request
+ * distribution, in milliseconds. This timeout is for the distribution itself, not the encryption process.
  */
 public class EncryptionRequestHandler extends RequestHandlerBase {
 
@@ -112,18 +141,62 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
    */
   public static final String ENCRYPTION_STATE = "encryptionState";
   /**
-   * One of {@link #ENCRYPTION_STATE} values: the encryption with the provided key id is ongoing and pending.
+   * Enumeration of the {@link #ENCRYPTION_STATE} values.
    */
-  public static final String STATE_PENDING = "pending";
-  /**
-   * One of {@link #ENCRYPTION_STATE} values: the encryption with the provided key id is complete.
-   */
-  public static final String STATE_COMPLETE = "complete";
-  /**
-   * One of {@link #ENCRYPTION_STATE} values: another encryption for a different key id is ongoing
-   * on the same Solr core; cannot start a new encryption until it finishes.
-   */
-  public static final String STATE_BUSY = "busy";
+  public enum State {
+    /** The encryption with the provided key id is complete. */
+    COMPLETE("complete", 0),
+    /** The request distribution timed out (can only be returned when {@link org.apache.solr.common.params.CommonParams#DISTRIB} is set). */
+    TIMEOUT("timeout", 1),
+    /** The encryption with the provided key id is ongoing and pending. */
+    PENDING("pending", 2),
+    /** Another encryption for a different key id is ongoing on the same Solr core; cannot start a new encryption until it finishes. */
+    BUSY("busy", 3),
+    /** At least one distributed encryption request failed for a shard (can only be returned when {@link org.apache.solr.common.params.CommonParams#DISTRIB} is set). */
+    ERROR("error", 4),
+    /** The request distribution was interrupted (can only be returned when {@link org.apache.solr.common.params.CommonParams#DISTRIB} is set). */
+    INTERRUPTED("interrupted", 5);
+
+    public final String value;
+    private final int priority;
+
+    State(String value, int priority) {
+      this.value = value;
+      this.priority = priority;
+    }
+
+    public static State fromValue(String value) {
+      switch (value) {
+        case "complete":
+          return COMPLETE;
+        case "timeout":
+          return TIMEOUT;
+        case "pending":
+          return PENDING;
+        case "busy":
+          return BUSY;
+        case "error":
+          return ERROR;
+        case "interrupted":
+          return INTERRUPTED;
+        default:
+          throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "Unsupported encryption state '" + value + "'");
+      }
+    }
+
+    public boolean isSuccess() {
+      switch (this) {
+        case COMPLETE:
+        case PENDING:
+        case BUSY:
+          return true;
+        default:
+          return false;
+      }
+    }
+  }
+
+  private static final long DISTRIBUTION_MAX_ATTEMPTS = 3;
 
   private static final Object pendingEncryptionLock = new Object();
   private static final Map<String, PendingKeyId> pendingEncryptions = new HashMap<>();
@@ -185,7 +258,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
 
   @Override
   public void handleRequestBody(SolrQueryRequest req, SolrQueryResponse rsp) throws Exception {
-    long startTimeMs = System.currentTimeMillis();
+    long startTimeNs = getTimeSource().getTimeNs();
     String keyId = req.getParams().get(PARAM_KEY_ID);
     if (keyId == null || keyId.isEmpty()) {
       rsp.add(STATUS, STATUS_FAILURE);
@@ -194,15 +267,22 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     } else if (keyId.equals(NO_KEY_ID)) {
       keyId = null;
     }
+    // Check the defined DirectoryFactory instance.
     EncryptionDirectoryFactory.getFactory(req.getCore());
+
+    if (req.getParams().getBool(DISTRIB, false)) {
+      distributeRequest(req, rsp, keyId, startTimeNs);
+      return;
+    }
+
     log.debug("Encrypt request for keyId={}", keyId);
     boolean success = false;
-    String encryptionState = STATE_PENDING;
+    State state = State.PENDING;
     try {
       SegmentInfos segmentInfos = readLatestCommit(req.getCore());
       if (segmentInfos.size() == 0) {
         commitEmptyIndexForEncryption(keyId, segmentInfos, req, rsp);
-        encryptionState = STATE_COMPLETE;
+        state = State.COMPLETE;
         success = true;
         return;
       }
@@ -221,7 +301,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
         }
       }
       if (encryptionComplete) {
-        encryptionState = STATE_COMPLETE;
+        state = State.COMPLETE;
         success = true;
         return;
       }
@@ -231,12 +311,11 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
         if (pendingKeyId != null) {
           if (Objects.equals(pendingKeyId.keyId, keyId)) {
             log.debug("Ongoing encryption for keyId={}", keyId);
-            encryptionState = STATE_PENDING;
             success = true;
           } else {
             log.debug("Core busy encrypting for keyId={} different than requested keyId={}",
                       pendingKeyId.keyId, keyId);
-            encryptionState = STATE_BUSY;
+            state = State.BUSY;
           }
           return;
         }
@@ -244,7 +323,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
       }
       try {
         commitEncryptionStart(keyId, segmentInfos, req, rsp);
-        encryptAsync(req, startTimeMs);
+        encryptAsync(req);
         success = true;
       } finally {
         if (!success) {
@@ -255,15 +334,119 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
       }
 
     } finally {
-      if (success) {
-        rsp.add(STATUS, STATUS_SUCCESS);
-      } else {
-        rsp.add(STATUS, STATUS_FAILURE);
-      }
-      log.info("Responding encryption state={} success={} for keyId={}",
-               encryptionState, success, keyId);
-      rsp.add(ENCRYPTION_STATE, encryptionState);
+      String statusValue = success ? STATUS_SUCCESS : STATUS_FAILURE;
+      rsp.add(STATUS, statusValue);
+      rsp.addToLog(STATUS, statusValue);
+      rsp.add(ENCRYPTION_STATE, state.value);
+      rsp.addToLog(ENCRYPTION_STATE, state.value);
+      log.info("Responding encryption state={} success={} for keyId={} timeMs={}",
+          state.value, success, keyId, toMs(elapsedTimeNs(startTimeNs)));
     }
+  }
+
+  private void distributeRequest(SolrQueryRequest req, SolrQueryResponse rsp, String keyId, long startTimeNs) {
+    boolean success = false;
+    State collectionState = null;
+    long timeAllowedMs = req.getParams().getLong(TIME_ALLOWED, 0);
+    TimeOut timeOut = timeAllowedMs <= 0 ? null : new TimeOut(timeAllowedMs, TimeUnit.MILLISECONDS, getTimeSource());
+    try {
+      String collectionName = req.getCore().getCoreDescriptor().getCollectionName();
+      if (collectionName == null) {
+        throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "Parameter " + DISTRIB + " can only be used in Solr Cloud mode.");
+      }
+      log.debug("Encrypt request distributed for keyId={}", keyId);
+      DocCollection docCollection = req.getCore().getCoreContainer().getZkController().getZkStateReader().getCollection(collectionName);
+      if (docCollection == null) {
+        throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "Parameter " + DISTRIB + " present but collection '" + collectionName + "' not found.");
+      }
+      ModifiableSolrParams params = createDistributedRequestParams(req, rsp, keyId);
+      Collection<Slice> slices = docCollection.getActiveSlices();
+      Collection<Callable<State>> encryptRequests = new ArrayList<>(slices.size());
+      for (Slice slice : slices) {
+        Replica replica = slice.getLeader();
+        if (replica == null) {
+          log.error("No leader found for shard {}", slice.getName());
+          collectionState = State.ERROR;
+          continue;
+        }
+        encryptRequests.add(() -> sendEncryptionRequestWithRetry(replica, req, params, keyId));
+      }
+      try {
+        List<Future<State>> responses = timeOut == null ?
+            executor.invokeAll(encryptRequests)
+            : executor.invokeAll(encryptRequests, timeOut.timeLeft(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
+        for (Future<State> response : responses) {
+          State state;
+          try {
+            state = response.get();
+          } catch (ExecutionException e) {
+            log.error("Error distributing encryption request for keyId={}", keyId, e);
+            collectionState = State.ERROR;
+            break;
+          } catch (CancellationException e) {
+            log.warn("Cancelled distributing encryption request for keyId={}", keyId, e);
+            if (collectionState == null || State.TIMEOUT.priority > collectionState.priority) {
+              collectionState = State.TIMEOUT;
+            }
+            break;
+          }
+          if (collectionState == null || state.priority > collectionState.priority) {
+            collectionState = state;
+          }
+        }
+      } catch (InterruptedException e) {
+        collectionState = State.INTERRUPTED;
+      }
+      success = collectionState == null || collectionState.isSuccess();
+    } finally {
+      String statusValue = success ? STATUS_SUCCESS : STATUS_FAILURE;
+      rsp.add(STATUS, statusValue);
+      rsp.addToLog(STATUS, statusValue);
+      if (collectionState != null) {
+        rsp.add(ENCRYPTION_STATE, collectionState.value);
+        rsp.addToLog(ENCRYPTION_STATE, collectionState.value);
+      }
+      if (log.isInfoEnabled()) {
+        log.info("Responding encryption distributed state={} success={} for keyId={} timeMs={}",
+            (collectionState == null ? null : collectionState.value), success, keyId, toMs(elapsedTimeNs(startTimeNs)));
+      }
+    }
+  }
+
+  protected ModifiableSolrParams createDistributedRequestParams(SolrQueryRequest req, SolrQueryResponse rsp, String keyId) {
+    return new ModifiableSolrParams().set(PARAM_KEY_ID, keyId == null ? NO_KEY_ID : keyId);
+  }
+
+  private State sendEncryptionRequestWithRetry(
+      Replica replica,
+      SolrQueryRequest req,
+      ModifiableSolrParams params,
+      String keyId) {
+    for (int numAttempts = 0; numAttempts < DISTRIBUTION_MAX_ATTEMPTS; numAttempts++) {
+      try {
+        SimpleSolrResponse response = sendEncryptionRequest(replica, req, params);
+        Object responseStatus = response.getResponse().get(STATUS);
+        Object responseState = response.getResponse().get(ENCRYPTION_STATE);
+        log.info("Encryption state {} status {} for replica {} keyId {} in {} ms", responseStatus, responseState, replica.getName(), keyId, response.getElapsedTime());
+        if (responseState != null) {
+          return State.fromValue(responseState.toString());
+        }
+      } catch (SolrServerException | IOException e) {
+        log.error("Error occurred while sending encryption request", e);
+      }
+    }
+    throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "Failed encryption request to replica " + replica.getName() + " for keyId " + keyId);
+  }
+
+  private SimpleSolrResponse sendEncryptionRequest(
+      Replica replica,
+      SolrQueryRequest req,
+      ModifiableSolrParams params)
+      throws SolrServerException, IOException {
+    // Use the update-only http client, considering encryption is an update as we indeed create new Lucene segments.
+    Http2SolrClient solrClient = req.getCoreContainer().getUpdateShardHandler().getUpdateOnlyHttpClient();
+    GenericSolrRequest distributedRequest = new GenericSolrRequest(SolrRequest.METHOD.POST, req.getPath(), params);
+    return solrClient.requestWithBaseUrl(replica.getCoreUrl(), null, distributedRequest);
   }
 
   private void commitEmptyIndexForEncryption(@Nullable String keyId,
@@ -327,31 +510,33 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     req.getCore().getUpdateHandler().commit(commitCmd);
   }
 
-  private void encryptAsync(SolrQueryRequest req, long startTimeMs) {
+  private void encryptAsync(SolrQueryRequest req) {
     log.debug("Submitting async encryption");
     executor.submit(() -> {
       try {
         EncryptionUpdateLog updateLog = getEncryptionUpdateLog(req.getCore());
         if (updateLog != null) {
           log.debug("Encrypting update log");
+          long startTimeNs = getTimeSource().getTimeNs();
           boolean logEncryptionComplete = updateLog.encryptLogs();
-          log.info("{} encrypted the update log in {}",
-                  logEncryptionComplete ? "Successfully" : "Partially", elapsedTime(startTimeMs));
+          log.info("{} encrypted the update log in {} ms",
+                  logEncryptionComplete ? "Successfully" : "Partially", toMs(elapsedTimeNs(startTimeNs)));
           // If the logs encryption is not complete, it means some logs are currently in use.
           // The encryption will be automatically be retried after the next commit which should
           // release the old transaction log and make it ready for encryption.
         }
 
         log.debug("Triggering index encryption");
+        long startTimeNs = getTimeSource().getTimeNs();
         CommitUpdateCommand commitCmd = new CommitUpdateCommand(req, true);
         // Trigger EncryptionMergePolicy.findForcedMerges() to re-encrypt
         // each segment which is not encrypted with the latest active key id.
         commitCmd.maxOptimizeSegments = Integer.MAX_VALUE;
         req.getCore().getUpdateHandler().commit(commitCmd);
-        log.info("Successfully triggered index encryption with commit in {}", elapsedTime(startTimeMs));
+        log.info("Successfully triggered index encryption with commit in {} ms", toMs(elapsedTimeNs(startTimeNs)));
 
       } catch (IOException e) {
-        log.error("Exception while encrypting the index after {}", elapsedTime(startTimeMs), e);
+        log.error("Exception while encrypting the index", e);
       } finally {
         synchronized (pendingEncryptionLock) {
           pendingEncryptions.remove(req.getCore().getName());
@@ -405,8 +590,17 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     return Objects.equals(keyId, activeKeyId);
   }
 
-  private static String elapsedTime(long startTimeMs) {
-    return (System.currentTimeMillis() - startTimeMs) + " ms";
+  private long elapsedTimeNs(long startTimeNs) {
+    return getTimeSource().getTimeNs() - startTimeNs;
+  }
+
+  private static long toMs(long ns) {
+    return TimeUnit.NANOSECONDS.toMillis(ns);
+  }
+
+  // For testing.
+  protected TimeSource getTimeSource() {
+    return TimeSource.NANO_TIME;
   }
 
   /**

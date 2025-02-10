@@ -57,7 +57,7 @@ import static org.apache.solr.encryption.TestingKeySupplier.KEY_ID_3;
 public class EncryptionHeavyLoadTest extends SolrCloudTestCase {
 
   // Change the test duration manually to run longer, e.g. 20 minutes.
-  private static final long TEST_DURATION_MS = TimeUnit.SECONDS.toMillis(10);
+  private static final long TEST_DURATION_NS = TimeUnit.SECONDS.toNanos(10);
   private static final int RANDOM_DELAY_BETWEEN_INDEXING_BATCHES_MS = 50;
   private static final int RANDOM_NUM_DOCS_PER_BATCH = 200;
   private static final float PROBABILITY_OF_COMMIT_PER_BATCH = 0.33f;
@@ -81,9 +81,9 @@ public class EncryptionHeavyLoadTest extends SolrCloudTestCase {
   private int nextKeyIndex;
   private String keyId;
   private volatile Exception exception;
-  private long startTimeMs;
-  private long endTimeMs;
-  private long lastDisplayTimeMs;
+  private long startTimeNs;
+  private long endTimeNs;
+  private long lastDisplayTimeNs;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -123,8 +123,8 @@ public class EncryptionHeavyLoadTest extends SolrCloudTestCase {
           System.err.println("Interrupted while closing " + thread.getName());
         }
       }
-      startTimeMs = lastDisplayTimeMs = System.currentTimeMillis();
-      endTimeMs = startTimeMs + TimeUnit.SECONDS.toMillis(20);
+      startTimeNs = lastDisplayTimeNs = System.nanoTime();
+      endTimeNs = startTimeNs + TimeUnit.SECONDS.toNanos(20);
       print("waiting for the final encryption completion");
       assertTrue("Timeout waiting for the final encryption completion", encrypt(keyId, true));
       print("final encryption complete");
@@ -136,8 +136,8 @@ public class EncryptionHeavyLoadTest extends SolrCloudTestCase {
   @Test
   public void testReencryptionUnderHeavyConcurrentLoad() throws Exception {
     print("Starting test");
-    startTimeMs = lastDisplayTimeMs = System.currentTimeMillis();
-    endTimeMs = startTimeMs + TEST_DURATION_MS;
+    startTimeNs = lastDisplayTimeNs = System.nanoTime();
+    endTimeNs = startTimeNs + TEST_DURATION_NS;
     Random random = random();
     if (random.nextBoolean()) {
       print("preparing empty index for encryption");
@@ -149,8 +149,9 @@ public class EncryptionHeavyLoadTest extends SolrCloudTestCase {
       Thread.sleep(random.nextInt(RANDOM_DELAY_BETWEEN_REENCRYPTION_MS));
       encrypt(nextKeyId(), waitForCompletion(random));
     }
-    if (System.currentTimeMillis() - lastDisplayTimeMs >= 1000) {
-      print("elapsed time = " + ((System.currentTimeMillis() - startTimeMs) / 1000) + " s");
+    long timeNs = System.nanoTime();
+    if (timeNs - lastDisplayTimeNs >= TimeUnit.SECONDS.toNanos(1)) {
+      print("elapsed time = " + TimeUnit.NANOSECONDS.toSeconds(timeNs - startTimeNs) + " s");
     }
     print("Stopping test");
     if (exception != null) {
@@ -170,12 +171,12 @@ public class EncryptionHeavyLoadTest extends SolrCloudTestCase {
   }
 
   private boolean isTimeElapsed() {
-    long timeMs = System.currentTimeMillis();
-    if (timeMs - lastDisplayTimeMs >= 10000) {
-      print("elapsed time = " + ((timeMs - startTimeMs) / 1000) + " s");
-      lastDisplayTimeMs = timeMs;
+    long timeNs = System.nanoTime();
+    if (timeNs - lastDisplayTimeNs >= TimeUnit.SECONDS.toNanos(10)) {
+      print("elapsed time = " + TimeUnit.NANOSECONDS.toSeconds(timeNs - startTimeNs) + " s");
+      lastDisplayTimeNs = timeNs;
     }
-    return timeMs >= endTimeMs;
+    return timeNs >= endTimeNs;
   }
 
   private String nextKeyId() {

@@ -34,6 +34,7 @@ import java.util.UUID;
 
 import static org.apache.solr.encryption.EncryptionDirectoryFactory.PROPERTY_INNER_ENCRYPTION_DIRECTORY_FACTORY;
 import static org.apache.solr.encryption.EncryptionRequestHandler.NO_KEY_ID;
+import static org.apache.solr.encryption.EncryptionRequestHandler.STATUS_SUCCESS;
 import static org.apache.solr.encryption.EncryptionUtil.getKeyIdFromCommit;
 import static org.apache.solr.encryption.TestingKeySupplier.KEY_ID_1;
 import static org.apache.solr.encryption.TestingKeySupplier.KEY_ID_2;
@@ -45,6 +46,8 @@ import static org.apache.solr.encryption.TestingKeySupplier.KEY_ID_2;
 public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
 
   private static final String COLLECTION_PREFIX = EncryptionRequestHandlerTest.class.getSimpleName() + "-collection-";
+
+  protected static String configDir = "collection1";
 
   private static volatile boolean forceClearText;
   private static volatile String soleKeyIdAllowed;
@@ -58,7 +61,7 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     System.setProperty(PROPERTY_INNER_ENCRYPTION_DIRECTORY_FACTORY, MockFactory.class.getName());
     EncryptionTestUtil.setInstallDirProperty();
     cluster = new MiniSolrCloudCluster.Builder(2, createTempDir())
-      .addConfig("config", EncryptionTestUtil.getRandomConfigPath())
+      .addConfig("config", EncryptionTestUtil.getConfigPath(configDir))
       .configure();
   }
 
@@ -199,9 +202,63 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     testUtil.assertQueryReturns("weather", 4);
   }
 
+  @Test
+  public void testDistributionTimeout() throws Exception {
+    // Ensure the next distributed requests will time out.
+    testUtil
+        .setShouldDistributeRequests(true)
+        .setDistributionTimeoutMs(1); // any value > 0 will trigger the mock timeout.
+    TestingEncryptionRequestHandler.isDistributionTimeout = true;
+
+    // Send an encrypt request with a key id on an empty index.
+    EncryptionTestUtil.EncryptionStatus encryptionStatus = testUtil.encrypt(KEY_ID_1);
+
+    // Verify that the distribution timeout is handled with the appropriate response status.
+    assertFalse(encryptionStatus.isSuccess());
+    assertFalse(encryptionStatus.isComplete());
+    assertEquals(EncryptionRequestHandler.State.TIMEOUT, encryptionStatus.getCollectionState());
+  }
+
+  @Test
+  public void testDistributionState() throws Exception {
+    // Ensure the next distributed requests will return PENDING state.
+    testUtil.setShouldDistributeRequests(true);
+    TestingEncryptionRequestHandler.mockedDistributedResponseStatus = STATUS_SUCCESS;
+    TestingEncryptionRequestHandler.mockedDistributedResponseState = EncryptionRequestHandler.State.PENDING;
+
+    // Send an encrypt request with a key id on an empty index.
+    EncryptionTestUtil.EncryptionStatus encryptionStatus = testUtil.encrypt(KEY_ID_1);
+
+    // Verify that the distribution is successful with the PENDING state.
+    assertTrue(encryptionStatus.isSuccess());
+    assertEquals(EncryptionRequestHandler.State.PENDING, encryptionStatus.getCollectionState());
+
+    // Ensure the next distributed requests will return BUSY state.
+    TestingEncryptionRequestHandler.mockedDistributedResponseState = EncryptionRequestHandler.State.BUSY;
+
+    // Send an encrypt request with a key id on an empty index.
+    encryptionStatus = testUtil.encrypt(KEY_ID_1);
+
+    // Verify that the distribution is successful with the BUSY state.
+    assertTrue(encryptionStatus.isSuccess());
+    assertEquals(EncryptionRequestHandler.State.BUSY, encryptionStatus.getCollectionState());
+
+    // Ensure the next distributed requests return regular state.
+    TestingEncryptionRequestHandler.mockedDistributedResponseStatus = null;
+    TestingEncryptionRequestHandler.mockedDistributedResponseState = null;
+
+    // Send an encrypt request with a key id on an empty index.
+    encryptionStatus = testUtil.encrypt(KEY_ID_1);
+
+    // Verify that the distribution is successful with the COMPLETE state.
+    assertTrue(encryptionStatus.isSuccess());
+    assertEquals(EncryptionRequestHandler.State.COMPLETE, encryptionStatus.getCollectionState());
+  }
+
   private static void clearMockValues() {
     forceClearText = false;
     soleKeyIdAllowed = null;
+    TestingEncryptionRequestHandler.clearMockedValues();
   }
 
   public static class MockFactory implements EncryptionDirectoryFactory.InnerFactory {

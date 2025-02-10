@@ -31,6 +31,7 @@ import org.apache.solr.common.cloud.Replica;
 import org.apache.solr.common.cloud.Slice;
 import org.apache.solr.common.params.CoreAdminParams;
 import org.apache.solr.common.params.ModifiableSolrParams;
+import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.common.util.RetryUtil;
 import org.apache.solr.encryption.kms.TestingKmsClient;
@@ -42,9 +43,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import static org.apache.lucene.tests.util.LuceneTestCase.random;
+import static org.apache.solr.common.params.CommonParams.DISTRIB;
+import static org.apache.solr.common.params.CommonParams.TIME_ALLOWED;
 import static org.apache.solr.encryption.EncryptionRequestHandler.ENCRYPTION_STATE;
 import static org.apache.solr.encryption.EncryptionRequestHandler.PARAM_KEY_ID;
-import static org.apache.solr.encryption.EncryptionRequestHandler.STATE_COMPLETE;
 import static org.apache.solr.encryption.EncryptionRequestHandler.STATUS;
 import static org.apache.solr.encryption.EncryptionRequestHandler.STATUS_SUCCESS;
 import static org.apache.solr.encryption.kms.KmsEncryptionRequestHandler.PARAM_ENCRYPTION_KEY_BLOB;
@@ -70,10 +72,29 @@ public class EncryptionTestUtil {
   private final CloudSolrClient cloudSolrClient;
   private final String collectionName;
   private int docId;
+  private Boolean shouldDistributeRequests;
+  private long distributionTimeoutMs;
 
   public EncryptionTestUtil(CloudSolrClient cloudSolrClient, String collectionName) {
     this.cloudSolrClient = cloudSolrClient;
     this.collectionName = collectionName;
+  }
+
+  public boolean shouldDistributeEncryptRequest() {
+    if (shouldDistributeRequests == null) {
+      setShouldDistributeRequests(random().nextBoolean());
+    }
+    return shouldDistributeRequests;
+  }
+
+  public EncryptionTestUtil setShouldDistributeRequests(Boolean shouldDistributeRequests) {
+    this.shouldDistributeRequests = shouldDistributeRequests;
+    return this;
+  }
+
+  public EncryptionTestUtil setDistributionTimeoutMs(long distributionTimeoutMs) {
+    this.distributionTimeoutMs = distributionTimeoutMs;
+    return this;
   }
 
   /**
@@ -130,13 +151,33 @@ public class EncryptionTestUtil {
     params.set(PARAM_KEY_ID, keyId);
     params.set(PARAM_TENANT_ID, TENANT_ID);
     params.set(PARAM_ENCRYPTION_KEY_BLOB, generateKeyBlob(keyId));
+    if (shouldDistributeEncryptRequest()) {
+      return encryptDistrib(params);
+    }
     GenericSolrRequest encryptRequest = new GenericSolrRequest(SolrRequest.METHOD.GET, "/admin/encrypt", params);
     EncryptionStatus encryptionStatus = new EncryptionStatus();
-    forAllReplicas(replica -> {
-      NamedList<Object> response = requestCore(encryptRequest, replica);
+    forAllReplicas(false, replica -> {
+      NamedList<?> response = requestCore(encryptRequest, replica);
+      EncryptionRequestHandler.State state = EncryptionRequestHandler.State.fromValue(response.get(ENCRYPTION_STATE).toString());
       encryptionStatus.success &= response.get(STATUS).equals(STATUS_SUCCESS);
-      encryptionStatus.complete &= response.get(ENCRYPTION_STATE).equals(STATE_COMPLETE);
+      encryptionStatus.complete &= state == EncryptionRequestHandler.State.COMPLETE;
     });
+    return encryptionStatus;
+  }
+
+  private EncryptionStatus encryptDistrib(SolrParams params) throws SolrServerException, IOException {
+    ModifiableSolrParams modifiableParams = new ModifiableSolrParams().set(DISTRIB, true);
+    if (distributionTimeoutMs != 0 || random().nextBoolean()) {
+      modifiableParams.set(TIME_ALLOWED, String.valueOf(distributionTimeoutMs));
+    }
+    params = SolrParams.wrapDefaults(params, modifiableParams);
+    GenericSolrRequest encryptRequest = new GenericSolrRequest(SolrRequest.METHOD.GET, "/admin/encrypt", params);
+    NamedList<Object> response = cloudSolrClient.request(encryptRequest, collectionName);
+    EncryptionRequestHandler.State state = EncryptionRequestHandler.State.fromValue(response.get(ENCRYPTION_STATE).toString());
+    EncryptionStatus encryptionStatus = new EncryptionStatus();
+    encryptionStatus.success = response.get(STATUS).equals(STATUS_SUCCESS);
+    encryptionStatus.complete = state == EncryptionRequestHandler.State.COMPLETE;
+    encryptionStatus.collectionState = state;
     return encryptionStatus;
   }
 
@@ -187,10 +228,9 @@ public class EncryptionTestUtil {
    */
   public void reloadCores() throws Exception {
     try {
-      forAllReplicas(replica -> {
+      forAllReplicas(shouldDistributeEncryptRequest(), replica -> {
         try {
           CoreAdminRequest req = new CoreAdminRequest();
-          req.setBasePath(replica.getBaseUrl());
           req.setCoreName(replica.getCoreName());
           req.setAction(CoreAdminParams.CoreAdminAction.RELOAD);
           try (Http2SolrClient httpSolrClient = new Http2SolrClient.Builder(replica.getBaseUrl()).build()) {
@@ -220,18 +260,21 @@ public class EncryptionTestUtil {
   }
 
   /** Processes the given {@code action} for all replicas of the collection defined in the constructor. */
-  public void forAllReplicas(Consumer<Replica> action) {
+  public void forAllReplicas(boolean onlyLeaders, Consumer<Replica> action) {
     for (Slice slice : cloudSolrClient.getClusterState().getCollection(collectionName).getSlices()) {
-      for (Replica replica : slice.getReplicas()) {
-        action.accept(replica);
+      if (onlyLeaders) {
+        action.accept(slice.getLeader());
+      } else {
+        for (Replica replica : slice.getReplicas()) {
+          action.accept(replica);
+        }
       }
     }
   }
 
   /** Sends the given {@link SolrRequest} to a specific replica. */
   public NamedList<Object> requestCore(SolrRequest<?> request, Replica replica) {
-    request.setBasePath(replica.getCoreUrl());
-    try (Http2SolrClient httpSolrClient = new Http2SolrClient.Builder(replica.getBaseUrl()).build()) {
+    try (Http2SolrClient httpSolrClient = new Http2SolrClient.Builder(replica.getCoreUrl()).build()) {
       return httpSolrClient.request(request);
     } catch (SolrServerException e) {
       throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, e);
@@ -251,6 +294,7 @@ public class EncryptionTestUtil {
 
     private boolean success;
     private boolean complete;
+    private EncryptionRequestHandler.State collectionState;
 
     private EncryptionStatus() {
       this.success = true;
@@ -263,6 +307,10 @@ public class EncryptionTestUtil {
 
     public boolean isComplete() {
       return complete;
+    }
+
+    public EncryptionRequestHandler.State getCollectionState() {
+      return collectionState;
     }
   }
 }

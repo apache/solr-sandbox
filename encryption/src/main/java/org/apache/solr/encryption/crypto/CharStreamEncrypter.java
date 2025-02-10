@@ -39,6 +39,9 @@ import java.nio.charset.StandardCharsets;
  * buffers allocated. The encryption transformation is AES/CTR/NoPadding.
  * A secure random IV is generated for each encryption and appended as the first
  * appended chars.
+ * <p>
+ * This encryption tool is intended to encrypt write-once and then read-only strings,
+ * it should not be used to encrypt updatable content as CTR is not designed for that.
  */
 public class CharStreamEncrypter {
 
