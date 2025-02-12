@@ -127,7 +127,6 @@ public class EncryptionDirectory extends FilterDirectory {
    */
   protected IndexOutput maybeWrapOutput(IndexOutput indexOutput) throws IOException {
     String fileName = indexOutput.getName();
-    assert !fileName.startsWith(IndexFileNames.SEGMENTS);
     if (fileName.startsWith(IndexFileNames.PENDING_SEGMENTS)) {
       // The pending_segments file should not be encrypted. Do not wrap the IndexOutput.
       // It also means a commit has started, so set the flag to read the commit user data
@@ -135,8 +134,9 @@ public class EncryptionDirectory extends FilterDirectory {
       shouldReadCommitUserData = true;
       return indexOutput;
     }
-    if (!keySupplier.shouldEncrypt(fileName)) {
+    if (fileName.startsWith(IndexFileNames.SEGMENTS) || !keySupplier.shouldEncrypt(fileName)) {
       // The file should not be encrypted, based on its name. Do not wrap the IndexOutput.
+      // (the segments file can be opened by the IndexFetcher)
       return indexOutput;
     }
     boolean success = false;
