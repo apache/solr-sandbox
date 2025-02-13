@@ -35,10 +35,11 @@ import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.common.util.RetryUtil;
 import org.apache.solr.encryption.kms.TestingKmsClient;
-import org.junit.Assert;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -53,6 +54,7 @@ import static org.apache.solr.encryption.kms.KmsEncryptionRequestHandler.PARAM_E
 import static org.apache.solr.encryption.kms.KmsEncryptionRequestHandler.PARAM_TENANT_ID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Utility methods for encryption tests.
@@ -238,39 +240,78 @@ public class EncryptionTestUtil {
   }
 
   /**
-   * Reloads the leader replica core of the first shard of the collection.
+   * Reloads the replicas of the collection defined in the constructor.
+   * <p>
+   * If {@link #shouldDistributeEncryptRequest()} returns true, then only the leader replicas are reloaded
+   * (because only them receive the distributed encryption request).
    */
-  public void reloadCores() throws Exception {
+  public void reloadCores() {
+    reloadCores(shouldDistributeEncryptRequest());
+  }
+
+  /**
+   * Reloads the replicas of the collection defined in the constructor.
+   *
+   * @param onlyLeaders whether to only reload leader replicas, or all replicas.
+   */
+  public void reloadCores(boolean onlyLeaders) {
+    forAllReplicas(onlyLeaders, this::reloadCore);
+  }
+
+  /**
+   * Reloads a specific replica.
+   */
+  public void reloadCore(Replica replica) {
     try {
-      forAllReplicas(shouldDistributeEncryptRequest(), replica -> {
-        try {
-          CoreAdminRequest req = new CoreAdminRequest();
-          req.setCoreName(replica.getCoreName());
-          req.setAction(CoreAdminParams.CoreAdminAction.RELOAD);
-          try (Http2SolrClient httpSolrClient = new Http2SolrClient.Builder(replica.getBaseUrl()).build()) {
-            httpSolrClient.request(req);
-          }
-        } catch (SolrServerException e) {
-          throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, e);
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      });
-    } catch (SolrException e) {
-      throw new CoreReloadException("The index cannot be reloaded. There is probably an issue with the encryption key ids.", e);
+      CoreAdminRequest req = new CoreAdminRequest();
+      req.setCoreName(replica.getCoreName());
+      req.setAction(CoreAdminParams.CoreAdminAction.RELOAD);
+      try (Http2SolrClient httpSolrClient = new Http2SolrClient.Builder(replica.getBaseUrl()).build()) {
+        httpSolrClient.request(req);
+      }
+    } catch (SolrServerException | SolrException e) {
+      throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "The index cannot be reloaded. There is probably an issue with the encryption key ids.", e);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
   /**
-   * Verifies that {@link #reloadCores()} fails.
+   * Verifies that the replicas of the collection defined in the constructor fail to reload.
+   * <p>
+   * If {@link #shouldDistributeEncryptRequest()} returns true, then only the leader replicas are reloaded
+   * (because only them receive the distributed encryption request).
    */
-  public void assertCannotReloadCores() throws Exception {
-    try {
-      reloadCores();
-      Assert.fail("Core reloaded whereas it was not expected to be possible");
-    } catch (CoreReloadException e) {
-      // Expected.
+  public void assertCannotReloadCores() {
+    assertCannotReloadCores(shouldDistributeEncryptRequest());
+  }
+
+  /**
+   * Verifies that the replicas of the collection defined in the constructor fail to reload.
+   *
+   * @param onlyLeaders whether to only reload leader replicas, or all replicas.
+   */
+  public void assertCannotReloadCores(boolean onlyLeaders) {
+    Map<String, Integer> numReloadedPerShard = new HashMap<>();
+    forAllReplicas(onlyLeaders, replica -> {
+      try {
+        numReloadedPerShard.putIfAbsent(replica.getShard(), 0);
+        reloadCore(replica);
+        numReloadedPerShard.compute(replica.getShard(), (k, v) -> v == null ? 1 : v + 1);
+      } catch (SolrException e) {
+        // Expected.
+      }
+    });
+    // It is tricky to check that index is encrypted. We check that by reloading the cores, and
+    // forcing the mock EncryptionDirectory to consider clear text, and attempting to open the index
+    // files. But in our tests, the small index files are not in all shards. So we check here that
+    // at least one shard has no cores successfully reloaded.
+    for (Map.Entry<String, Integer> entry : numReloadedPerShard.entrySet()) {
+      if (entry.getValue() == 0) {
+        return;
+      }
     }
+    fail("Core reloaded whereas it was not expected to be possible");
   }
 
   /** Processes the given {@code action} for all replicas of the collection defined in the constructor. */
@@ -294,12 +335,6 @@ public class EncryptionTestUtil {
       throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, e);
     } catch (IOException e) {
       throw new RuntimeException(e);
-    }
-  }
-
-  private static class CoreReloadException extends Exception {
-    CoreReloadException(String msg, SolrException cause) {
-      super(msg, cause);
     }
   }
 

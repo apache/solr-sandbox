@@ -49,6 +49,9 @@ dependencies {
 
     testImplementation 'org.apache.solr:solr-test-framework:9.8.0'
     testImplementation 'org.apache.lucene:lucene-test-framework:9.11.1'
+
+    // Remove when ReplicationHandler hook is in upstream Solr.
+    implementation 'jakarta.ws.rs:jakarta.ws.rs-api:3.1.0'
 }
 
 test {
