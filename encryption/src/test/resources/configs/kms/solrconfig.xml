@@ -54,6 +54,8 @@
   <!-- Encryption handler can be called to trigger the encryption of the index and update log. -->
   <requestHandler name="/admin/encrypt" class="org.apache.solr.encryption.kms.KmsEncryptionRequestHandler"/>
 
+  <requestHandler name="/replication" class="org.apache.solr.encryption.EncryptionReplicationHandler" startup="lazy"/>
+
   <indexConfig>
     <mergeScheduler class="${solr.mscheduler:org.apache.lucene.index.ConcurrentMergeScheduler}"/>
 
