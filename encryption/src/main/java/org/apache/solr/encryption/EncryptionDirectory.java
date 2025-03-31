@@ -275,7 +275,7 @@ public class EncryptionDirectory extends FilterDirectory {
    */
   protected String getKeyRefForReading(IndexInput indexInput) throws IOException {
     // Always reading the magic number, even for non-encrypted indexes, is not a performance
-    // issue because it will be read immediately again when the Directory is returned, to
+    // issue because it will be read immediately again when the IndexInput is returned, to
     // check the index header (CodecUtil.checkIndexHeader()).
     long filePointer = indexInput.getFilePointer();
     int magic = readBEInt(indexInput);

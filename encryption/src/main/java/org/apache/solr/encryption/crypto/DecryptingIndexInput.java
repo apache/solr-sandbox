@@ -16,6 +16,7 @@
  */
 package org.apache.solr.encryption.crypto;
 
+import org.apache.lucene.store.FilterIndexInput;
 import org.apache.lucene.store.IndexInput;
 
 import java.io.EOFException;
@@ -29,11 +30,12 @@ import static org.apache.solr.encryption.crypto.AesCtrUtil.*;
  * the read-only index files. It can decrypt data previously encrypted with an {@link EncryptingIndexOutput}.
  * <p>It first reads the CTR Initialization Vector (IV). This random IV is not encrypted. Then it can decrypt the rest
  * of the file, which probably contains a header and footer, with random access.
+ * <p>It is a {@link FilterIndexInput}, so it is possible to {@link FilterIndexInput#unwrap} it.
  *
  * @see EncryptingIndexOutput
  * @see AesCtrEncrypter
  */
-public class DecryptingIndexInput extends IndexInput {
+public class DecryptingIndexInput extends FilterIndexInput {
 
   /**
    * Must be a multiple of {@link AesCtrUtil#AES_BLOCK_SIZE}.
@@ -84,7 +86,7 @@ public class DecryptingIndexInput extends IndexInput {
                               byte[] key,
                               AesCtrEncrypterFactory factory,
                               int bufferCapacity) throws IOException {
-    this("Decrypting " + indexInput.toString(),
+    this("Decrypting " + indexInput,
          indexInput.getFilePointer() + IV_LENGTH,
          indexInput.getFilePointer() + IV_LENGTH,
          indexInput.length() - indexInput.getFilePointer() - IV_LENGTH,
@@ -102,7 +104,7 @@ public class DecryptingIndexInput extends IndexInput {
                                IndexInput indexInput,
                                AesCtrEncrypter encrypter,
                                int bufferCapacity) {
-    super(resourceDescription);
+    super(resourceDescription, indexInput);
     assert delegateOffset >= 0 && sliceOffset >= 0 && sliceLength >= 0;
     this.delegateOffset = delegateOffset;
     this.sliceOffset = sliceOffset;
