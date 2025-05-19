@@ -23,6 +23,17 @@ import java.security.SecureRandom;
  */
 public class AesCtrUtil {
 
+  // Rationale about the choice of the CTR-Mode:
+  // - simple, efficient, random-access.
+  // - adapted to Lucene immutable index files.
+  // - file integrity and error detection checks are verified by Lucene checksums.
+  // - nonce-misuse resistance is implemented when building the random IV in this class (see generateRandomAesCtrIv).
+  // - used in combination with a strong AES cipher.
+  //
+  // See https://csrc.nist.rip/groups/ST/toolkit/BCM/documents/proposedmodes/ctr/ctr-spec.pdf
+  // Comparison between AES-XTS and AES-CTR
+  // See https://crypto.stackexchange.com/questions/64556/aes-xts-vs-aes-ctr-for-write-once-storage?rq=1
+
   /**
    * AES block has a fixed length of 16 bytes (128 bits).
    */
@@ -69,6 +80,40 @@ public class AesCtrUtil {
     // The IV length must be the AES block size.
     // For the CTR mode, the IV is composed of a random NONCE (first bytes) and a counter (last bytes).
     // com.sun.crypto.provider.CounterMode.increment() increments the counter starting from the last byte.
+
+    // Rationale for the IV construction:
+    // We have to ensure the IV is not repeated for the same encryption key. This is the (IV,key) pair
+    // reuse problem. Otherwise, a crib-dragging technique could eliminate the confidentiality of the
+    // paired contents (this would not reveal the encryption key).
+    // One approach could be to use part of the IV bytes to encode the segment id. But the segment id has
+    // a potentially unlimited size. And we would still need to differentiate the IV of the files in the
+    // segment.
+    // The approach taken here is a nonce-misuse resistance, to rely on a near-0 probability of having two
+    // files sharing the same IV. We use all the remaining IV 11 bytes to generate 88 secure random bits
+    // nounce.
+    // The probability of having at least two files sharing the same IV is calculated here for 3 scenarios.
+    // The probability can be estimated by following the Birthday Problem resolution
+    // (https://en.wikipedia.org/wiki/Birthday_problem).
+    // with n the number of files/IVs, and d the number of possible nounce values with 11 bytes (2^88), then
+    // with n << d, the probability of having at least two identical IVs can be estimated by
+    // P(n,d) ~= 1 - exp(- n(n-1)/2d) ~= n²/2d
+    //
+    // Scenario 1 typical - less than 2000 segments files on disk for the index.
+    // Lucene frequently removes old unused segment files. Even if it takes some time to remove them on a
+    // busy machine, we can consider there are less than 100 segments for an index on disk, which gives
+    // less than 2000 files. This would be less with compound files.
+    // P(2000,2^88) ~= 2000²/2^89 ~= 6.5E-21
+    //
+    // Scenario 2 very bad case - the key is changed every 4 months, all the segments produced are recorded
+    // by an attacker, one commit/segment per 5 seconds, and 20 files per segment.
+    // Num files recorded = 4*30*24*60*60/5*20 ~= 4.14E7 files
+    // P(4.14E7, 2^88) ~= 2.7E-12
+    //
+    // Scenario 3 awfully bad case - the key is changed every year, all the segments produced are recorded
+    // by an attacker, one commit/segment per second, and 20 files per segment.
+    // Num files recorded = 365*24*60*60*20 ~= 6.3E8 files
+    // P(6.3E8, 2^88) ~= 6.4E-10
+
     byte[] nonce = new byte[IV_LENGTH - COUNTER_LENGTH];
     secureRandom.nextBytes(nonce);
     byte[] iv = new byte[IV_LENGTH];

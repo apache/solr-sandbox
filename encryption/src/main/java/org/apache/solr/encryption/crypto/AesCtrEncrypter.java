@@ -23,6 +23,7 @@ package org.apache.solr.encryption.crypto;
  * <p>An {@link AesCtrEncrypter} must be first {@link #init(long) initialized} before it can be used to
  * {@link #process encrypt/decrypt}.
  * <p>Not thread safe.
+ * <p>See {@link AesCtrUtil} for internal doc about the choice of CTR mode.
  */
 public interface AesCtrEncrypter extends Cloneable {
 

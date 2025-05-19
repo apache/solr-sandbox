@@ -17,6 +17,7 @@
 package org.apache.solr.encryption.crypto;
 
 import org.apache.lucene.store.BufferedChecksum;
+import org.apache.lucene.store.FilterIndexOutput;
 import org.apache.lucene.store.IndexOutput;
 
 import java.io.IOException;
@@ -32,11 +33,12 @@ import static org.apache.solr.encryption.crypto.AesCtrUtil.*;
  * <p>It generates a cryptographically strong random CTR Initialization Vector (IV). This random IV is not encrypted and
  * is skipped by any {@link DecryptingIndexInput} reading the written data. Then it can encrypt the rest of the file
  * which probably contains a header and footer.
+ * <p>It is a {@link FilterIndexOutput}, so it is possible to {@link FilterIndexOutput#unwrap} it.
  *
  * @see DecryptingIndexInput
  * @see AesCtrEncrypter
  */
-public class EncryptingIndexOutput extends IndexOutput {
+public class EncryptingIndexOutput extends FilterIndexOutput {
 
   /**
    * Must be a multiple of {@link AesCtrUtil#AES_BLOCK_SIZE}.
@@ -81,7 +83,7 @@ public class EncryptingIndexOutput extends IndexOutput {
                                AesCtrEncrypterFactory factory,
                                int bufferCapacity)
     throws IOException {
-    super("Encrypting " + indexOutput.toString(), indexOutput.getName());
+    super("Encrypting " + indexOutput, indexOutput.getName(), indexOutput);
     this.indexOutput = indexOutput;
     byte[] iv = generateRandomIv();
     encrypter = factory.create(key, iv);
