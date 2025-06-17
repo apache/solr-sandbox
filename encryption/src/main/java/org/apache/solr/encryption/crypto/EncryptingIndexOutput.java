@@ -45,7 +45,6 @@ public class EncryptingIndexOutput extends FilterIndexOutput {
    */
   public static final int BUFFER_CAPACITY = 64 * AES_BLOCK_SIZE; // 1024
 
-  private final IndexOutput indexOutput;
   private final AesCtrEncrypter encrypter;
   private final byte[] inBuffer;
   private final byte[] outBuffer;
@@ -84,7 +83,6 @@ public class EncryptingIndexOutput extends FilterIndexOutput {
                                int bufferCapacity)
     throws IOException {
     super("Encrypting " + indexOutput, indexOutput.getName(), indexOutput);
-    this.indexOutput = indexOutput;
     byte[] iv = generateRandomIv();
     encrypter = factory.create(key, iv);
     encrypter.init(0);
@@ -115,7 +113,7 @@ public class EncryptingIndexOutput extends FilterIndexOutput {
           encryptBufferAndWrite();
         }
       } finally {
-        indexOutput.close();
+        out.close();
       }
     }
   }
@@ -165,7 +163,7 @@ public class EncryptingIndexOutput extends FilterIndexOutput {
   private void encryptBufferAndWrite() throws IOException {
     assert inSize > 0;
     encrypter.process(inBuffer, 0, inSize, outBuffer, 0);
-    indexOutput.writeBytes(outBuffer, 0, inSize);
+    out.writeBytes(outBuffer, 0, inSize);
     inSize = 0;
   }
 }
