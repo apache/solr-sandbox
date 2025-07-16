@@ -395,6 +395,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
           }
         }
       } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
         collectionState = State.INTERRUPTED;
       }
       success = collectionState == null || collectionState.isSuccess();
