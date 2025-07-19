@@ -34,6 +34,7 @@ import org.apache.solr.encryption.crypto.DecryptingIndexInput;
 import org.apache.solr.encryption.crypto.EncryptingIndexOutput;
 
 import javax.annotation.Nullable;
+import java.io.EOFException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
@@ -49,6 +50,7 @@ import java.util.stream.Collectors;
 import static org.apache.lucene.codecs.CodecUtil.readBEInt;
 import static org.apache.lucene.codecs.CodecUtil.writeBEInt;
 import static org.apache.solr.encryption.EncryptionUtil.*;
+import static org.apache.solr.encryption.crypto.AesCtrUtil.IV_LENGTH;
 
 /**
  * {@link FilterDirectory} that wraps a delegate {@link Directory} to encrypt/decrypt files on the fly.
@@ -80,6 +82,9 @@ public class EncryptionDirectory extends FilterDirectory {
    * is encrypted.
    */
   public static final int ENCRYPTION_MAGIC = 0x2E5BF271; // 777777777 in decimal
+
+  // An encrypted file starts with a 4-bytes "magic header", then 4-bytes key reference, then a 16-bytes random IV.
+  private static final int ENCRYPTION_HEADER_LENGTH = 8 + IV_LENGTH;
 
   protected final AesCtrEncrypterFactory encrypterFactory;
 
@@ -278,7 +283,13 @@ public class EncryptionDirectory extends FilterDirectory {
     // issue because it will be read immediately again when the IndexInput is returned, to
     // check the index header (CodecUtil.checkIndexHeader()).
     long filePointer = indexInput.getFilePointer();
-    int magic = readBEInt(indexInput);
+    int magic;
+    try {
+      magic = readBEInt(indexInput);
+    } catch (EOFException e) {
+      // The file contains less than 4 bytes (not expected to happen with Lucene). It is not encrypted.
+      magic = 0;
+    }
     if (magic == ENCRYPTION_MAGIC) {
       // This file is encrypted.
       // Read the key reference that follows.
@@ -325,6 +336,22 @@ public class EncryptionDirectory extends FilterDirectory {
       }
     }
     return segmentsWithOldKeyId == null ? Collections.emptyList() : segmentsWithOldKeyId;
+  }
+
+  /**
+   * Returns the logical length of the file. If the file is encrypted, its logical length ignores the encryption header.
+   *
+   * @param fileName the name of an existing file.
+   * @return the logical length of the file, in bytes.
+   */
+  @Override
+  public long fileLength(String fileName) throws IOException {
+    // Read the first 4 bytes to check the encryption "magic header".
+    try (IndexInput indexInput = in.openInput(fileName, IOContext.READONCE)) {
+      long fileLength = indexInput.length();
+      return fileLength >= 4 && readBEInt(indexInput) == ENCRYPTION_MAGIC ?
+          fileLength - ENCRYPTION_HEADER_LENGTH : fileLength;
+    }
   }
 
   /**
