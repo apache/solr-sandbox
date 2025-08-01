@@ -96,14 +96,17 @@ public class EncryptionBackupRepositoryTest extends AbstractBackupRepositoryTest
         AesCtrEncrypterFactory encrypterFactory = random().nextBoolean() ? CipherAesCtrEncrypter.FACTORY : LightAesCtrEncrypter.FACTORY;
         KeySupplier keySupplier = new TestingKeySupplier.Factory().create();
         try (Directory fsSourceDir = FSDirectory.open(sourcePath);
-             Directory encSourceDir = new TestEncryptionDirectory(fsSourceDir, encrypterFactory, keySupplier);
-             Directory destinationDir = FSDirectory.open(createTempDir().toAbsolutePath())) {
+             Directory destinationDir = FSDirectory.open(createTempDir().toAbsolutePath());
+             EncryptionDirectoryFactory encDirFactory = new EncryptionDirectoryFactory(keySupplier, encrypterFactory, TestEncryptionDirectory::new);
+             Directory encSourceDir = encDirFactory.get(sourcePath.toString(), DirectoryFactory.DirContext.BACKUP, null)) {
             String fileName = "source-file";
             String content = "content";
             try (IndexOutput out = encSourceDir.createOutput(fileName, IOContext.DEFAULT)) {
                 byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
                 out.writeBytes(bytes, bytes.length);
                 CodecUtil.writeFooter(out);
+            } finally {
+              encDirFactory.release(encSourceDir);
             }
 
             BackupRepositoryFactory repoFactory = new BackupRepositoryFactory(plugins);
