@@ -263,7 +263,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     if (req.getParams().getBool(DISTRIB, false)) {
       distributeRequest(req, rsp, keyId);
     } else {
-      handleRequest(req, rsp, keyId);
+      localRequest(req, rsp, keyId);
     }
   }
 
@@ -284,7 +284,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     EncryptionDirectoryFactory.getFactory(req.getCore());
   }
 
-  private void handleRequest(
+  private void localRequest(
       SolrQueryRequest req,
       SolrQueryResponse rsp,
       String keyId)
