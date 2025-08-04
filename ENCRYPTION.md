@@ -45,18 +45,8 @@ needs specific parameters to get a key.
 
 ## Installing and Configuring the Encryption Plug-In
 
-1. Configure the sharedLib directory in solr.xml (e.g. sharedLib=lib) and place the Encryption plug-in jar file into
-the specified folder.
-
-**solr.xml**
-
-```xml
-<solr>
-
-    <str name="sharedLib">${solr.sharedLib:}</str>
-
-</solr>
-```
+1. Place the Encryption plug-in jar file in the lib directory.
+See https://solr.apache.org/guide/solr/latest/configuration-guide/libs.html for details.
 
 2. Configure the Encryption classes in solrconfig.xml.
 
