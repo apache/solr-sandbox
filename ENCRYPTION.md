@@ -10,20 +10,26 @@ obviously the key secret is never stored). It is possible to define a different 
 provides an EncryptionRequestHandler so that a client can trigger the (re)encryption of a Solr Core index. The
 (re)encryption is done concurrently while the Solr Core can continue to serve update and query requests.
 
+A custom key "cookie" can be stored in the commit metadata if it is required to get the key secret. For example, it can
+be the key secret in a wrapped (encrypted) form that only a Key Management System can decrypt.
+
 In addition, the Solr update logs are also encrypted when the Solr Core index is encrypted. When the active encryption
 key changes for the Solr Core, the re-encryption of the update logs is done synchronously when an old log file is
 opened for addition. This re-encryption is nearly as fast as a file copy.
+
+This module also ensures that replication and backup can copy and restore the index files in their encrypted form.
 
 Comparing with an OS-level encryption:
 
 - OS-level encryption [1][2] is more performant and more adapted to let Lucene leverage the OS memory cache. It can
 manage encryption at block or filesystem level in the OS. This makes it possible to encrypt with different keys
-per-directory, making multi-tenant use-cases possible. If you can use OS-level encryption, prefer it and skip this
-Java-level encryption.
+per-directory, making multi-tenant use-cases possible. If you control and can use an OS-level encryption, prefer it
+compared to this Java-level encryption.
 
 - Java-level encryption can be used when the OS-level encryption management is not possible (e.g. host machine managed
 by a cloud provider), or when even admin rights should not allow to get clear access to the index files. It has an
-impact on performance: expect -20% on most queries, -60% on multi-term queries.
+impact on performance: expect -20% on most queries, -60% on multi-term queries. Although, the impact could be less
+important if/when we support JDK 24.
 
 [1] https://wiki.archlinux.org/title/Fscrypt
 
@@ -39,7 +45,7 @@ needs specific parameters to get a key.
 
 ## Installing and Configuring the Encryption Plug-In
 
-1. Configure the sharedLib directory in solr.xml (e.g. sharedLIb=lib) and place the Encryption plug-in jar file into
+1. Configure the sharedLib directory in solr.xml (e.g. sharedLib=lib) and place the Encryption plug-in jar file into
 the specified folder.
 
 **solr.xml**
@@ -99,7 +105,7 @@ to use. By default `CipherAesCtrEncrypter$Factory` is used. You can change to `L
 more lightweight and efficient implementation (+10% perf), but it calls an internal com.sun.crypto.provider.AESCrypt()
 constructor which either logs a JDK warning (Illegal reflective access) with JDK 16 and below, or with JDK 17 and above
 requires to open the access to the com.sun.crypto.provider package with the jvm arg
-`--add-opens=java.base/com.sun.crypto.provider=ALL-UNNAMED`. Both support encrypting files up to 17 TB.
+`--add-opens=java.base/com.sun.crypto.provider=ALL-UNNAMED`. Both support encrypting files up to 17 TB per file.
 
 `EncryptionUpdateHandler` replaces the standard `DirectUpdateHandler2` (which it extends) to store persistently the
 encryption key id in the commit metadata. It supports all the configuration parameters of `DirectUpdateHandler2`.
@@ -151,7 +157,10 @@ the parameters `tenantId` and `encryptionKeyBlob` to be sent in the `SolrQueryRe
 Once Solr is set up, it is ready to encrypt. To set the encryption key id to use, the Solr client calls the
 `EncryptionRequestHandler` at `/admin/encrypt`.
 
-`EncryptionRequestHandler` handles an encryption request for a specific Solr core.
+By default, `EncryptionRequestHandler` handles an encryption request for a specific Solr core. In Solr Cloud mode, it
+is also possible to add the `distrib=true` parameter to have this handler distribute the encryption request to all the
+leader replicas of all the shards of the collection, ensuring they all encrypt their index shard (it supports the
+`timeAllowed` parameter with a milliseconds timeout).
 
 The caller provides the mandatory `encryptionKeyId` request parameter to define the encryption key id to use to encrypt
 the index files. To decrypt the index to cleartext, the special parameter value `no_key_id` must be provided.
@@ -159,6 +168,7 @@ the index files. To decrypt the index to cleartext, the special parameter value 
 The encryption processing is asynchronous. The request returns immediately with two response parameters.
 - `encryptionState` parameter with value either `pending`, `complete`, or `busy`.
 - `status` parameter with values either `success` or `failure`.
+If `distrib=true`, the `encryptionState` is `complete` only if all the shards encryption are complete.
 
 The expected usage of this handler is to first send an encryption request with a key id, and to receive a response with
 `status`=`success` and `encryptionState`=`pending`. If the caller needs to know when the encryption is complete, it can
@@ -178,6 +188,16 @@ If your `KeySupplier` implementation requires specific parameters to supply keys
 ## Encryption Algorithm
 
 This encryption module implements AES-CTR.
+
+Rationale about the choice of the CTR-Mode:
+- simple, efficient, random-access.
+- adapted to Lucene immutable index files.
+- file integrity and error detection checks are verified by Lucene checksums.
+- nonce-misuse resistance is implemented by building a secure random IV.
+- used in combination with a strong AES cipher.
+
+The random IV is composed of 5 bytes for the CTR counter, supporting up to 17 TB per file, and 11 bytes for the random
+nonce.
 
 AES-CTR compared to AES-XTS:
 Lucene produces read-only files per index segment. Since we have a new random IV per file, we don't repeat the same AES
