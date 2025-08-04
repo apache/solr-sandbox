@@ -52,7 +52,7 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
 
   protected static String configDir = "collection1";
 
-  private static volatile boolean forceClearText;
+  static volatile boolean forceClearText;
   private static volatile String soleKeyIdAllowed;
 
   private String collectionName;
@@ -80,11 +80,7 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     solrClient = cluster.getSolrClient();
     CollectionAdminRequest.createCollection(collectionName, 2, 2).process(solrClient);
     cluster.waitForActiveCollection(collectionName, 2, 4);
-    testUtil = createEncryptionTestUtil(solrClient, collectionName);
-  }
-
-  protected EncryptionTestUtil createEncryptionTestUtil(CloudSolrClient solrClient, String collectionName) {
-    return new EncryptionTestUtil(solrClient, collectionName);
+    testUtil = new EncryptionTestUtil(solrClient, collectionName);
   }
 
   @Override
@@ -272,15 +268,16 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
       restartSolrServer(1);
       waitForState("Timed out waiting for shards to be active",
           collectionName,
-          SolrCloudTestCase.activeClusterShape(2, 4),
           30,
-          TimeUnit.SECONDS);
-    } catch (InterruptedException | TimeoutException e) {
+          TimeUnit.SECONDS,
+          SolrCloudTestCase.activeClusterShape(2, 4));
+    } catch (InterruptedException | TimeoutException | AssertionError e) {
       // Sometimes restarting Solr nodes hangs, or waiting for shards to become active times out.
       // In this case, exit silently the test.
       return;
     }
 
+    // Now commit.
     testUtil.commit();
     testUtil.waitUntilEncryptionIsComplete(KEY_ID_1);
 

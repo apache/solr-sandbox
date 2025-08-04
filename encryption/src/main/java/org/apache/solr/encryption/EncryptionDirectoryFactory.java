@@ -17,6 +17,7 @@
 package org.apache.solr.encryption;
 
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FilterDirectory;
 import org.apache.lucene.store.LockFactory;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.util.NamedList;
@@ -76,6 +77,21 @@ public class EncryptionDirectoryFactory extends MMapDirectoryFactory {
   private KeySupplier keySupplier;
   private AesCtrEncrypterFactory encrypterFactory;
   private InnerFactory innerFactory;
+
+  public EncryptionDirectoryFactory() {}
+
+  /**
+   * Visible for tests only.
+   */
+  EncryptionDirectoryFactory(
+      KeySupplier keySupplier,
+      AesCtrEncrypterFactory encrypterFactory,
+      InnerFactory innerFactory) {
+    super.init(new NamedList<>());
+    this.keySupplier = keySupplier;
+    this.encrypterFactory = encrypterFactory;
+    this.innerFactory = innerFactory;
+  }
 
   @Override
   public void init(NamedList<?> args) {
@@ -142,6 +158,14 @@ public class EncryptionDirectoryFactory extends MMapDirectoryFactory {
   @Override
   protected Directory create(String path, LockFactory lockFactory, DirContext dirContext) throws IOException {
     return innerFactory.create(super.create(path, lockFactory, dirContext), getEncrypterFactory(), getKeySupplier());
+  }
+
+  @Override
+  protected Directory filterDirectory(Directory dir, DirContext dirContext) {
+    // Do not unwrap for DirContext.BACKUP, as it is managed by the EncryptionBackupRepository.
+    // EncryptionBackupRepository needs to both unwrap when copying file content, and also not
+    // unwrap when checking the checksum of the cleartext content.
+    return dirContext == DirContext.REPLICATION ? FilterDirectory.unwrap(dir) : dir;
   }
 
   @Override

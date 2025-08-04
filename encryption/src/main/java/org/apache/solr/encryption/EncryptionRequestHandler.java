@@ -363,13 +363,13 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
       Collection<Slice> slices = docCollection.getActiveSlices();
       Collection<Callable<State>> encryptRequests = new ArrayList<>(slices.size());
       for (Slice slice : slices) {
-        Replica replica = slice.getLeader();
-        if (replica == null) {
+        Replica leader = slice.getLeader();
+        if (leader == null) {
           log.error("No leader found for shard {}", slice.getName());
           collectionState = State.ERROR;
           continue;
         }
-        encryptRequests.add(() -> sendEncryptionRequestWithRetry(replica, req, params, keyId));
+        encryptRequests.add(() -> sendEncryptionRequestWithRetry(leader, req, params, keyId));
       }
       try {
         List<Future<State>> responses = timeOut == null ?
