@@ -23,8 +23,14 @@ import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
 import org.apache.solr.cloud.MiniSolrCloudCluster;
 import org.apache.solr.cloud.SolrCloudTestCase;
+import org.apache.solr.common.params.ModifiableSolrParams;
+import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.embedded.JettySolrRunner;
 import org.apache.solr.encryption.crypto.AesCtrEncrypterFactory;
+import org.apache.solr.request.SolrQueryRequest;
+import org.apache.solr.request.SolrQueryRequestBase;
+import org.apache.solr.response.SolrQueryResponse;
+import org.apache.solr.util.TimeOut;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -36,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.apache.solr.encryption.EncryptionDirectoryFactory.PROPERTY_INNER_ENCRYPTION_DIRECTORY_FACTORY;
+import static org.apache.solr.common.params.CommonParams.TIME_ALLOWED;
 import static org.apache.solr.encryption.EncryptionRequestHandler.NO_KEY_ID;
 import static org.apache.solr.encryption.EncryptionRequestHandler.STATUS_SUCCESS;
 import static org.apache.solr.encryption.EncryptionUtil.getKeyIdFromCommit;
@@ -296,6 +303,84 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     cluster.waitForJettyToStop(node);
     cluster.startJettySolrRunner(node);
     cluster.waitForNode(node, 30);
+  }
+
+  /**
+   * Test for getRequestKeyId method.
+   * The method should return the key id passed in the request parameters. If the key id is not present,
+   * then it should throw an exception.
+   */
+  @Test
+  public void testGetRequestKeyId() throws Exception {
+    // Test valid key ID
+    ModifiableSolrParams params = new ModifiableSolrParams();
+    params.set(EncryptionRequestHandler.PARAM_KEY_ID, KEY_ID_1);
+    String keyId = EncryptionRequestHandler.getRequestKeyId(createRequest(params), new SolrQueryResponse());
+    assertEquals(KEY_ID_1, keyId);
+
+    // Test NO_KEY_ID returns null
+    params.set(EncryptionRequestHandler.PARAM_KEY_ID, NO_KEY_ID);
+    keyId = EncryptionRequestHandler.getRequestKeyId(createRequest(params), new SolrQueryResponse());
+    assertNull(keyId);
+
+    // Test missing key ID parameter
+    params.remove(EncryptionRequestHandler.PARAM_KEY_ID);
+    SolrQueryResponse rsp1 = new SolrQueryResponse();
+    IOException e1 = assertThrows(
+        "Expected IOException for missing key ID parameter",
+        IOException.class,
+        () -> EncryptionRequestHandler.getRequestKeyId(createRequest(params), rsp1));
+    assertTrue(e1.getMessage().contains(EncryptionRequestHandler.PARAM_KEY_ID));
+    assertEquals(EncryptionRequestHandler.STATUS_FAILURE, rsp1.getValues().get(EncryptionRequestHandler.STATUS));
+
+    // Test empty key ID parameter
+    params.set(EncryptionRequestHandler.PARAM_KEY_ID, "");
+    SolrQueryResponse rsp2 = new SolrQueryResponse();
+    IOException e2 = assertThrows(
+        "Expected IOException for empty key ID parameter",
+        IOException.class,
+        () -> EncryptionRequestHandler.getRequestKeyId(createRequest(params), rsp2));
+    assertTrue(e2.getMessage().contains(EncryptionRequestHandler.PARAM_KEY_ID));
+    assertEquals(EncryptionRequestHandler.STATUS_FAILURE, rsp2.getValues().get(EncryptionRequestHandler.STATUS));
+  }
+
+  /**
+   * Test for getTimeOut method.
+   * This method parses the timeout parameters from requests.
+   */
+  @Test
+  public void testGetTimeOut() throws Exception {
+    try (EncryptionRequestHandler handler = new EncryptionRequestHandler()) {
+
+      // Test with no timeout parameter
+      ModifiableSolrParams params = new ModifiableSolrParams();
+      SolrQueryRequest req = createRequest(params);
+      TimeOut timeOut = handler.getTimeOut(req);
+      assertNull(timeOut);
+
+      // Test with zero timeout
+      params.set(TIME_ALLOWED, "0");
+      req = createRequest(params);
+      timeOut = handler.getTimeOut(req);
+      assertNull(timeOut);
+
+      // Test with negative timeout
+      params.set(TIME_ALLOWED, "-1000");
+      req = createRequest(params);
+      timeOut = handler.getTimeOut(req);
+      assertNull(timeOut);
+
+      // Test with valid timeout
+      params.set(TIME_ALLOWED, "5000");
+      req = createRequest(params);
+      timeOut = handler.getTimeOut(req);
+      assertNotNull(timeOut);
+      assertTrue(timeOut.timeLeft(TimeUnit.MILLISECONDS) > 0);
+    }
+  }
+
+  SolrQueryRequest createRequest(SolrParams params) {
+    return new SolrQueryRequestBase(null, params) {};
   }
 
   private static void clearMockValues() {

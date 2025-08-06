@@ -267,7 +267,8 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     }
   }
 
-  private static String getRequestKeyId(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException {
+  // Visible for testing.
+  static String getRequestKeyId(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException {
     String keyId = req.getParams().get(PARAM_KEY_ID);
     if (keyId == null || keyId.isEmpty()) {
       rsp.add(STATUS, STATUS_FAILURE);
@@ -293,7 +294,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     log.debug("Encrypt request for keyId={}", keyId);
     RequestStatus requestStatus = RequestStatus.ERROR;
     try {
-      requestStatus = handleRequestLocallyInner(req, rsp, keyId);
+      requestStatus = localRequestInner(req, rsp, keyId);
     } finally {
       String statusValue = requestStatus.success ? STATUS_SUCCESS : STATUS_FAILURE;
       rsp.add(STATUS, statusValue);
@@ -305,7 +306,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     }
   }
 
-  private RequestStatus handleRequestLocallyInner(
+  private RequestStatus localRequestInner(
       SolrQueryRequest req,
       SolrQueryResponse rsp,
       String keyId)
@@ -351,7 +352,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     }
   }
 
-  private void ensureNonEmptyCommitDataForEmptyCommit(Map<String, String> commitData) {
+  private static void ensureNonEmptyCommitDataForEmptyCommit(Map<String, String> commitData) {
     if (commitData.isEmpty()) {
       // Ensure that there is some data in the commit user data so that an empty commit
       // (with no change) is allowed.
@@ -359,7 +360,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     }
   }
 
-  private boolean checkEncryptionComplete(
+  private static boolean checkEncryptionComplete(
       SolrQueryRequest req,
       String keyId,
       SegmentInfos segmentInfos)
@@ -380,13 +381,13 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     return encryptionComplete;
   }
 
-  private boolean isCommitActiveKeyId(String keyId, SegmentInfos segmentInfos) {
+  private static boolean isCommitActiveKeyId(String keyId, SegmentInfos segmentInfos) {
     String keyRef = getActiveKeyRefFromCommit(segmentInfos.getUserData());
     String activeKeyId = keyRef == null ? null : getKeyIdFromCommit(keyRef, segmentInfos.getUserData());
     return Objects.equals(keyId, activeKeyId);
   }
 
-  private boolean areAllSegmentsEncryptedWithKeyId(@Nullable String keyId,
+  private static boolean areAllSegmentsEncryptedWithKeyId(@Nullable String keyId,
                                                    SolrCore core,
                                                    SegmentInfos segmentInfos) throws IOException {
     DirectoryFactory directoryFactory = core.getDirectoryFactory();
@@ -404,13 +405,13 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     }
   }
 
-  private boolean areAllLogsEncryptedWithKeyId(String keyId, SolrCore core, SegmentInfos segmentInfos)
+  private static boolean areAllLogsEncryptedWithKeyId(String keyId, SolrCore core, SegmentInfos segmentInfos)
       throws IOException {
     EncryptionUpdateLog updateLog = getEncryptionUpdateLog(core);
     return updateLog == null || updateLog.areAllLogsEncryptedWithKeyId(keyId, segmentInfos.getUserData());
   }
 
-  private EncryptionUpdateLog getEncryptionUpdateLog(SolrCore core) {
+  private static EncryptionUpdateLog getEncryptionUpdateLog(SolrCore core) {
     UpdateHandler updateHandler = core.getUpdateHandler();
     if (updateHandler == null) {
       return null;
@@ -424,7 +425,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     return (EncryptionUpdateLog) updateHandler.getUpdateLog();
   }
 
-  private void commitEncryptionComplete(String keyId,
+  private static void commitEncryptionComplete(String keyId,
                                         SegmentInfos segmentInfos,
                                         SolrQueryRequest req) throws IOException {
     assert isCommitActiveKeyId(keyId, segmentInfos);
@@ -439,7 +440,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     req.getCore().getUpdateHandler().commit(commitCmd);
   }
 
-  private RequestStatus checkEncryptionOngoing(String keyId, SolrQueryRequest req) {
+  private static RequestStatus checkEncryptionOngoing(String keyId, SolrQueryRequest req) {
     synchronized (pendingEncryptionLock) {
       PendingKeyId pendingKeyId = pendingEncryptions.get(req.getCore().getName());
       if (pendingKeyId != null) {
@@ -557,7 +558,8 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
         : new RequestStatus(collectionState.state, collectionState.state.isSuccess());
   }
 
-  private TimeOut getTimeOut(SolrQueryRequest req) {
+  // Visible for testing.
+  TimeOut getTimeOut(SolrQueryRequest req) {
     long timeAllowedMs = req.getParams().getLong(TIME_ALLOWED, 0);
     return timeAllowedMs <= 0 ?
         null
@@ -635,7 +637,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     return new ModifiableSolrParams().set(PARAM_KEY_ID, keyId == null ? NO_KEY_ID : keyId);
   }
 
-  private State sendEncryptionRequestWithRetry(
+  private static State sendEncryptionRequestWithRetry(
       Replica replica,
       SolrQueryRequest req,
       ModifiableSolrParams params,
@@ -656,7 +658,7 @@ public class EncryptionRequestHandler extends RequestHandlerBase {
     throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, "Failed encryption request to replica " + replica.getName() + " for keyId " + keyId);
   }
 
-  private SimpleSolrResponse sendEncryptionRequest(
+  private static SimpleSolrResponse sendEncryptionRequest(
       Replica replica,
       SolrQueryRequest req,
       ModifiableSolrParams params)
