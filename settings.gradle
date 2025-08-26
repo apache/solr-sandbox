@@ -12,4 +12,8 @@ rootProject.name = 'solr-sandbox'
 include 'crossdc-consumer'
 include 'crossdc-producer'
 include 'crossdc-commons'
+
 include 'encryption'
+
+include 'gatling-data-prep'
+include 'gatling-simulations'
