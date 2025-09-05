@@ -33,7 +33,7 @@ First, compile the code we use to read the raw wikipedia archives.
 Next, we will use this tool to convert the data:
 
 ```
-java -cp gatling-data-prep/build/libs/data-prep.jar WikipediaXmlToSolr source-file output-dir data-type batch-size text-size
+java -cp gatling-data-prep/build/libs/gatling-data-prep.jar WikipediaXmlToSolr source-file output-dir data-type batch-size text-size
 ```
 
 With the following arguments:
@@ -48,7 +48,7 @@ An example invocation might look like:
 
 ```
 mkdir -p .gatling/batches
-java -cp gatling-data-prep/build/libs/data-prep.jar WikipediaXmlToSolr ~/Downloads/wiki .gatling/batches enwiki-latest-pages-articles.xml json 5000 1000
+java -cp gatling-data-prep/build/libs/gatling-data-prep.jar WikipediaXmlToSolr ~/Downloads/wiki/enwiki-latest-pages-articles.xml .gatling/batches json 5000 1000
 ```
 
 This will generate json files with 5000 articles per file, and each article's text will be truncated to 1kb of data.

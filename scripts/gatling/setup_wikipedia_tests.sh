@@ -75,8 +75,8 @@ fi
 
 echo "Uploading latest configset"
 rm -f $TESTS_WORK_DIR/wikipedia-conf.zip
-( cd scenarios/src/gatling/resources/configSets/$CONF ; zip -r wikipedia-conf.zip * )
-mv scenarios/src/gatling/resources/configSets/$CONF/wikipedia-conf.zip $TESTS_WORK_DIR/wikipedia-conf.zip
+( cd gatling-simulations/src/gatling/resources/configSets/$CONF ; zip -r wikipedia-conf.zip * )
+mv gatling-simulations/src/gatling/resources/configSets/$CONF/wikipedia-conf.zip $TESTS_WORK_DIR/wikipedia-conf.zip
 
 curl -s -XPOST -T "$TESTS_WORK_DIR/wikipedia-conf.zip" -H "Content-Type: application/octet-stream" "$SOLR_ENDPOINT/solr/admin/configs?action=UPLOAD&name=wikipedia&overwrite=true&cleanup=true" && echo "...Configset uploaded"
 
