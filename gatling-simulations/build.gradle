@@ -3,6 +3,10 @@ plugins {
     id "io.gatling.gradle" version "3.14.3.5"
 }
 
+repositories {
+  mavenCentral()
+}
+
 gatling {
     systemProperties = [
         'endpoint': System.getProperty('endpoint', 'http://localhost:8983'),
