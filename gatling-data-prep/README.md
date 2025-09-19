@@ -2,7 +2,11 @@
 
 Performance benchmarks, whether query or index based, rely on input data.
 This module offers utilities to help fetch and prepare that data.
-Currently the only supported data source is wikipedia, but other sources may be added over time.
+(Currently the only supported data source is wikipedia, but other sources may be added over time.)
+
+> [!NOTE]
+> Input data is made available to download on [nightlies.apache.org](https://nightlies.apache.org/solr/benchmark-data).
+> Most users will find it easier to download from there, and not need to use this module to prepare their own input data.
 
 # Wikipedia Data
 ## Download
