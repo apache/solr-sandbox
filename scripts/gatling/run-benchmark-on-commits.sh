@@ -20,10 +20,12 @@ BRANCH="main"
 if [ $# -gt 0 ]; then
   while [ $# -gt 0 ]; do
     case "${1:-}" in
+        # Inclusive
         -s|--start-hash)
             START_HASH=${2}
             shift 2
         ;;
+        # Inclusive
         -e|--end-hash)
             END_HASH=${2}
             shift 2
@@ -56,7 +58,6 @@ pushd $BENCH_SOLR_CHECKOUT_DIR
       exit 1
     else
       git_update_checkout $BRANCH
-      # TODO Implement this function or copy it over from solr-test-health
       COMMIT_HASHES="$(git_list_commits_since $START_HASH $END_HASH)"
     fi
   fi
@@ -93,7 +94,7 @@ pushd $BENCH_SOLR_CHECKOUT_DIR
     pushd $SANDBOX_CHECKOUT_ROOT 
       ./scripts/gatling/setup_wikipedia_tests.sh
       ./gradlew gatlingRun --simulation index.IndexWikipediaBatchesSimulation
-      env_state_store_gatling_result $BRANCH $COMMIT
+      env_state_store_gatling_result $BRANCH $commit
     popd
     solr_kill_all
 
