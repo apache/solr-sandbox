@@ -1,0 +1,17 @@
+plugins {
+    id 'java'
+    id "io.gatling.gradle" version "3.14.3.5"
+}
+
+repositories {
+  mavenCentral()
+}
+
+gatling {
+    systemProperties = [
+        'endpoint': System.getProperty('endpoint', 'http://localhost:8983'),
+        'TESTS_WORK_DIR': project.rootDir.absolutePath + '/.gatling'
+    ]
+}
+
+tasks.matching { it.name.contains("gatlingRun") }.all { it.outputs.upToDateWhen { false } }

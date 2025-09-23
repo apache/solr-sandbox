@@ -17,4 +17,6 @@ build
 out
 cluster
 
+.gatling
+
 logs
