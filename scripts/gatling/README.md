@@ -9,7 +9,8 @@ Each script "run" is intended to (1) identify the commits that are new since the
 The scripts in this directory can be run manually, but are primarily intended to be invoked via a cronjob or in some other automated fashion.
 To this end the scripts are "stateful", so that they can remember what commits are "new" since the last run.
 By default, all state is stored in the `$HOME/.solr-benchmarks` directory.
-This includes source checkouts, a "state" text file which remembers which commits have been benchmarked, and benchmark results themselves (located in the `results` subdirectory).
+(This can be overridden by exporting a `BENCH_STATE_ROOT` env var pointing to an alternate location.)
+This directory is used to store repository checkouts, a "state" text file which remembers which commits have been benchmarked, and benchmark results themselves (located in the `results` subdirectory).
 
 Scripts store all Gatling output for each "run", which primarily consists of a HTML "report" web page and any JS and other assets that this requires.
 (We don't yet have a good way to aggregate these reports over time and show trendlines or other longitudinal data, but this is in progress.)

@@ -7,7 +7,7 @@
 
 BENCH_LIB_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-BENCH_STATE_ROOT="$HOME/.solr-benchmarks"
+BENCH_STATE_ROOT="${BENCH_STATE_ROOT:-$HOME/.solr-benchmarks}"
 BENCH_RESULT_DIR="$BENCH_STATE_ROOT/results"
 BENCH_LAST_RUN_STATE="$BENCH_STATE_ROOT/last-run.txt"
 export BENCH_CHECKOUT_DIR="$BENCH_STATE_ROOT/checkouts"
