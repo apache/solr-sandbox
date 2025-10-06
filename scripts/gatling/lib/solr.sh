@@ -40,7 +40,10 @@ function solr_kill_all() {
 # Start Solr (with custom ops pulled from START_SOLR_OPTS)
 # Assumes cwd of the Solr package root
 function solr_start() {
-  bin/solr start ${START_SOLR_OPTS:-}
+  # TODO The "OR" done here to handle recent Solr changes in its "cloud-mode"
+  # syntax is unfortunate, figure out a better way to handle these 9.x/10.x
+  # differences
+  bin/solr start ${START_SOLR_OPTS:-} || bin/solr start -c ${START_SOLR_OPTS:-}
 }
 
 ##############################

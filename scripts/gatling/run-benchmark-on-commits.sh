@@ -81,7 +81,7 @@ pushd $BENCH_SOLR_CHECKOUT_DIR
     solr_build_package
     package_dir="$(solr_get_package_directory)"
     pushd $package_dir
-      export START_SOLR_OPTS=" -m 4g "
+      export START_SOLR_OPTS="${START_SOLR_OPTS:-} -m 4g "
       solr_start
       if ! solr_is_running "8983" ; then
         >&2 echo "Unable to start Solr; please check logs. Exiting..."
