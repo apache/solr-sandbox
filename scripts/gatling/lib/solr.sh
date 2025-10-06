@@ -13,7 +13,7 @@ function solr_checkout_source_in() {
   fi
 
   pushd $location
-    git clone git@github.com:apache/solr.git
+    git clone https://github.com/apache/solr.git
   popd
 }
 
