@@ -34,7 +34,7 @@ function solr_is_running() {
 }
 
 function solr_kill_all() {
-  ps -ef | grep solr | grep java | awk {'print $2'} | xargs kill -9
+  ps -ef | grep solr | grep java | awk {'print $2'} | xargs -r kill -9
 }
 
 # Start Solr (with custom ops pulled from START_SOLR_OPTS)
