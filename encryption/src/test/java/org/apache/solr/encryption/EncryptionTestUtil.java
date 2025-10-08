@@ -41,6 +41,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import static org.apache.lucene.tests.util.LuceneTestCase.random;
@@ -223,9 +224,10 @@ public class EncryptionTestUtil {
   }
 
   public void waitUntilEncryptionIsComplete(String keyId) throws InterruptedException {
+    AtomicBoolean success = new AtomicBoolean();
     RetryUtil.retryUntil("Timeout waiting for encryption completion",
-                         50,
-                         100,
+                         20,
+                         1000,
                          TimeUnit.MILLISECONDS,
                          () -> {
                            EncryptionStatus encryptionStatus;
@@ -234,9 +236,10 @@ public class EncryptionTestUtil {
                            } catch (Exception e) {
                              throw new RuntimeException(e);
                            }
-                           assertTrue(encryptionStatus.success);
+                           success.set(encryptionStatus.success);
                            return encryptionStatus.complete;
                          });
+    assertTrue(success.get());
   }
 
   /**
