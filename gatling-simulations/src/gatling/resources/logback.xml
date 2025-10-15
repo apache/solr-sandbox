@@ -8,17 +8,17 @@
     </appender>
 
     <!-- Silence HTTP traffic loggers -->
-    <logger name="io.gatling.http" level="WARN" />
-    <logger name="io.gatling.http.engine" level="WARN" />
-    <logger name="io.gatling.http.response" level="WARN" />
-    <logger name="io.gatling.http.ahc" level="ERROR" />
-    <logger name="io.netty" level="WARN" />
-    <logger name="org.asynchttpclient" level="ERROR" />
+    <logger name="io.gatling.http" level="INFO" />
+    <logger name="io.gatling.http.engine" level="INFO" />
+    <logger name="io.gatling.http.response" level="INFO" />
+    <logger name="io.gatling.http.ahc" level="INFO" />
+    <logger name="io.netty" level="INFO" />
+    <logger name="org.asynchttpclient" level="INFO" />
     
     <!-- Other potentially verbose loggers -->
-    <logger name="io.gatling.http.cache" level="ERROR" />
-    <logger name="io.gatling.http.cookie" level="ERROR" />
-    <logger name="io.gatling.http.util" level="ERROR" />
+    <logger name="io.gatling.http.cache" level="INFO" />
+    <logger name="io.gatling.http.cookie" level="INFO" />
+    <logger name="io.gatling.http.util" level="INFO" />
     
     <!-- Configure root logger -->
     <root level="INFO">
