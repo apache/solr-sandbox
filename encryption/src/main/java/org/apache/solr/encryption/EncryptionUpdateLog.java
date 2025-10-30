@@ -98,7 +98,7 @@ public class EncryptionUpdateLog extends UpdateLog {
     String activeKeyRef;
     EncryptionDirectory directory = directorySupplier.get();
     try {
-      directory.forceReadCommitUserData();
+      directory.clearCachedCommitUserData();
       latestCommitData = directory.getLatestCommitData().data;
       activeKeyRef = getActiveKeyRefFromCommit(latestCommitData);
       for (TransactionLog log : logs) {

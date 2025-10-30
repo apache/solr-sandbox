@@ -74,7 +74,12 @@ public class EncryptionMergePolicy extends FilterMergePolicy {
     // Make sure the EncryptionDirectory does not keep its cache for the commit user data.
     // It must read the latest commit user data to get the latest active key, so below the
     // segments with old key (to re-encrypt) are always accurate.
-    encryptionDir.forceReadCommitUserData();
+    encryptionDir.clearCachedCommitUserData();
+    // Also clear the encryption status for logs if the index becomes cleartext after rewriting
+    // the segments.
+    if (activeKeyId == null) {
+      encryptionDir.clearCachedEncryptionStatus();
+    }
     List<SegmentCommitInfo> segmentsWithOldKeyId = encryptionDir.getSegmentsWithOldKeyId(segmentInfos, activeKeyId);
     if (segmentsWithOldKeyId.isEmpty()) {
       return null;
