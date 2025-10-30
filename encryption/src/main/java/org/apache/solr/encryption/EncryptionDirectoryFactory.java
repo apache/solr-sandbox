@@ -24,6 +24,7 @@ import org.apache.solr.common.util.NamedList;
 import org.apache.solr.core.DirectoryFactory;
 import org.apache.solr.core.MMapDirectoryFactory;
 import org.apache.solr.core.SolrCore;
+import org.apache.solr.encryption.EncryptionDirectory.EncryptionListener;
 import org.apache.solr.encryption.crypto.AesCtrEncrypterFactory;
 import org.apache.solr.encryption.crypto.CipherAesCtrEncrypter;
 
@@ -74,9 +75,20 @@ public class EncryptionDirectoryFactory extends MMapDirectoryFactory {
    */
   static final String PROPERTY_INNER_ENCRYPTION_DIRECTORY_FACTORY = "innerEncryptionDirectoryFactory";
 
+  private final EncryptionListener encryptionListener = new EncryptionListener() {
+    @Override
+    public void onEncryption() {
+      indexEncrypted = true;
+    }
+    @Override
+    public void clearEncryptionStatus() {
+      indexEncrypted = false;
+    }
+  };
   private KeySupplier keySupplier;
   private AesCtrEncrypterFactory encrypterFactory;
   private InnerFactory innerFactory;
+  private volatile boolean indexEncrypted;
 
   public EncryptionDirectoryFactory() {}
 
@@ -145,6 +157,15 @@ public class EncryptionDirectoryFactory extends MMapDirectoryFactory {
     return keySupplier;
   }
 
+  /**
+   * Returns whether the index is encrypted.
+   * This flag is set when the {@link EncryptionDirectory} opens an output/input stream that
+   * requires encryption.
+   */
+  public boolean isIndexEncrypted() {
+    return indexEncrypted;
+  }
+
   public static EncryptionDirectoryFactory getFactory(SolrCore core) {
     if (!(core.getDirectoryFactory() instanceof EncryptionDirectoryFactory)) {
       throw new SolrException(SolrException.ErrorCode.SERVICE_UNAVAILABLE,
@@ -157,7 +178,7 @@ public class EncryptionDirectoryFactory extends MMapDirectoryFactory {
 
   @Override
   protected Directory create(String path, LockFactory lockFactory, DirContext dirContext) throws IOException {
-    return innerFactory.create(super.create(path, lockFactory, dirContext), getEncrypterFactory(), getKeySupplier());
+    return innerFactory.create(super.create(path, lockFactory, dirContext), getEncrypterFactory(), getKeySupplier(), encryptionListener);
   }
 
   @Override
@@ -178,7 +199,11 @@ public class EncryptionDirectoryFactory extends MMapDirectoryFactory {
    * Visible for tests only - Inner factory that creates {@link EncryptionDirectory} instances.
    */
   interface InnerFactory {
-    EncryptionDirectory create(Directory delegate, AesCtrEncrypterFactory encrypterFactory, KeySupplier keySupplier)
+    EncryptionDirectory create(
+        Directory delegate,
+        AesCtrEncrypterFactory encrypterFactory,
+        KeySupplier keySupplier,
+        EncryptionListener encryptionListener)
       throws IOException;
   }
 }

@@ -90,6 +90,8 @@ public class EncryptionDirectory extends FilterDirectory {
 
   protected final KeySupplier keySupplier;
 
+  protected final EncryptionListener encryptionListener;
+
   /** Cache of the latest commit user data. */
   protected volatile CommitUserData commitUserData;
 
@@ -100,14 +102,20 @@ public class EncryptionDirectory extends FilterDirectory {
    * Creates an {@link EncryptionDirectory} which wraps a delegate {@link Directory} to encrypt/decrypt
    * files on the fly.
    *
-   * @param encrypterFactory creates {@link AesCtrEncrypter}.
-   * @param keySupplier      provides the key secrets and determines which files should be encrypted.
+   * @param encrypterFactory   creates {@link AesCtrEncrypter}.
+   * @param keySupplier        provides the key secrets and determines which files should be encrypted.
+   * @param encryptionListener notified when the index is encrypted.
    */
-  public EncryptionDirectory(Directory delegate, AesCtrEncrypterFactory encrypterFactory, KeySupplier keySupplier)
+  public EncryptionDirectory(
+      Directory delegate,
+      AesCtrEncrypterFactory encrypterFactory,
+      KeySupplier keySupplier,
+      EncryptionListener encryptionListener)
     throws IOException {
     super(delegate);
     this.encrypterFactory = encrypterFactory;
     this.keySupplier = keySupplier;
+    this.encryptionListener = encryptionListener;
     commitUserData = readLatestCommitUserData();
   }
 
@@ -148,6 +156,7 @@ public class EncryptionDirectory extends FilterDirectory {
     try {
       String keyRef = getActiveKeyRefFromCommit(getLatestCommitData().data);
       if (keyRef != null) {
+        encryptionListener.onEncryption();
         // Get the key secret first. If it fails, we do not write anything.
         byte[] keySecret = getKeySecret(keyRef);
         // The IndexOutput has to be wrapped to be encrypted with the key.
@@ -173,8 +182,15 @@ public class EncryptionDirectory extends FilterDirectory {
   /**
    * Forces this {@link EncryptionDirectory} to read the user data of the latest commit, to refresh its cache.
    */
-  public void forceReadCommitUserData() {
+  public void clearCachedCommitUserData() {
     shouldReadCommitUserData = true;
+  }
+
+  /**
+   * Clears the cached encryption status for logs.
+   */
+  public void clearCachedEncryptionStatus() {
+    encryptionListener.clearEncryptionStatus();
   }
 
   /**
@@ -255,6 +271,7 @@ public class EncryptionDirectory extends FilterDirectory {
     try {
       String keyRef = getKeyRefForReading(indexInput);
       if (keyRef != null) {
+        encryptionListener.onEncryption();
         // The IndexInput has to be wrapped to be decrypted with the key.
         indexInput = new DecryptingIndexInput(indexInput, getKeySecret(keyRef), encrypterFactory);
       }
@@ -370,5 +387,26 @@ public class EncryptionDirectory extends FilterDirectory {
       this.data = data;
       keyCookies = getKeyCookiesFromCommit(data);
     }
+  }
+
+  /**
+   * Notified when the index is encrypted.
+   */
+  public interface EncryptionListener {
+
+    EncryptionListener NO_LISTENER = new EncryptionListener() {
+
+      @Override
+      public void onEncryption() {
+      }
+
+      @Override
+      public void clearEncryptionStatus() {
+      }
+    };
+
+    void onEncryption();
+
+    void clearEncryptionStatus();
   }
 }

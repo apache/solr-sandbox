@@ -45,213 +45,219 @@ import static org.apache.solr.encryption.TestingKeySupplier.KEY_ID_2;
  */
 public class EncryptionMergePolicyTest extends LuceneTestCase {
 
-    private final Path tempDir = createTempDir();
-    private final KeySupplier keySupplier = new TestingKeySupplier.Factory().create();
-    private final AesCtrEncrypterFactory encrypterFactory = LightAesCtrEncrypter.FACTORY;
+  private final Path tempDir = createTempDir();
+  private final KeySupplier keySupplier = new TestingKeySupplier.Factory().create();
+  private final AesCtrEncrypterFactory encrypterFactory = LightAesCtrEncrypter.FACTORY;
+  private final EncryptionDirectory.EncryptionListener encryptionListener = EncryptionDirectory.EncryptionListener.NO_LISTENER;
 
-    @Test
-    public void testNoReencryptionWhenNoKeyChange() throws Exception {
-        try (Directory dir = new EncryptionDirectory(
-                new MMapDirectory(tempDir, FSLockFactory.getDefault()),
-                encrypterFactory,
-                keySupplier)) {
-            
-            IndexWriterConfig iwc = new IndexWriterConfig(new WhitespaceAnalyzer());
-            iwc.setMergePolicy(createMergePolicy());
-            
-            try (IndexWriter writer = new IndexWriter(dir, iwc)) {
-                // Create initial segments with KEY_ID_1.
-                commit(writer, keySupplier, KEY_ID_1);
-                int numSegments = 3;
-                for (int i = 0; i < numSegments; ++i) {
-                    writer.addDocument(new Document());
-                    commit(writer, keySupplier, KEY_ID_1);
-                }
-                
-                Set<String> initialSegmentNames = readSegmentNames(dir);
-                assertEquals(numSegments, initialSegmentNames.size());
+  @Test
+  public void testNoReencryptionWhenNoKeyChange() throws Exception {
+    try (Directory dir = new EncryptionDirectory(
+        new MMapDirectory(tempDir, FSLockFactory.getDefault()),
+        encrypterFactory,
+        keySupplier,
+        encryptionListener)) {
 
-                // Force merge with MAX_VALUE should not trigger reencryption.
-                writer.forceMerge(Integer.MAX_VALUE);
-                commit(writer, keySupplier, KEY_ID_1);
-                
-                // Verify segments remain unchanged.
-                assertEquals(initialSegmentNames, readSegmentNames(dir));
-            }
+      IndexWriterConfig iwc = new IndexWriterConfig(new WhitespaceAnalyzer());
+      iwc.setMergePolicy(createMergePolicy());
+
+      try (IndexWriter writer = new IndexWriter(dir, iwc)) {
+        // Create initial segments with KEY_ID_1.
+        commit(writer, keySupplier, KEY_ID_1);
+        int numSegments = 3;
+        for (int i = 0; i < numSegments; ++i) {
+          writer.addDocument(new Document());
+          commit(writer, keySupplier, KEY_ID_1);
         }
+
+        Set<String> initialSegmentNames = readSegmentNames(dir);
+        assertEquals(numSegments, initialSegmentNames.size());
+
+        // Force merge with MAX_VALUE should not trigger reencryption.
+        writer.forceMerge(Integer.MAX_VALUE);
+        commit(writer, keySupplier, KEY_ID_1);
+
+        // Verify segments remain unchanged.
+        assertEquals(initialSegmentNames, readSegmentNames(dir));
+      }
     }
+  }
 
-    @Test
-    public void testReencryptionWithKeyChange() throws Exception {
-        try (Directory dir = new EncryptionDirectory(
-                new MMapDirectory(tempDir, FSLockFactory.getDefault()),
-                encrypterFactory,
-                keySupplier)) {
-            
-            IndexWriterConfig iwc = new IndexWriterConfig(new WhitespaceAnalyzer());
-            iwc.setMergePolicy(createMergePolicy());
-            
-            try (IndexWriter writer = new IndexWriter(dir, iwc)) {
-                // Create initial segments with KEY_ID_1.
-                commit(writer, keySupplier, KEY_ID_1);
-                int numSegments = 3;
-                for (int i = 0; i < numSegments; ++i) {
-                    writer.addDocument(new Document());
-                    commit(writer, keySupplier, KEY_ID_1);
-                }
-                
-                Set<String> initialSegmentNames = readSegmentNames(dir);
-                assertEquals(numSegments, initialSegmentNames.size());
+  @Test
+  public void testReencryptionWithKeyChange() throws Exception {
+    try (Directory dir = new EncryptionDirectory(
+        new MMapDirectory(tempDir, FSLockFactory.getDefault()),
+        encrypterFactory,
+        keySupplier,
+        encryptionListener)) {
 
-                // Change active key to KEY_ID_2.
-                commit(writer, keySupplier, KEY_ID_1, KEY_ID_2);
+      IndexWriterConfig iwc = new IndexWriterConfig(new WhitespaceAnalyzer());
+      iwc.setMergePolicy(createMergePolicy());
 
-                // Force merge with MAX_VALUE should trigger reencryption.
-                writer.forceMerge(Integer.MAX_VALUE);
-                commit(writer, keySupplier, KEY_ID_1, KEY_ID_2);
-                
-                // Verify all segments have been rewritten.
-                Set<String> newSegmentNames = readSegmentNames(dir);
-                assertEquals(initialSegmentNames.size(), newSegmentNames.size());
-                assertNotEquals(initialSegmentNames, newSegmentNames);
-                newSegmentNames.retainAll(initialSegmentNames);
-                assertTrue(newSegmentNames.isEmpty());
-            }
+      try (IndexWriter writer = new IndexWriter(dir, iwc)) {
+        // Create initial segments with KEY_ID_1.
+        commit(writer, keySupplier, KEY_ID_1);
+        int numSegments = 3;
+        for (int i = 0; i < numSegments; ++i) {
+          writer.addDocument(new Document());
+          commit(writer, keySupplier, KEY_ID_1);
         }
+
+        Set<String> initialSegmentNames = readSegmentNames(dir);
+        assertEquals(numSegments, initialSegmentNames.size());
+
+        // Change active key to KEY_ID_2.
+        commit(writer, keySupplier, KEY_ID_1, KEY_ID_2);
+
+        // Force merge with MAX_VALUE should trigger reencryption.
+        writer.forceMerge(Integer.MAX_VALUE);
+        commit(writer, keySupplier, KEY_ID_1, KEY_ID_2);
+
+        // Verify all segments have been rewritten.
+        Set<String> newSegmentNames = readSegmentNames(dir);
+        assertEquals(initialSegmentNames.size(), newSegmentNames.size());
+        assertNotEquals(initialSegmentNames, newSegmentNames);
+        newSegmentNames.retainAll(initialSegmentNames);
+        assertTrue(newSegmentNames.isEmpty());
+      }
     }
+  }
 
-    @Test
-    public void testNoReencryptionWithNonMaxValueForceMerge() throws Exception {
-        try (Directory dir = new EncryptionDirectory(
-                new MMapDirectory(tempDir, FSLockFactory.getDefault()),
-                encrypterFactory,
-                keySupplier)) {
-            
-            IndexWriterConfig iwc = new IndexWriterConfig(new WhitespaceAnalyzer());
-            iwc.setMergePolicy(createMergePolicy());
-            
-            try (IndexWriter writer = new IndexWriter(dir, iwc)) {
-                // Create initial segments with KEY_ID_1.
-                commit(writer, keySupplier, KEY_ID_1);
-                int numSegments = 3;
-                for (int i = 0; i < numSegments; ++i) {
-                    writer.addDocument(new Document());
-                    commit(writer, keySupplier, KEY_ID_1);
-                }
-                
-                Set<String> initialSegmentNames = readSegmentNames(dir);
-                assertEquals(numSegments, initialSegmentNames.size());
+  @Test
+  public void testNoReencryptionWithNonMaxValueForceMerge() throws Exception {
+    try (Directory dir = new EncryptionDirectory(
+        new MMapDirectory(tempDir, FSLockFactory.getDefault()),
+        encrypterFactory,
+        keySupplier,
+        encryptionListener)) {
 
-                // Change active key to KEY_ID_2.
-                commit(writer, keySupplier, KEY_ID_1, KEY_ID_2);
+      IndexWriterConfig iwc = new IndexWriterConfig(new WhitespaceAnalyzer());
+      iwc.setMergePolicy(createMergePolicy());
 
-                // Force merge with non-MAX_VALUE should not trigger reencryption.
-                writer.forceMerge(10);
-                commit(writer, keySupplier, KEY_ID_1, KEY_ID_2);
-                
-                // Verify segments remain unchanged.
-                assertEquals(initialSegmentNames, readSegmentNames(dir));
-            }
+      try (IndexWriter writer = new IndexWriter(dir, iwc)) {
+        // Create initial segments with KEY_ID_1.
+        commit(writer, keySupplier, KEY_ID_1);
+        int numSegments = 3;
+        for (int i = 0; i < numSegments; ++i) {
+          writer.addDocument(new Document());
+          commit(writer, keySupplier, KEY_ID_1);
         }
+
+        Set<String> initialSegmentNames = readSegmentNames(dir);
+        assertEquals(numSegments, initialSegmentNames.size());
+
+        // Change active key to KEY_ID_2.
+        commit(writer, keySupplier, KEY_ID_1, KEY_ID_2);
+
+        // Force merge with non-MAX_VALUE should not trigger reencryption.
+        writer.forceMerge(10);
+        commit(writer, keySupplier, KEY_ID_1, KEY_ID_2);
+
+        // Verify segments remain unchanged.
+        assertEquals(initialSegmentNames, readSegmentNames(dir));
+      }
     }
+  }
 
-    @Test
-    public void testEmptyIndex() throws Exception {
-        try (Directory dir = new EncryptionDirectory(
-                new MMapDirectory(tempDir, FSLockFactory.getDefault()),
-                encrypterFactory,
-                keySupplier)) {
-            
-            IndexWriterConfig iwc = new IndexWriterConfig(new WhitespaceAnalyzer());
-            iwc.setMergePolicy(createMergePolicy());
-            
-            try (IndexWriter writer = new IndexWriter(dir, iwc)) {
-                // Create empty index with KEY_ID_1.
-                commit(writer, keySupplier, KEY_ID_1);
-                
-                // Change active key to KEY_ID_2.
-                commit(writer, keySupplier, KEY_ID_1, KEY_ID_2);
+  @Test
+  public void testEmptyIndex() throws Exception {
+    try (Directory dir = new EncryptionDirectory(
+        new MMapDirectory(tempDir, FSLockFactory.getDefault()),
+        encrypterFactory,
+        keySupplier,
+        encryptionListener)) {
 
-                // Force merge with MAX_VALUE should not trigger any merges.
-                writer.forceMerge(Integer.MAX_VALUE);
-                commit(writer, keySupplier, KEY_ID_1, KEY_ID_2);
-                
-                // Verify no segments exist.
-                assertEquals(0, readSegmentNames(dir).size());
-            }
+      IndexWriterConfig iwc = new IndexWriterConfig(new WhitespaceAnalyzer());
+      iwc.setMergePolicy(createMergePolicy());
+
+      try (IndexWriter writer = new IndexWriter(dir, iwc)) {
+        // Create empty index with KEY_ID_1.
+        commit(writer, keySupplier, KEY_ID_1);
+
+        // Change active key to KEY_ID_2.
+        commit(writer, keySupplier, KEY_ID_1, KEY_ID_2);
+
+        // Force merge with MAX_VALUE should not trigger any merges.
+        writer.forceMerge(Integer.MAX_VALUE);
+        commit(writer, keySupplier, KEY_ID_1, KEY_ID_2);
+
+        // Verify no segments exist.
+        assertEquals(0, readSegmentNames(dir).size());
+      }
+    }
+  }
+
+  @Test
+  public void testPartiallyEncryptedSegments() throws Exception {
+    try (Directory dir = new EncryptionDirectory(
+        new MMapDirectory(tempDir, FSLockFactory.getDefault()),
+        encrypterFactory,
+        keySupplier,
+        encryptionListener)) {
+
+      IndexWriterConfig iwc = new IndexWriterConfig(new WhitespaceAnalyzer());
+      iwc.setMergePolicy(createMergePolicy());
+
+      try (IndexWriter writer = new IndexWriter(dir, iwc)) {
+        // Create segments with mixed encryption states.
+        commit(writer, keySupplier, KEY_ID_1);
+
+        // Add some documents with KEY_ID_1.
+        for (int i = 0; i < 3; i++) {
+          Document doc = new Document();
+          doc.add(new StringField("id", String.valueOf(i), Field.Store.YES));
+          writer.addDocument(doc);
+          commit(writer, keySupplier, KEY_ID_1);
         }
-    }
 
-    @Test
-    public void testPartiallyEncryptedSegments() throws Exception {
-        try (Directory dir = new EncryptionDirectory(
-                new MMapDirectory(tempDir, FSLockFactory.getDefault()),
-                encrypterFactory,
-                keySupplier)) {
-            
-            IndexWriterConfig iwc = new IndexWriterConfig(new WhitespaceAnalyzer());
-            iwc.setMergePolicy(createMergePolicy());
-            
-            try (IndexWriter writer = new IndexWriter(dir, iwc)) {
-                // Create segments with mixed encryption states.
-                commit(writer, keySupplier, KEY_ID_1);
-                
-                // Add some documents with KEY_ID_1.
-                for (int i = 0; i < 3; i++) {
-                    Document doc = new Document();
-                    doc.add(new StringField("id", String.valueOf(i), Field.Store.YES));
-                    writer.addDocument(doc);
-                    commit(writer, keySupplier, KEY_ID_1);
-                }
+        Set<String> key1SegmentNames = readSegmentNames(dir);
+        assertEquals(3, key1SegmentNames.size());
 
-                Set<String> key1SegmentNames = readSegmentNames(dir);
-                assertEquals(3, key1SegmentNames.size());
+        // Change to KEY_ID_2.
+        commit(writer, keySupplier, KEY_ID_1, KEY_ID_2);
 
-                // Change to KEY_ID_2.
-                commit(writer, keySupplier, KEY_ID_1, KEY_ID_2);
-                
-                // Add more documents with KEY_ID_2.
-                for (int i = 3; i < 6; i++) {
-                    Document doc = new Document();
-                    doc.add(new StringField("id", String.valueOf(i), Field.Store.YES));
-                    writer.addDocument(doc);
-                    commit(writer, keySupplier, KEY_ID_1, KEY_ID_2);
-                }
-                
-                Set<String> key2NewSegmentNames = readSegmentNames(dir);
-                key2NewSegmentNames.removeAll(key1SegmentNames);
-                assertEquals(3, key2NewSegmentNames.size());
-
-                // Force merge with MAX_VALUE should trigger reencryption of old segments.
-                writer.forceMerge(Integer.MAX_VALUE);
-                commit(writer, keySupplier, KEY_ID_1, KEY_ID_2);
-                
-                // Verify only and all key1 segments have been rewritten.
-                Set<String> finalSegmentNames = readSegmentNames(dir);
-                assertEquals(6, finalSegmentNames.size());
-                assertTrue(finalSegmentNames.containsAll(key2NewSegmentNames));
-                assertTrue(finalSegmentNames.stream().noneMatch(key1SegmentNames::contains));
-            }
+        // Add more documents with KEY_ID_2.
+        for (int i = 3; i < 6; i++) {
+          Document doc = new Document();
+          doc.add(new StringField("id", String.valueOf(i), Field.Store.YES));
+          writer.addDocument(doc);
+          commit(writer, keySupplier, KEY_ID_1, KEY_ID_2);
         }
-    }
 
-    private MergePolicy createMergePolicy() {
-        return new EncryptionMergePolicy(new TieredMergePolicy());
-    }
+        Set<String> key2NewSegmentNames = readSegmentNames(dir);
+        key2NewSegmentNames.removeAll(key1SegmentNames);
+        assertEquals(3, key2NewSegmentNames.size());
 
-    private void commit(IndexWriter writer, KeySupplier keySupplier, String... keyIds) throws IOException {
-        Map<String, String> commitData = new HashMap<>();
-        for (String keyId : keyIds) {
-            EncryptionUtil.setNewActiveKeyIdInCommit(keyId, keySupplier.getKeyCookie(keyId, MOCK_COOKIE_PARAMS), commitData);
-        }
-        writer.setLiveCommitData(commitData.entrySet());
-        writer.commit();
-    }
+        // Force merge with MAX_VALUE should trigger reencryption of old segments.
+        writer.forceMerge(Integer.MAX_VALUE);
+        commit(writer, keySupplier, KEY_ID_1, KEY_ID_2);
 
-    private Set<String> readSegmentNames(Directory dir) throws IOException {
-        SegmentInfos segmentInfos = SegmentInfos.readLatestCommit(dir);
-        return segmentInfos.asList().stream()
-                .map(sci -> sci.info.name)
-                .collect(Collectors.toSet());
+        // Verify only and all key1 segments have been rewritten.
+        Set<String> finalSegmentNames = readSegmentNames(dir);
+        assertEquals(6, finalSegmentNames.size());
+        assertTrue(finalSegmentNames.containsAll(key2NewSegmentNames));
+        assertTrue(finalSegmentNames.stream().noneMatch(key1SegmentNames::contains));
+      }
     }
+  }
+
+  private MergePolicy createMergePolicy() {
+    return new EncryptionMergePolicy(new TieredMergePolicy());
+  }
+
+  private void commit(IndexWriter writer, KeySupplier keySupplier, String... keyIds) throws IOException {
+    Map<String, String> commitData = new HashMap<>();
+    for (String keyId : keyIds) {
+      EncryptionUtil.setNewActiveKeyIdInCommit(keyId, keySupplier.getKeyCookie(keyId, MOCK_COOKIE_PARAMS), commitData);
+    }
+    writer.setLiveCommitData(commitData.entrySet());
+    writer.commit();
+  }
+
+  private Set<String> readSegmentNames(Directory dir) throws IOException {
+    SegmentInfos segmentInfos = SegmentInfos.readLatestCommit(dir);
+    return segmentInfos.asList().stream()
+        .map(sci -> sci.info.name)
+        .collect(Collectors.toSet());
+  }
 } 

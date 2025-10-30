@@ -262,8 +262,10 @@ public class EncryptionDirectoryTest extends SolrCloudTestCase {
     @Override
     public EncryptionDirectory create(Directory delegate,
                                       AesCtrEncrypterFactory encrypterFactory,
-                                      KeySupplier keySupplier) throws IOException {
-      MockEncryptionDirectory mockDir = new MockEncryptionDirectory(delegate, encrypterFactory, keySupplier);
+                                      KeySupplier keySupplier,
+                                      EncryptionDirectory.EncryptionListener encryptionListener)
+        throws IOException {
+      MockEncryptionDirectory mockDir = new MockEncryptionDirectory(delegate, encrypterFactory, keySupplier, encryptionListener);
       mockDirs.add(mockDir);
       return mockDir;
     }
@@ -273,9 +275,13 @@ public class EncryptionDirectoryTest extends SolrCloudTestCase {
 
     final KeySupplier keySupplier;
 
-    MockEncryptionDirectory(Directory delegate, AesCtrEncrypterFactory encrypterFactory, KeySupplier keySupplier)
+    MockEncryptionDirectory(
+        Directory delegate,
+        AesCtrEncrypterFactory encrypterFactory,
+        KeySupplier keySupplier,
+        EncryptionListener encryptionListener)
       throws IOException {
-      super(delegate, encrypterFactory, keySupplier);
+      super(delegate, encrypterFactory, keySupplier, encryptionListener);
       this.keySupplier = keySupplier;
     }
 
