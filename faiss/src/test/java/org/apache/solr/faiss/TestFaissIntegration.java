@@ -63,7 +63,7 @@ public class TestFaissIntegration extends SolrTestCaseJ4 {
       // FAISS library not available
     }
     assumeTrue("FAISS native library not available", faissAvailable);
-    
+
     Path tmpSolrHome = createTempDir();
     Path tmpConfDir = FilterPath.unwrap(tmpSolrHome.resolve(CONF_DIR));
     Path testHomeConfDir = TEST_HOME().resolve(CONF_DIR);
@@ -109,7 +109,7 @@ public class TestFaissIntegration extends SolrTestCaseJ4 {
     KnnFloatVectorQuery q1 =
         new KnnFloatVectorQuery(VECTOR_FIELD1, queryVector, TOPK);
     TopDocs results1 = searcher.search(q1, TOPK);
-    
+
     assertTrue("Should return at least some results", results1.scoreDocs.length > 0);
     assertTrue("Should return at most TOPK results", results1.scoreDocs.length <= TOPK);
 

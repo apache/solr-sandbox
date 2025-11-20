@@ -41,7 +41,7 @@ dependencies {
     implementation "org.apache.lucene:lucene-codecs:10.3.1"
     provided "org.apache.solr:solr-core:${solrVersion}"
     implementation "org.slf4j:slf4j-api:2.0.5"
-    
+
     testImplementation "org.apache.lucene:lucene-test-framework:10.3.1"
     testImplementation "org.apache.lucene:lucene-backward-codecs:10.3.1"
     testImplementation "org.apache.lucene:lucene-sandbox:10.3.1"
@@ -49,14 +49,14 @@ dependencies {
     testImplementation "junit:junit:4.13.2"
     testImplementation "org.mockito:mockito-inline:5.2.0"
     testImplementation "org.hamcrest:hamcrest:3.0"
-    
+
     if (solrSubmoduleExists) {
         testImplementation fileTree(dir: "${solrSubmodulePath}/solr/test-framework/build/libs", include: 'solr-test-framework-*.jar', excludes: ['*sources*.jar', '*javadoc*.jar'])
         testImplementation fileTree(dir: "${solrSubmodulePath}/solr/core/build/libs", include: 'solr-core-*.jar', excludes: ['*sources*.jar', '*javadoc*.jar'])
         testImplementation fileTree(dir: "${solrSubmodulePath}/solr/solrj/build/libs", include: 'solr-solrj-*.jar', excludes: ['*sources*.jar', '*javadoc*.jar'])
         testImplementation fileTree(dir: "${solrSubmodulePath}/solr/api/build/libs", include: 'solr-api-*.jar', excludes: ['*sources*.jar', '*javadoc*.jar'])
         testImplementation fileTree(dir: "${solrSubmodulePath}/solr/solrj-zookeeper/build/libs", include: 'solr-solrj-zookeeper-*.jar', excludes: ['*sources*.jar', '*javadoc*.jar'])
-        
+
         testImplementation("org.apache.zookeeper:zookeeper:3.9.4") {
             exclude group: "org.apache.yetus", module: "audience-annotations"
         }
