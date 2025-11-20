@@ -181,7 +181,7 @@ final class FaissLibraryNativeImpl implements FaissLibrary {
       // Create an index
       MemorySegment pointer = temp.allocate(ADDRESS);
       handleException(
-          wrapper.faiss_index_factory(pointer, dimension, Java21Compatibility.allocateFrom(temp, description), metric));
+          wrapper.faiss_index_factory(pointer, dimension, FFMUtils.allocateFrom(temp, description), metric));
 
       MemorySegment indexPointer = pointer.get(ADDRESS, 0);
 
@@ -195,7 +195,7 @@ final class FaissLibraryNativeImpl implements FaissLibrary {
 
       handleException(
           wrapper.faiss_ParameterSpace_set_index_parameters(
-              parameterSpacePointer, indexPointer, Java21Compatibility.allocateFrom(temp, indexParams)));
+              parameterSpacePointer, indexPointer, FFMUtils.allocateFrom(temp, indexParams)));
 
       // TODO: Improve memory usage (with a tradeoff in performance) by batched indexing, see:
       //  - https://github.com/opensearch-project/k-NN/issues/1506
@@ -334,7 +334,7 @@ final class FaissLibraryNativeImpl implements FaissLibrary {
             };
 
         // Allocate queries in native memory
-        MemorySegment queries = Java21Compatibility.allocateFrom(temp, JAVA_FLOAT, query);
+        MemorySegment queries = FFMUtils.allocateFrom(temp, JAVA_FLOAT, query);
 
         // Faiss knn search
         int k = knnCollector.k();
@@ -352,7 +352,7 @@ final class FaissLibraryNativeImpl implements FaissLibrary {
           long[] bits = fixedBitSet.getBits();
           MemorySegment nativeBits =
               // Use LITTLE_ENDIAN to convert long[] -> uint8_t*
-              Java21Compatibility.allocateFrom(temp, JAVA_LONG.withOrder(ByteOrder.LITTLE_ENDIAN), bits);
+              FFMUtils.allocateFrom(temp, JAVA_LONG.withOrder(ByteOrder.LITTLE_ENDIAN), bits);
 
           handleException(
               wrapper.faiss_IDSelectorBitmap_new(pointer, fixedBitSet.length(), nativeBits));

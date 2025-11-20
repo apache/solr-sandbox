@@ -63,14 +63,14 @@ final class FaissNativeWrapper {
       }
     }
     // Use compatibility layer for findOrThrow() vs find()
-    MemorySegment symbol = Java21Compatibility.findSymbol(lookup, functionName);
+    MemorySegment symbol = FFMUtils.findSymbol(lookup, functionName);
     return Linker.nativeLinker().downcallHandle(symbol, descriptor);
   }
 
   FaissNativeWrapper() {
     // Check Faiss version
     String expectedVersion = FaissLibrary.VERSION;
-    String actualVersion = Java21Compatibility.getString(faiss_get_version().reinterpret(Long.MAX_VALUE), 0);
+    String actualVersion = FFMUtils.getString(faiss_get_version().reinterpret(Long.MAX_VALUE), 0);
 
     if (expectedVersion.equals(actualVersion) == false) {
       throw new LinkageError(

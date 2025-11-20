@@ -30,7 +30,7 @@ import java.util.Optional;
  *
  * @lucene.experimental
  */
-final class Java21Compatibility {
+final class FFMUtils {
   private static final int JAVA_VERSION = Runtime.version().feature();
   private static final boolean IS_JAVA_21 = JAVA_VERSION == 21;
 
@@ -88,11 +88,11 @@ final class Java21Compatibility {
                 MethodType.methodType(MemorySegment.class, ValueLayout.OfLong.class, long[].class));
       }
     } catch (NoSuchMethodException | IllegalAccessException e) {
-      throw new RuntimeException("Failed to initialize Java compatibility layer", e);
+        throw new RuntimeException("Failed to initialize FFM utils", e);
     }
   }
 
-  private Java21Compatibility() {}
+  private FFMUtils() {}
 
   /**
    * Find a symbol in SymbolLookup.
