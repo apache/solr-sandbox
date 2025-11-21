@@ -2,6 +2,18 @@
 
 This module supports running performance benchmarks packaged and run as "Gatling simulations".
 
+## Quickstart using Pre-Processed Data
+
+There is preprocessed data available at https://nightlies.apache.org/solr/benchmark-data/wiki/solr-wiki-batches-5k-1k.tar.gz.  This tgz contains ~5k Solr-ready JSON files, each containing a batch of 5k wikipedia articles truncated at 1k each.
+
+1. Download pre-processed data:
+  `mkdir -p .gatling/batches && cd .gatling/batches && wget https://nightlies.apache.org/solr/benchmark-data/wiki/solr-wiki-batches-5k-1k.tar.gz && tar -xvf solr-wiki-batches-5k-1k.tar.gz`
+1. Start a local Solr - any Solr can be used: local or remote, Docker or baremetal, release or SNAPSHOT, etc. Benchmarking will assume `http://localhost:8983/solr` unless told otherwise.
+1. Install wiki configset to Solr:
+  `./scripts/gatling/setup_wikipedia_tests.sh`.
+1. Run benchmark:
+  `NUM_SHARDS=2 ./gradlew gatlingRun --simulation index.IndexWikipediaBatchesSimulation`.
+
 ## Supported Simulations
 
 Currently only a single simulation is supported, "IndexWikipediaBatchesSimulation", which provides a benchmark for indexing truncated wikipedia pages.
@@ -19,7 +31,7 @@ This benchmark can be can be configured using the environment-variable knobs bel
 
 ## Running Built-In Scenarios
 
-Built-in indexing scenarios will create a collection and delete it after the test completes.
+Built-in indexing scenarios will create a collection and delete it after the test completes.  You still need to load your own configset first.
 
 Indexing benchmarks may be run using the command below from the repository root
 
