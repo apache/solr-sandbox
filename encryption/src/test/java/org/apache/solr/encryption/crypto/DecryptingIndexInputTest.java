@@ -151,6 +151,43 @@ public class DecryptingIndexInputTest extends RandomizedTest {
     indexInput.close();
   }
 
+  /**
+   * Reproduces a bug where creating a sub-slice at offset 0 from a slice at a non-zero offset
+   * would produce corrupted decrypted data. This is the pattern used by
+   * {@link IndexInput#randomAccessSlice(long, long)}, which internally calls
+   * slice("randomaccess", 0, length).
+   *
+   * The root cause: when slice() creates a new DecryptingIndexInput, the
+   * constructor sets encrypter.init(0) (AES counter = 0) and the subsequent
+   * seek(0) is supposed to call setPosition() to initialize the correct
+   * AES counter and padding. But when the cloned delegate's file pointer already equals the
+   * target position (which happens with offset=0), seek() took a buffer shortcut
+   * and skipped setPosition(), leaving the counter and padding at wrong values.
+   *
+   * With prefixSize=17: counter should be 17/16=1 (not 0) and padding should be 17%16=1 (not 0).
+   * Both are wrong without the fix, triggering both dimensions of the bug.
+   */
+  @Test
+  public void testRandomAccessSlice() throws Exception {
+    ByteBuffersDataOutput dataOutput = new ByteBuffersDataOutput();
+    EncryptingIndexOutput indexOutput = createEncryptingIndexOutput(dataOutput);
+    int bytesBeforeFirstSlice = 17;
+    byte[] prefix = new byte[bytesBeforeFirstSlice];
+    indexOutput.writeBytes(prefix, 0, prefix.length);
+    String data = "Hello, world!";
+    indexOutput.writeBytes(data.getBytes(), 0, data.length());
+    indexOutput.close();
+
+    DecryptingIndexInput root = createDecryptingIndexInput(dataOutput, 0);
+    // Simulates reading a sub-file (.tip for example) at a non-zero offset inside a compound file (.cfs)
+    IndexInput firstSlice = root.slice(".tip", bytesBeforeFirstSlice, data.length());
+    // Simulates randomAccessSlice(0, length) - creates a sub-slice at offset 0
+    IndexInput subSlice = firstSlice.slice("randomaccess", 0, data.length());
+    byte[] result = new byte[data.length()];
+    subSlice.readBytes(result, 0, data.length());
+    assertEquals(data, new String(result));
+  }
+
   @Test
   public void testSeek() throws Exception {
     for (int reps = randomIntBetween(1, 200); --reps > 0; ) {

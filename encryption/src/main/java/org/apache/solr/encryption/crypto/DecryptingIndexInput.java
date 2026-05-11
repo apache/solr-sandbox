@@ -164,7 +164,7 @@ public class DecryptingIndexInput extends FilterIndexInput {
     long targetPosition = position + sliceOffset;
     long delegatePosition = indexInput.getFilePointer();
     long currentPosition = delegatePosition - (outSize - outPos);
-    if (targetPosition >= currentPosition && targetPosition <= delegatePosition) {
+    if (outSize > 0 && targetPosition >= currentPosition && targetPosition <= delegatePosition) {
       // The target position is within the buffered output. Just move the output buffer position.
       outPos += (int) (targetPosition - currentPosition);
       assert targetPosition == delegatePosition - (outSize - outPos);
