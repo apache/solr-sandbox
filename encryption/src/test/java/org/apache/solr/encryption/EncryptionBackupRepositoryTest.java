@@ -182,7 +182,11 @@ public class EncryptionBackupRepositoryTest extends AbstractBackupRepositoryTest
         AesCtrEncrypterFactory encrypterFactory = random().nextBoolean() ? CipherAesCtrEncrypter.FACTORY : LightAesCtrEncrypter.FACTORY;
         KeySupplier keySupplier = new TestingKeySupplier.Factory().create();
         try (Directory fsSourceDir = FSDirectory.open(sourcePath);
-             Directory encSourceDir = new TestEncryptionDirectory(fsSourceDir, encrypterFactory, keySupplier);
+             Directory encSourceDir = new TestEncryptionDirectory(
+                 fsSourceDir,
+                 encrypterFactory,
+                 keySupplier,
+                 EncryptionDirectory.EncryptionListener.NO_LISTENER);
              Directory destinationDir = FSDirectory.open(createTempDir().toAbsolutePath())) {
             String fileName = "source-file";
             String content = "content";
@@ -331,9 +335,13 @@ public class EncryptionBackupRepositoryTest extends AbstractBackupRepositoryTest
      */
     private static class TestEncryptionDirectory extends EncryptionDirectory {
 
-        TestEncryptionDirectory(Directory delegate, AesCtrEncrypterFactory encrypterFactory, KeySupplier keySupplier)
-                throws IOException {
-            super(delegate, encrypterFactory, keySupplier);
+        TestEncryptionDirectory(
+            Directory delegate,
+            AesCtrEncrypterFactory encrypterFactory,
+            KeySupplier keySupplier,
+            EncryptionListener encryptionListener)
+            throws IOException {
+            super(delegate, encrypterFactory, keySupplier, encryptionListener);
         }
 
         @Override

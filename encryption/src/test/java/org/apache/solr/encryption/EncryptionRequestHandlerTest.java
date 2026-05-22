@@ -27,6 +27,7 @@ import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.embedded.JettySolrRunner;
 import org.apache.solr.encryption.crypto.AesCtrEncrypterFactory;
+import org.apache.solr.encryption.EncryptionDirectory.EncryptionListener;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.request.SolrQueryRequestBase;
 import org.apache.solr.response.SolrQueryResponse;
@@ -393,16 +394,22 @@ public class EncryptionRequestHandlerTest extends SolrCloudTestCase {
     @Override
     public EncryptionDirectory create(Directory delegate,
                                       AesCtrEncrypterFactory encrypterFactory,
-                                      KeySupplier keySupplier) throws IOException {
-      return new MockEncryptionDirectory(delegate, encrypterFactory, keySupplier);
+                                      KeySupplier keySupplier,
+                                      EncryptionListener encryptionListener)
+        throws IOException {
+      return new MockEncryptionDirectory(delegate, encrypterFactory, keySupplier, encryptionListener);
     }
   }
 
   private static class MockEncryptionDirectory extends EncryptionDirectory {
 
-    MockEncryptionDirectory(Directory delegate, AesCtrEncrypterFactory encrypterFactory, KeySupplier keySupplier)
+    MockEncryptionDirectory(
+        Directory delegate,
+        AesCtrEncrypterFactory encrypterFactory,
+        KeySupplier keySupplier,
+        EncryptionListener encryptionListener)
       throws IOException {
-      super(delegate, encrypterFactory, keySupplier);
+      super(delegate, encrypterFactory, keySupplier, encryptionListener);
     }
 
     @Override

@@ -30,6 +30,7 @@ import org.apache.lucene.store.MMapDirectory;
 import org.apache.lucene.tests.util.LuceneTestCase;
 import org.apache.solr.core.SolrResourceLoader;
 import org.apache.solr.encryption.crypto.LightAesCtrEncrypter;
+import org.apache.solr.encryption.EncryptionDirectory.EncryptionListener;
 import org.apache.solr.index.MergePolicyFactoryArgs;
 import org.apache.solr.index.TieredMergePolicyFactory;
 import org.junit.Test;
@@ -38,6 +39,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static org.apache.solr.encryption.TestingEncryptionRequestHandler.MOCK_COOKIE_PARAMS;
@@ -80,9 +82,22 @@ public class EncryptionMergePolicyFactoryTest extends LuceneTestCase {
   @Test
   public void testSegmentReencryption() throws Exception {
     KeySupplier keySupplier = new TestingKeySupplier.Factory().create();
-    try (Directory dir = new EncryptionDirectory(new MMapDirectory(createTempDir(), FSLockFactory.getDefault()),
-                                                 LightAesCtrEncrypter.FACTORY,
-                                                 keySupplier)) {
+    AtomicBoolean indexEncrypted = new AtomicBoolean(false);
+    EncryptionListener encryptionListener = new EncryptionListener() {
+      @Override
+      public void onEncryption() {
+        indexEncrypted.set(true);
+      }
+      @Override
+      public void clearEncryptionStatus() {
+        indexEncrypted.set(false);
+      }
+    };
+    try (Directory dir = new EncryptionDirectory(
+        new MMapDirectory(createTempDir(), FSLockFactory.getDefault()),
+        LightAesCtrEncrypter.FACTORY,
+        keySupplier,
+        encryptionListener)) {
       IndexWriterConfig iwc = new IndexWriterConfig(new WhitespaceAnalyzer());
       iwc.setMergeScheduler(new ConcurrentMergeScheduler());
       iwc.setMergePolicy(createMergePolicy());
@@ -125,6 +140,7 @@ public class EncryptionMergePolicyFactoryTest extends LuceneTestCase {
         assertTrue(segmentNames.isEmpty());
       }
     }
+    assertTrue(indexEncrypted.get());
   }
 
   private void commit(IndexWriter writer, KeySupplier keySupplier, String... keyIds) throws IOException {
