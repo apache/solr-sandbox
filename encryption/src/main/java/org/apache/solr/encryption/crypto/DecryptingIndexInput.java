@@ -51,14 +51,8 @@ public class DecryptingIndexInput extends FilterIndexInput {
   private final long sliceOffset;
   private final long sliceEnd;
   private IndexInput indexInput;
-  private AesCtrEncrypter encrypter;
-  private byte[] inBuffer;
-  private byte[] outBuffer;
+  private DecryptionBuffer buffer;
   private byte[] oneByteBuf;
-  private int inPos;
-  private int outPos;
-  private int outSize;
-  private int padding;
   private boolean closed;
 
   /**
@@ -111,11 +105,7 @@ public class DecryptingIndexInput extends FilterIndexInput {
     this.sliceEnd = sliceOffset + sliceLength;
     this.isClone = isClone;
     this.indexInput = indexInput;
-    this.encrypter = encrypter;
-    encrypter.init(0);
-    assert bufferCapacity % AES_BLOCK_SIZE == 0;
-    inBuffer = new byte[bufferCapacity];
-    outBuffer = new byte[bufferCapacity + AES_BLOCK_SIZE];
+    this.buffer = new DecryptionBuffer(encrypter, bufferCapacity);
     oneByteBuf = new byte[1];
   }
 
@@ -150,7 +140,7 @@ public class DecryptingIndexInput extends FilterIndexInput {
    * Gets the current internal position in the delegate {@link IndexInput}. It includes IV length.
    */
   private long getPosition() {
-    return indexInput.getFilePointer() - (outSize - outPos);
+    return indexInput.getFilePointer() - buffer.bufferedAhead();
   }
 
   @Override
@@ -163,25 +153,15 @@ public class DecryptingIndexInput extends FilterIndexInput {
     }
     long targetPosition = position + sliceOffset;
     long delegatePosition = indexInput.getFilePointer();
-    long currentPosition = delegatePosition - (outSize - outPos);
-    if (targetPosition >= currentPosition && targetPosition <= delegatePosition) {
+    long currentPosition = delegatePosition - buffer.bufferedAhead();
+    if (buffer.hasData() && targetPosition >= currentPosition && targetPosition <= delegatePosition) {
       // The target position is within the buffered output. Just move the output buffer position.
-      outPos += (int) (targetPosition - currentPosition);
-      assert targetPosition == delegatePosition - (outSize - outPos);
+      buffer.skipBytes((int) (targetPosition - currentPosition));
+      assert targetPosition == delegatePosition - buffer.bufferedAhead();
     } else {
       indexInput.seek(targetPosition);
-      setPosition(targetPosition);
+      buffer.seek(targetPosition, delegateOffset);
     }
-  }
-
-  private void setPosition(long position) {
-    outPos = outSize = 0;
-    // Compute the counter by ignoring the IV and the delegate offset, if any.
-    long delegatePosition = position - delegateOffset;
-    long counter = delegatePosition / AES_BLOCK_SIZE;
-    encrypter.init(counter);
-    padding = (int) (delegatePosition & AES_BLOCK_SIZE_MOD_MASK);
-    inPos = padding;
   }
 
   /**
@@ -203,7 +183,7 @@ public class DecryptingIndexInput extends FilterIndexInput {
     }
     DecryptingIndexInput slice = new DecryptingIndexInput(
       getFullSliceDescription(sliceDescription), delegateOffset, sliceOffset + offset, length, true,
-      indexInput.clone(), encrypter.clone(), inBuffer.length);
+      indexInput.clone(), buffer.cloneEncrypter(), buffer.capacity());
     slice.seek(0);
     return slice;
   }
@@ -224,42 +204,7 @@ public class DecryptingIndexInput extends FilterIndexInput {
       throw new EOFException("Read beyond EOF (position=" + (getPosition() - sliceOffset) + ", arrayLength=" + length
         + ", fileLength=" + length() + ") in " + this);
     }
-    while (length > 0) {
-      // Transfer decrypted bytes from outBuffer.
-      int outRemaining = outSize - outPos;
-      if (outRemaining > 0) {
-        if (length <= outRemaining) {
-          System.arraycopy(outBuffer, outPos, b, offset, length);
-          outPos += length;
-          return;
-        }
-        System.arraycopy(outBuffer, outPos, b, offset, outRemaining);
-        outPos += outRemaining;
-        offset += outRemaining;
-        length -= outRemaining;
-      }
-      readToFillBuffer(length);
-      decryptBuffer();
-    }
-  }
-
-  private void readToFillBuffer(int length) throws IOException {
-    assert length > 0;
-    int inRemaining = inBuffer.length - inPos;
-    if (inRemaining > 0) {
-      int numBytesToRead = Math.min(inRemaining, length);
-      indexInput.readBytes(inBuffer, inPos, numBytesToRead);
-      inPos += numBytesToRead;
-    }
-  }
-
-  private void decryptBuffer() {
-    assert inPos > padding : "inPos=" + inPos + " padding=" + padding;
-    encrypter.process(inBuffer, 0, inPos, outBuffer, 0);
-    outSize = inPos;
-    inPos = 0;
-    outPos = padding;
-    padding = 0;
+    buffer.readDecrypted(indexInput, b, offset, length);
   }
 
   @Override
@@ -268,12 +213,133 @@ public class DecryptingIndexInput extends FilterIndexInput {
     clone.isClone = true;
     clone.indexInput = indexInput.clone();
     assert clone.indexInput.getFilePointer() == indexInput.getFilePointer();
-    clone.encrypter = encrypter.clone();
-    clone.inBuffer = new byte[inBuffer.length];
-    clone.outBuffer = new byte[outBuffer.length];
+    clone.buffer = buffer.clone();
     clone.oneByteBuf = new byte[1];
     // The clone must be initialized.
-    clone.setPosition(getPosition());
+    clone.buffer.seek(getPosition(), delegateOffset);
     return clone;
+  }
+
+  /**
+   * Manages the AES-CTR decryption buffers and encrypter state.
+   * <p>Reads encrypted bytes from a delegate {@link IndexInput} into an input buffer,
+   * decrypts them into an output buffer, and serves decrypted bytes to the caller.
+   */
+  private static class DecryptionBuffer implements Cloneable {
+
+    AesCtrEncrypter encrypter;
+    byte[] inBuffer;
+    byte[] outBuffer;
+    int inPos;
+    int outPos;
+    int outSize;
+    int padding;
+
+    DecryptionBuffer(AesCtrEncrypter encrypter, int bufferCapacity) {
+      assert bufferCapacity % AES_BLOCK_SIZE == 0;
+      this.encrypter = encrypter;
+      encrypter.init(0);
+      inBuffer = new byte[bufferCapacity];
+      outBuffer = new byte[bufferCapacity + AES_BLOCK_SIZE];
+    }
+
+    /** Whether there are decrypted bytes available in the output buffer. */
+    boolean hasData() {
+      return outSize > 0;
+    }
+
+    /** Number of decrypted bytes in the output buffer not yet consumed. */
+    int bufferedAhead() {
+      return outSize - outPos;
+    }
+
+    /** The input buffer capacity (used when creating slices with the same buffer size). */
+    int capacity() {
+      return inBuffer.length;
+    }
+
+    /**
+     * Advances the read position within the already-decrypted output buffer.
+     * The caller must ensure the target falls within the buffered range.
+     */
+    void skipBytes(int bytesCount) {
+      outPos += bytesCount;
+      assert outPos <= outSize;
+    }
+
+    /**
+     * Resets the buffer state and initializes the AES-CTR counter and padding for the given
+     * absolute position in the delegate file.
+     *
+     * @param absolutePosition position in the delegate {@link IndexInput} (includes IV offset)
+     * @param delegateOffset   the position right after the IV — the "zero" of the AES-CTR stream
+     */
+    void seek(long absolutePosition, long delegateOffset) {
+      outPos = outSize = 0;
+      long relativePosition = absolutePosition - delegateOffset;
+      long counter = relativePosition / AES_BLOCK_SIZE;
+      encrypter.init(counter);
+      padding = (int) (relativePosition & AES_BLOCK_SIZE_MOD_MASK);
+      inPos = padding;
+    }
+
+    /**
+     * Reads and decrypts bytes from the delegate into the target array.
+     * Serves from the output buffer first, then reads and decrypts more as needed.
+     */
+    void readDecrypted(IndexInput delegate, byte[] target, int offset, int length) throws IOException {
+      while (length > 0) {
+        int outRemaining = outSize - outPos;
+        if (outRemaining > 0) {
+          if (length <= outRemaining) {
+            System.arraycopy(outBuffer, outPos, target, offset, length);
+            outPos += length;
+            return;
+          }
+          System.arraycopy(outBuffer, outPos, target, offset, outRemaining);
+          outPos += outRemaining;
+          offset += outRemaining;
+          length -= outRemaining;
+        }
+        readFromDelegate(delegate, length);
+        decrypt();
+      }
+    }
+
+    private void readFromDelegate(IndexInput delegate, int length) throws IOException {
+      assert length > 0;
+      int inRemaining = inBuffer.length - inPos;
+      if (inRemaining > 0) {
+        int numBytesToRead = Math.min(inRemaining, length);
+        delegate.readBytes(inBuffer, inPos, numBytesToRead);
+        inPos += numBytesToRead;
+      }
+    }
+
+    private void decrypt() {
+      assert inPos > padding : "inPos=" + inPos + " padding=" + padding;
+      encrypter.process(inBuffer, 0, inPos, outBuffer, 0);
+      outSize = inPos;
+      inPos = 0;
+      outPos = padding;
+      padding = 0;
+    }
+
+    AesCtrEncrypter cloneEncrypter() {
+      return encrypter.clone();
+    }
+
+    @Override
+    public DecryptionBuffer clone() {
+      try {
+        DecryptionBuffer clone = (DecryptionBuffer) super.clone();
+        clone.encrypter = encrypter.clone();
+        clone.inBuffer = new byte[inBuffer.length];
+        clone.outBuffer = new byte[outBuffer.length];
+        return clone;
+      } catch (CloneNotSupportedException e) {
+        throw new AssertionError(e);
+      }
+    }
   }
 }
