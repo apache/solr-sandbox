@@ -40,6 +40,10 @@ while getopts ":s:m:h" opt; do
     esac
 done
 
+echo "setting up sample wikipedia queries"
+rm -f $TESTS_WORK_DIR/wikipedia-queries.txt
+cp gatling-simulations/src/gatling/resources/wikipedia-queries.txt $TESTS_WORK_DIR/wikipedia-queries.txt
+
 CONF="wikipedia-${SOLR_MAJOR_VERSION}"
 
 

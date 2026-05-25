@@ -1,10 +1,5 @@
 package index;
 
-import io.gatling.javaapi.core.*;
-import io.gatling.javaapi.http.*;
-import util.GatlingUtils;
-import util.SolrUtil;
-
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
@@ -16,15 +11,28 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.stream.StreamSupport;
 
-import static io.gatling.javaapi.core.CoreDsl.*;
-import static io.gatling.javaapi.http.HttpDsl.*;
+import io.gatling.javaapi.core.ChainBuilder;
+import static io.gatling.javaapi.core.CoreDsl.RawFileBody;
+import static io.gatling.javaapi.core.CoreDsl.atOnceUsers;
+import static io.gatling.javaapi.core.CoreDsl.exec;
+import static io.gatling.javaapi.core.CoreDsl.feed;
+import static io.gatling.javaapi.core.CoreDsl.scenario;
+import io.gatling.javaapi.core.ScenarioBuilder;
+import io.gatling.javaapi.core.Simulation;
+import static io.gatling.javaapi.http.HttpDsl.http;
+import io.gatling.javaapi.http.HttpProtocolBuilder;
+import io.gatling.javaapi.http.HttpRequestActionBuilder;
+import util.GatlingUtils;
+import util.SolrUtil;
 
 public class IndexWikipediaBatchesSimulation extends Simulation {
 
     private final String testWorkDir;
     private final Path batchesDir;
     private final int numFiles;
+    private final int numBatches;
     private final int atOnceUsersCount;
+    private final boolean tearDownCollection;
     private final HttpProtocolBuilder httpProtocol;
     private final ChainBuilder updates;
     private final ScenarioBuilder scn;
@@ -33,8 +41,10 @@ public class IndexWikipediaBatchesSimulation extends Simulation {
         atOnceUsersCount = getConfigInt("CONCURRENT_USERS", 10);
 
         testWorkDir = getConfig("TESTS_WORK_DIR", ".gatling");
+        tearDownCollection = getConfigBool("TEAR_DOWN_COLLECTION", true);
+        numBatches = getConfigInt("NUM_BATCHES", -1);
         batchesDir = Paths.get(testWorkDir, "batches");
-        numFiles = batchesDir.toFile().list().length;
+        numFiles = numBatches > -1 ? numBatches : batchesDir.toFile().list().length;
         httpProtocol =  http.baseUrl(GatlingUtils.getEndpoint());
         updates = index(testWorkDir);
         scn = scenario(this.getClass().getSimpleName())
@@ -55,6 +65,10 @@ public class IndexWikipediaBatchesSimulation extends Simulation {
         return Integer.parseInt(getConfig(key, String.valueOf(defaultValue)));
     }
 
+    public static boolean getConfigBool(String key, boolean defaultValue) {
+        return Boolean.parseBoolean(getConfig(key, String.valueOf(defaultValue)));
+    }
+
     @Override
     public void before() {
         setupCollection();
@@ -62,7 +76,9 @@ public class IndexWikipediaBatchesSimulation extends Simulation {
 
     @Override
     public void after() {
-        tearDownCollection();
+        if (tearDownCollection) {
+            tearDownCollection();
+        }
     }
 
 
