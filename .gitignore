@@ -14,9 +14,12 @@
 
 # Ignore Gradle build output directory
 build
+bin
 out
 cluster
 
 .gatling
 
 logs
+
+faiss/test-config

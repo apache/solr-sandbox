@@ -17,3 +17,5 @@ include 'encryption'
 
 include 'gatling-data-prep'
 include 'gatling-simulations'
+
+include 'faiss'

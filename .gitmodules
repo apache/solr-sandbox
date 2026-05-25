@@ -1,0 +1,4 @@
+[submodule "faiss/solr"]
+	path = faiss/solr
+	url = https://github.com/apache/solr.git
+	branch = branch_10_0
