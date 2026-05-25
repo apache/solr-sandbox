@@ -117,6 +117,7 @@ public class MirroringUpdateProcessor extends UpdateRequestProcessor {
     final SolrInputDocument doc = cmd.getSolrInputDocument().deepCopy();
     doc.removeField(CommonParams.VERSION_FIELD); // strip internal doc version
     final long estimatedDocSizeInBytes = ObjectSizeEstimator.estimate(doc);
+    log.info("Adding doc={}", doc);
     if (log.isDebugEnabled()) {
       log.debug("estimated doc size is {} bytes, max size is {}", estimatedDocSizeInBytes, maxMirroringDocSizeBytes);
     }

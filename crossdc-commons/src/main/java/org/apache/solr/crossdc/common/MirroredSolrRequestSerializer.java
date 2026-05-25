@@ -137,6 +137,10 @@ public class MirroredSolrRequestSerializer implements Serializer<MirroredSolrReq
             }
             request = new MirroredSolrRequest.MirroredConfigSetRequest(method, params, contentStreams);
             log.debug("-- configSet method={}, req={}, streams={}", request.getMethod(), request.getParams(), csNames);
+        } else if (type == MirroredSolrRequest.Type.SCHEMA) {
+            String m = (String) requestMap.get("method");
+            SolrRequest.METHOD method = SolrRequest.METHOD.valueOf(m);
+            request = new MirroredSolrRequest.MirroredSchemaRequest(method, params);
         } else {
             throw new RuntimeException("Unknown request type: " + requestMap);
         }
@@ -189,6 +193,9 @@ public class MirroredSolrRequestSerializer implements Serializer<MirroredSolrReq
                     }
                     map.put("contentStreams", streamsList);
                 }
+            } else if (solrRequest instanceof MirroredSolrRequest.MirroredSchemaRequest) {
+                MirroredSolrRequest.MirroredSchemaRequest schema = (MirroredSolrRequest.MirroredSchemaRequest) solrRequest;
+                map.put("method", schema.getMethod().toString());
             }
 
             codec.marshal(map, baos);

@@ -21,8 +21,11 @@ import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
 import org.apache.solr.client.solrj.request.ConfigSetAdminRequest;
 import org.apache.solr.client.solrj.request.UpdateRequest;
+import org.apache.solr.client.solrj.request.schema.AbstractSchemaRequest;
+import org.apache.solr.client.solrj.request.schema.SchemaRequest;
 import org.apache.solr.client.solrj.response.CollectionAdminResponse;
 import org.apache.solr.client.solrj.response.ConfigSetAdminResponse;
+import org.apache.solr.client.solrj.response.schema.SchemaResponse;
 import org.apache.solr.common.params.CollectionParams;
 import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.params.SolrParams;
@@ -46,6 +49,7 @@ public class MirroredSolrRequest {
         UPDATE,
         ADMIN,
         CONFIGSET,
+        SCHEMA,
         UNKNOWN;
 
         public static final Type get(String s) {
@@ -114,6 +118,28 @@ public class MirroredSolrRequest {
         @Override
         protected ConfigSetAdminResponse createResponse(SolrClient client) {
             return new ConfigSetAdminResponse();
+        }
+    }
+
+    public static class MirroredSchemaRequest extends AbstractSchemaRequest {
+        private ModifiableSolrParams params;
+        public MirroredSchemaRequest(METHOD method, ModifiableSolrParams params) {
+            super(method, "/schema", params);
+            this.params = params;
+        }
+
+        @Override
+        public SolrParams getParams() {
+            return params;
+        }
+
+        public void setParams(ModifiableSolrParams params) {
+            this.params = params;
+        }
+
+        @Override
+        protected SchemaResponse createResponse(SolrClient client) {
+            return new SchemaResponse();
         }
     }
 

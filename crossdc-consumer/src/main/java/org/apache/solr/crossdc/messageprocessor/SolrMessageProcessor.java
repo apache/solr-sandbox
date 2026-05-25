@@ -189,6 +189,7 @@ public class SolrMessageProcessor extends MessageProcessor implements IQueueHand
         if (log.isDebugEnabled()) {
             log.debug("Sending request to Solr at address={} with params {}", connectString, request.getParams());
         }
+        log.info("Sending request to Solr at address={} with params {}", connectString, request.getParams());
         Result<MirroredSolrRequest> result;
         SolrResponseBase response = null;
         Timer.Context ctx = metrics.timer(MetricRegistry.name(type.name(), "outputTime")).time();
